@@ -1,0 +1,21 @@
+# Local override example: enable the MarkItDown CLI (venv path).
+# Per the official layering rule, an override row is a top-level entry keyed
+# by id (no `insert` wrapper — that would create a duplicate) and must
+# restate EVERY config key the bundle row declares, since a patch replaces
+# the whole config value.
+- id: file-upload
+  config:
+    uploadMaxBytes: 26214400
+    allowedExtensions: []
+    uploadTtlMs: 604800000
+    sweepIntervalMs: 3600000
+    maxConcurrentUploads: 4
+    maxFileBytes: 26214400
+    readLimit: 2000
+    sheetRowLimit: 200
+    maxSheets: 5
+    cacheEntries: 16
+    cacheMaxBytes: 67108864
+    inlineTextLimit: 8192
+    previewTextLimit: 2048
+    markitdownBin: '/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload/.venv/bin/markitdown'
