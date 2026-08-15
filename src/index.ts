@@ -5,9 +5,11 @@
 //      session workspace (.dsh-uploads/<sessionId>) where the agent's fs
 //      backend can always resolve them; small text files are inlined straight
 //      into the composer.
-//   2. Content sniffing + document→Markdown conversion: built-in JS parsers
-//      (text/PDF/DOCX/XLSX) by default; when a Microsoft MarkItDown CLI is
-//      configured (or found) it takes over and covers many more formats.
+//   2. Content sniffing + document→Markdown conversion, fully bundled:
+//      the markitdown-node engine (Microsoft MarkItDown TypeScript port,
+//      20+ formats incl. image OCR) ships as a regular dependency — zero
+//      downloads, zero Python, works offline out of the box; an official
+//      MarkItDown CLI is used only when already present on the machine.
 //   3. read_document tool (host): paged Markdown reading with a byte-budgeted
 //      LRU conversion cache.
 
@@ -21,12 +23,6 @@ import { probeMarkitdown } from './convert.ts'
 
 const execFileAsync = promisify(execFile)
 const execFileAsyncSafe = execFileAsync as (file: string, args: string[], opts: object) => Promise<{ stdout: string; stderr: string }>
-
-// Lazy loader for the bundled MarkItDown installer (postinstall runs it once;
-// apply() may also trigger it when no CLI was found). Resolved from lib/ at
-// runtime, so `../scripts` points at the package root's scripts/.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const setupModule = () => import(/* @vite-ignore */ '../scripts/setup-markitdown.mjs' as string) as Promise<any>
 
 /** Cordis plugin name — must match the row id in cordis.patch.yml. */
 export const name = 'dsh-file-upload'
@@ -97,11 +93,11 @@ function assertPositiveInteger(value: number, label: string): void {
 }
 
 /**
- * Resolve the effective MarkItDown binary, in order:
+ * Resolve an optional official MarkItDown CLI, in order:
  *   1. explicitly configured `markitdownBin`;
- *   2. a `markitdown` on PATH;
- *   3. the CLI auto-installed by the bundled installer (venv + marker);
- *   4. best-effort lazy install (one-time, never blocks boot).
+ *   2. a `markitdown` already on PATH.
+ * The bundled markitdown-node engine is the always-available backend; the
+ * CLI (when present on the machine) simply upgrades conversions further.
  */
 async function resolveMarkitdownBin(configured: string): Promise<string> {
   if (configured !== '') return (await probeMarkitdown(configured)) ? configured : ''
@@ -109,16 +105,6 @@ async function resolveMarkitdownBin(configured: string): Promise<string> {
     await execFileAsyncSafe('markitdown', ['--help'], { timeout: 10000 })
     return 'markitdown'
   } catch {
-    // fall through
-  }
-  try {
-    const setup = await setupModule()
-    const markerBin = setup.readMarker()
-    if (markerBin !== '') return markerBin
-    const bin = await setup.installMarkitdown()
-    return bin
-  } catch (err) {
-    console.warn('[dsh-file-upload] MarkItDown auto-install check failed (non-fatal):', err)
     return ''
   }
 }
@@ -157,18 +143,18 @@ export function apply(ctx: any, config: FileUploadConfig): void {
   }
 
   // MarkItDown probe is async; resolve lazily once at startup. The bundled
-  // markitdown-node engine is always available (works out of the box); the
-  // official Python CLI, when found, upgrades conversions further.
+  // markitdown-node engine is always available (works out of the box, fully
+  // packaged — no downloads, no Python); an official CLI already present on
+  // the machine (config or PATH) upgrades conversions further.
   let markitdownReady: Promise<string> | null = null
   const markitdown = () => {
     markitdownReady ??= resolveMarkitdownBin(config.markitdownBin).then((bin) => {
       toolConfig.markitdownBin = bin
       if (bin !== '') {
-        console.log(`[dsh-file-upload] MarkItDown CLI enabled: ${bin} — official engine (audio transcription, EPUB, …) takes over conversions`)
+        console.log(`[dsh-file-upload] MarkItDown CLI detected: ${bin} — official engine takes over conversions`)
       } else {
         console.log(
-          '[dsh-file-upload] Document → Markdown ready out of the box: bundled markitdown-node engine (PDF/DOCX/XLSX/PPTX/HTML/CSV/JSON/…, image OCR). ' +
-            'MarkItDown CLI will be auto-installed when Python >= 3.10 is available (or set markitdownBin explicitly).'
+          '[dsh-file-upload] Document → Markdown ready: bundled MarkItDown engine (20+ formats, image OCR) — fully packaged, no downloads, no Python.'
         )
       }
       return bin

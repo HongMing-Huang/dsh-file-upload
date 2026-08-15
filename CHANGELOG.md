@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-15
+
+### Changed
+
+- **Fully bundled MarkItDown, no downloads, no Python**: the auto-install
+  (postinstall/venv/pip) design is removed. The markitdown-node engine
+  (Microsoft MarkItDown TypeScript port, 20+ formats, image OCR, audio
+  transcription via LLM) is the always-available backend, shipped as a
+  regular dependency. An official MarkItDown CLI already present on the
+  machine (config or PATH) is still detected and preferred when available.
+- README (en/zh) rewritten around the bundled design.
+
 ## [0.2.0] - 2026-08-15
 
 ### Added
@@ -59,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mutable tool config (no restart needed when found on PATH).
 - GB18030-encoded files inline with correct decoding via TextDecoder.
 
-[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.3.0
 [0.2.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.2.0
 [0.1.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.1.0

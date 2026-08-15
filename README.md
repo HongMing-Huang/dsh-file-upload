@@ -14,8 +14,8 @@ English | [中文](README.zh.md)
 - **上传**:composer 回形针按钮 + 全局拖拽(拖动文件到窗口任意位置 → "松开以添加文件"遮罩 → 松开即上传),多文件支持
 - **附件卡片**:按类型着色的徽标卡(PDF 红 / DOC 蓝 / XLS 绿 / TXT 灰 / ZIP 紫 / JSON 金),显示名称、大小,可移除
 - **文本直插(Claude 风格)**:小的文本文件(代码/JSON/CSV/日志/配置…)上传后**内容直接进输入框**,模型第一眼就看到文件内容;大文本插入路径引用
-- **文档转 Markdown(开箱即用,非可选)**:内置 [markitdown-node](https://www.npmjs.com/package/markitdown-node) 引擎(微软 MarkItDown 的 TypeScript 移植),覆盖 PDF/DOCX/PPTX/XLSX/HTML/CSV/JSON/XML/ZIP/Jupyter/图片 OCR 等 20+ 格式,**装完即用,零外部依赖**;
-- **MarkItDown CLI 内置打包**:官方 [MarkItDown](https://github.com/microsoft/markitdown) CLI 随插件自动安装(检测 Python 即装),支持音频转写、EPUB 等;内置引擎始终兜底
+- **文档转 Markdown(全部内置打包)**:MarkItDown 引擎随插件发布,覆盖 PDF/DOCX/PPTX/XLSX/HTML/CSV/JSON/XML/ZIP/Jupyter/图片 OCR 等 20+ 格式,**装完即用,零下载零 Python**;
+- **MarkItDown 全部内置打包**:微软 MarkItDown 引擎(TS 移植)随插件发布,20+ 格式 + 图片 OCR,零下载零 Python;机器上已有官方 CLI 时自动优先
 - **`read_document` 工具**:行号分页、`offset`/`limit` 翻页、字节预算 LRU 缓存(文件改动自动失效)、大小预检、走 `ctx.fs`(继承沙箱与 fs 观察策略)
 - **安全**:loopback-only、文件名消毒、会话隔离存储(`.dsh-uploads/<sessionId>`)、sha256 去重、并发限流、TTL 清扫
 
@@ -32,28 +32,23 @@ dsh plugin --profile web add dsh-file-upload
 2. 小文本文件内容自动进入输入框;文档显示为附件卡,路径随消息发出;
 3. agent 对文档调用 `read_document <路径>` 读取全文(自动转 Markdown,可翻页)。
 
-### MarkItDown CLI (bundled, auto-installed)
+### MarkItDown (fully bundled — no downloads, no setup)
 
-The official Microsoft MarkItDown CLI ships with the plugin and installs itself — no manual steps:
+**MarkItDown capability ships inside the plugin. Works out of the box: no Python, no pip, no downloads, no build-script approval.**
 
-- On install, `postinstall` probes for Python (>= 3.10) and installs the official CLI into an isolated venv at `$DSH_HOME/markitdown/venv` — your system Python is untouched;
-- At startup the plugin auto-discovers the CLI: explicit config → PATH → auto-installed venv;
-- No Python or failed install? It falls back to the bundled markitdown-node engine (20+ formats) — functionality is always available;
-- Manual reinstall/upgrade: `pnpm setup-markitdown` (or `npm run setup-markitdown`).
+- **Bundled engine**: the Microsoft MarkItDown TypeScript port (`markitdown-node`) is a regular dependency — **20+ formats**: PDF / DOCX / PPTX / XLSX / HTML / CSV / JSON / XML / RSS / Atom / ZIP / Jupyter / images (OCR via Tesseract, 110+ languages) / audio transcription (via LLM, needs model credentials);
+- **Images**: OCR to text by default through the bundled engine — no vision plugin required;
+- **Offline**: all parsing is local, no network calls.
 
-> ⚠️ pnpm >= 10 blocks postinstall scripts by default: if prompted, allow the `dsh-file-upload` build script to enable auto-install (without it the bundled engine still works).
->
-> ⚠️ Do not `pip install 'markitdown[all]'` manually: on newer Pythons (3.14+) some optional deps fail to resolve and pip falls back to the ancient 0.0.2. The bundled installer uses the verified `markitdown[docx,pdf,xlsx,pptx]` extras.
-
-Custom CLI path (usually unnecessary):
+> Optional upgrade: if an official MarkItDown CLI already exists on your machine (or via `markitdownBin`), the plugin prefers it (adds EPUB etc.); without one the bundled engine is the always-available backend.
 
 ```yaml
 - id: file-upload
   config:
-    markitdownBin: /path/to/your/markitdown   # explicit; empty = auto (bundled install wins)
+    markitdownBin: /path/to/your/markitdown   # optional; empty = bundled engine only
 ```
 
-Startup logs show `[dsh-file-upload] MarkItDown CLI enabled: …` (or the install hint when missing).
+Startup log (bundled mode): `[dsh-file-upload] Document → Markdown ready: bundled MarkItDown engine (20+ formats, image OCR) — fully packaged, no downloads, no Python.`
 
 ### How images are handled
 

@@ -14,8 +14,8 @@
 - **上传**:composer 回形针按钮 + 全局拖拽(拖动文件到窗口任意位置 → "松开以添加文件"遮罩 → 松开即上传),多文件支持
 - **附件卡片**:按类型着色的徽标卡(PDF 红 / DOC 蓝 / XLS 绿 / TXT 灰 / ZIP 紫 / JSON 金),显示名称、大小,可移除
 - **文本直插(Claude 风格)**:小的文本文件(代码/JSON/CSV/日志/配置…)上传后**内容直接进输入框**,模型第一眼就看到文件内容;大文本插入路径引用
-- **文档转 Markdown(开箱即用,非可选)**:内置 [markitdown-node](https://www.npmjs.com/package/markitdown-node) 引擎(微软 MarkItDown 的 TypeScript 移植),覆盖 PDF/DOCX/PPTX/XLSX/HTML/CSV/JSON/XML/ZIP/Jupyter/图片 OCR 等 20+ 格式,**装完即用,零外部依赖**;
-- **MarkItDown CLI 内置打包**:官方 [MarkItDown](https://github.com/microsoft/markitdown) CLI 随插件自动安装(检测 Python 即装),支持音频转写、EPUB 等;内置引擎始终兜底
+- **文档转 Markdown(全部内置打包)**:MarkItDown 引擎随插件发布,覆盖 PDF/DOCX/PPTX/XLSX/HTML/CSV/JSON/XML/ZIP/Jupyter/图片 OCR 等 20+ 格式,**装完即用,零下载零 Python**;
+- **MarkItDown 全部内置打包**:微软 MarkItDown 引擎(TS 移植)随插件发布,20+ 格式 + 图片 OCR,零下载零 Python;机器上已有官方 CLI 时自动优先
 - **`read_document` 工具**:行号分页、`offset`/`limit` 翻页、字节预算 LRU 缓存(文件改动自动失效)、大小预检、走 `ctx.fs`(继承沙箱与 fs 观察策略)
 - **安全**:loopback-only、文件名消毒、会话隔离存储(`.dsh-uploads/<sessionId>`)、sha256 去重、并发限流、TTL 清扫
 
@@ -32,28 +32,24 @@ dsh plugin --profile web add dsh-file-upload
 2. 小文本文件内容自动进入输入框;文档显示为附件卡,路径随消息发出;
 3. agent 对文档调用 `read_document <路径>` 读取全文(自动转 Markdown,可翻页)。
 
-### MarkItDown CLI(内置打包,自动安装)
+### MarkItDown(全部内置打包,零下载零安装)
 
-**微软官方 MarkItDown CLI 随插件内置,自动安装,无需手动操作:**
+**MarkItDown 能力已完整打包进插件,装完即用:不需要 Python、不需要 pip、不需要下载、不需要授权。**
 
-- 插件安装时(`postinstall`)自动探测系统 Python(≥ 3.10),在独立虚拟环境(`$DSH_HOME/markitdown/venv`)中安装官方 CLI —— 不影响系统 Python;
-- 插件启动时自动发现:显式配置 → PATH → 自动安装的 CLI,一路找到即用;
-- 没有 Python 或安装失败时自动降级到内置 markitdown-node 引擎(20+ 格式),**功能始终可用**;
-- 手动重装/升级:`pnpm setup-markitdown`(或 `npm run setup-markitdown`)。
+- **内置引擎**:微软 MarkItDown 的 TypeScript 移植(`markitdown-node`)作为正式依赖随包发布,覆盖 **20+ 格式**——PDF / DOCX / PPTX / XLSX / HTML / CSV / JSON / XML / RSS / Atom / ZIP / Jupyter / 图片 OCR(Tesseract,110+ 语言)等;
+- **音频转写**:内置引擎支持音频转文字(经 LLM,需配置模型凭据);
+- **图片**:默认经内置引擎 OCR 转文字描述,无需任何视觉插件;
+- **离线可用**:所有解析在本地完成,无网络依赖。
 
-> ⚠️ pnpm ≥ 10 默认阻止 postinstall 脚本:安装时若提示授权构建脚本,允许 `dsh-file-upload` 即可启用自动安装(不授权则使用内置引擎,功能不受影响)。
->
-> ⚠️ 不要手动 `pip install 'markitdown[all]'`:在较新 Python(3.14+)上部分可选依赖无法解析,会回退到 0.0.2 旧版。内置安装脚本使用已验证的 `markitdown[docx,pdf,xlsx,pptx]`。
-
-自定义 CLI 路径(一般不需要):
+> 可选增强:如果你机器上本来就装有官方 MarkItDown CLI(或配置 `markitdownBin`),插件会自动优先使用它(支持 EPUB 等);没有也完全不影响——内置引擎始终兜底。
 
 ```yaml
 - id: file-upload
   config:
-    markitdownBin: /path/to/your/markitdown   # 显式指定;留空 = 自动(内置安装优先)
+    markitdownBin: /path/to/your/markitdown   # 可选:已有 CLI 时指向它;留空 = 纯内置
 ```
 
-启动日志会显示 `[dsh-file-upload] MarkItDown CLI enabled: …`(未找到时提示安装命令)。
+启动日志:内置引擎就绪时显示 `[dsh-file-upload] Document → Markdown ready: bundled MarkItDown engine (20+ formats, image OCR) — fully packaged, no downloads, no Python.`
 
 ### 图片怎么处理
 
