@@ -17,6 +17,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { sniff } from './detect.ts'
 import type { SniffResult } from './detect.ts'
 import { decodeText } from './convert.ts'
+import { transcribeAudio, audioSizeOk } from './asr.ts'
+import type { AsrOptions } from './asr.ts'
 
 export interface UploadOptions {
   /** Byte cap for one upload body. */
@@ -42,6 +44,10 @@ export interface UploadOptions {
   sessionCwd?: (sessionId: string) => string | undefined | Promise<string | undefined>
   /** Fallback storage root when no sessions service is available. */
   defaultDir: string
+  /** Optional ASR configuration: audio uploads get transcribed when set. */
+  asr?: AsrOptions
+  /** Max audio bytes that may be transcribed inline (0 = disabled). */
+  asrMaxBytes?: number
   now?: () => number
 }
 
@@ -53,6 +59,7 @@ export interface UploadedMeta {
   sniff: SniffResult
   inlineText?: string
   preview?: string
+  transcript?: string
   deduplicated?: boolean
 }
 
@@ -87,6 +94,8 @@ export function createUploadHandler(options: UploadOptions) {
     defaultDir,
     inlineTextLimit,
     previewTextLimit,
+    asr: asrOptions,
+    asrMaxBytes,
     now = () => Date.now()
   } = options
 
@@ -187,6 +196,15 @@ export function createUploadHandler(options: UploadOptions) {
         }
       }
 
+      // Audio: transcribe automatically when an ASR endpoint is configured.
+      if (sniffResult.type === 'audio' && options.asr !== undefined && audioSizeOk(dest, options.asrMaxBytes ?? 25 * 1024 * 1024)) {
+        try {
+          meta.transcript = await transcribeAudio(dest, options.asr)
+        } catch (err) {
+          console.warn(`[dsh-file-upload] audio transcription failed for ${name}:`, err)
+        }
+      }
+
       res.writeHead(200, { 'content-type': 'application/json' })
       res.end(
         JSON.stringify({
@@ -198,6 +216,7 @@ export function createUploadHandler(options: UploadOptions) {
           label: meta.sniff.label,
           ...(meta.inlineText !== undefined ? { inlineText: meta.inlineText } : {}),
           ...(meta.preview !== undefined ? { preview: meta.preview } : {}),
+          ...(meta.transcript !== undefined ? { transcript: meta.transcript } : {}),
           ...(meta.deduplicated ? { deduplicated: true } : {})
         })
       )

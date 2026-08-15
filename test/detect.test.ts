@@ -48,6 +48,24 @@ test('sniff: PNG image', () => {
   assert.equal(r.type, 'image')
 })
 
+test('sniff: WAV audio', () => {
+  const data = Buffer.concat([Buffer.from('RIFF'), Buffer.alloc(4, 0), Buffer.from('WAVE'), Buffer.alloc(16, 0)])
+  const r = sniff(data, 'voice.wav')
+  assert.equal(r.type, 'audio')
+})
+
+test('sniff: MP3 audio (ID3 tag)', () => {
+  const data = Buffer.concat([Buffer.from('ID3'), Buffer.alloc(10, 0)])
+  const r = sniff(data, 'song.mp3')
+  assert.equal(r.type, 'audio')
+})
+
+test('sniff: FLAC audio', () => {
+  const data = Buffer.concat([Buffer.from('fLaC'), Buffer.alloc(16, 0)])
+  const r = sniff(data, 'song.flac')
+  assert.equal(r.type, 'audio')
+})
+
 test('sniff: UTF-16 LE BOM detection', () => {
   const data = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from('hi', 'utf16le')])
   const r = sniff(data, 'doc.txt')

@@ -18,3 +18,8 @@
         inlineTextLimit: 8192
         previewTextLimit: 2048
         markitdownBin: ''
+        maxRecordSec: 60
+        asrEndpoint: ''
+        asrApiKeyEnv: OPENAI_API_KEY
+        asrModel: whisper-1
+        asrMaxBytes: 26214400

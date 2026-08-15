@@ -7,6 +7,7 @@ export type SniffedType =
   | 'docx'      // Office Open XML wordprocessing
   | 'xlsx'      // Office Open XML spreadsheet
   | 'image'     // raster image (png/jpeg/webp/gif)
+  | 'audio'     // audio container (wav/mp3/m4a/flac/ogg/webm…)
   | 'archive'   // zip container (docx/xlsx are checked first)
   | 'binary'    // anything else: handed to the agent as path + sha256
 
@@ -106,6 +107,13 @@ export function sniff(data: Buffer, fileName: string): SniffResult {
   const image = /^\x89PNG\r\n\x1a\n|^\xFF\xD8\xFF|^RIFF....WEBP|^GIF87a|^GIF89a/
   if (image.test(head.toString('latin1'))) {
     return { type: 'image', ext, label: ext.toUpperCase(), likelyText: false }
+  }
+
+  // Audio containers: WAV (RIFF....WAVE), MP3 (ID3 or 0xFF sync frames),
+  // M4A/MP4 (ftyp), FLAC (fLaC), OGG (OggS), WebM/Matroska (1A45DFA3).
+  const audio = /^RIFF....WAVE|^ID3|^\xFF\xFB|^\xFF\xF3|^\xFF\xF2|^fLaC|^OggS|^\x1A\x45\xDF\xA3|....ftyp/
+  if (audio.test(head.toString('latin1'))) {
+    return { type: 'audio', ext, label: ext === '' ? 'AUDIO' : ext.toUpperCase(), likelyText: false }
   }
 
   // UTF-16 text legitimately contains NUL bytes; honor its BOM before the

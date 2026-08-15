@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-15
+
+### Added
+
+- **Voice input**: mic button in the composer — Web Speech API live dictation
+  inserts editable text into the composer; falls back to MediaRecorder audio
+  upload when speech recognition is unavailable.
+- **Audio sniffing**: WAV / MP3 / FLAC / OGG / M4A / WebM containers are
+  recognized (`audio` sniffed type).
+- **Audio file transcription**: when `asrEndpoint` (OpenAI-compatible
+  `/audio/transcriptions`) is configured, uploaded audio is transcribed
+  automatically and the transcript travels with the message; degrades to a
+  plain file attachment on failure or when disabled.
+- New config: `maxRecordSec`, `asrEndpoint`, `asrApiKeyEnv`, `asrModel`,
+  `asrMaxBytes`.
+
+### Changed
+
+- README.md fully rewritten in English (previously contained Chinese
+  leftovers); README.zh.md rewritten to match — no duplicated entries, all
+  sections (features / usage / config / architecture / security) accurate.
+
 ## [0.3.0] - 2026-08-15
 
 ### Changed
@@ -71,7 +93,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mutable tool config (no restart needed when found on PATH).
 - GB18030-encoded files inline with correct decoding via TextDecoder.
 
-[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.4.0
 [0.3.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.3.0
 [0.2.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.2.0
 [0.1.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.1.0

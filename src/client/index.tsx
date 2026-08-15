@@ -14,6 +14,8 @@ import { Tooltip, IconPaperclipOutline16, IconCloseOutline16 } from '@deepseek-a
 
 const SOURCE_NAME = 'dsh-file-upload'
 const STYLE_TAG = 'dsh-file-upload/style.css'
+/** Mirrors the host `maxRecordSec` default; the host config wins for uploads. */
+const MAX_RECORD_SEC = 60
 
 interface UploadMeta {
   name: string
@@ -89,6 +91,8 @@ function injectCss(): void {
 .dsh-upload-overlay.active{opacity:1}
 .dsh-upload-overlay-box{border:2px dashed var(--dsw-alias-border-accent,rgba(99,132,255,.55));border-radius:16px;padding:28px 44px;color:var(--dsw-alias-label-primary,inherit);font-size:15px;display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--dsw-specific-input-major,rgba(127,127,127,.08))}
 .dsh-upload-overlay-hint{font-size:12px;color:var(--dsw-alias-label-tertiary,inherit)}
+.dsh-mic-btn.recording{color:#e5484d;animation:dsh-mic-pulse 1s ease-in-out infinite}
+@keyframes dsh-mic-pulse{0%,100%{opacity:1}50%{opacity:.35}}
 `
   document.head.appendChild(tag)
 }
@@ -240,6 +244,128 @@ function UploadButton({ attach }: UploadButtonProps) {
       </button>
     </Tooltip>
   )
+}
+
+/** Voice input button: Web Speech API live dictation into the composer.
+ * Falls back to MediaRecorder + file upload when speech recognition is
+ * unavailable (the host transcribes audio files when ASR is configured). */
+function MicButton({
+  attach,
+  insert,
+  maxSec
+}: {
+  attach: (files: File[]) => Promise<void>
+  insert: (text: string) => void
+  maxSec: number
+}) {
+  const [recording, setRecording] = useState(false)
+  const recRef = useRef<{ stop: () => void } | null>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const stop = () => {
+    recRef.current?.stop()
+    recRef.current = null
+    setRecording(false)
+    if (timeoutRef.current !== null) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+  }
+
+  const toggle = () => {
+    if (recording) {
+      stop()
+      return
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition
+    if (SR !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rec = new SR() as any
+      rec.lang = navigator.language || 'zh-CN'
+      rec.continuous = true
+      rec.interimResults = true
+      let draft = ''
+      const actx = null as unknown
+      rec.onresult = (event: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }>> }) => {
+        let text = ''
+        for (let i = event.resultIndex; i < event.results.length; i += 1) {
+          const item = event.results[i]
+          if (item.length > 0) text += item[0].transcript
+        }
+        draft = text
+      }
+      rec.onend = () => {
+        setRecording(false)
+        if (timeoutRef.current !== null) {
+          clearTimeout(timeoutRef.current)
+          timeoutRef.current = null
+        }
+        if (draft.trim() !== '') insert(draft.trim())
+      }
+      rec.onerror = () => {
+        setRecording(false)
+        setUploadError('语音识别不可用,已切换为录音文件上传')
+        // Fall back to recording an audio file.
+        void recordAndAttach(attach, maxSec)
+      }
+      recRef.current = { stop: () => rec.stop() }
+      setRecording(true)
+      rec.start()
+      timeoutRef.current = setTimeout(stop, maxSec * 1000)
+      return
+    }
+    // No Web Speech API: record an audio file and upload it.
+    void recordAndAttach(attach, maxSec)
+  }
+
+  return (
+    <Tooltip label={recording ? '停止录音' : '语音输入'} side="top">
+      <button
+        type="button"
+        className={`dsh-upload-btn dsh-mic-btn${recording ? ' recording' : ''}`}
+        aria-label="语音输入"
+        onClick={toggle}
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path
+            d="M8 1.5a2.5 2.5 0 0 0-2.5 2.5v4a2.5 2.5 0 0 0 5 0V4A2.5 2.5 0 0 0 8 1.5Z"
+            fill="currentColor"
+          />
+          <path
+            d="M3.5 7.5a.75.75 0 0 1 1.5 0 2.5 2.5 0 0 0 5 0 .75.75 0 0 1 1.5 0 4 4 0 0 1-3.25 3.94V13H10a.75.75 0 0 1 0 1.5H6A.75.75 0 0 1 6 13h1.75v-1.56A4 4 0 0 1 4.5 8a.75.75 0 0 1 .5-.75.75.75 0 0 1 .5-.5Z"
+            fill="currentColor"
+            transform="translate(0 -1)"
+          />
+        </svg>
+      </button>
+    </Tooltip>
+  )
+}
+
+/** MediaRecorder fallback: record an audio file and upload it. */
+async function recordAndAttach(attach: (files: File[]) => Promise<void>, maxSec: number): Promise<void> {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mime = (window as any).MediaRecorder.isTypeSupported?.('audio/webm') ? 'audio/webm' : ''
+    const recorder = new MediaRecorder(stream, mime !== '' ? { mimeType: mime } : undefined)
+    const chunks: Blob[] = []
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunks.push(e.data)
+    }
+    recorder.onstop = () => {
+      stream.getTracks().forEach((t) => t.stop())
+      const blob = new Blob(chunks, { type: mime || 'audio/webm' })
+      const ext = mime.includes('mp4') ? 'm4a' : 'webm'
+      const file = new File([blob], `voice-${Date.now()}.${ext}`, { type: blob.type })
+      void attach([file])
+    }
+    recorder.start()
+    setTimeout(() => recorder.stop(), maxSec * 1000)
+  } catch (err) {
+    setUploadError(`无法访问麦克风: ${err instanceof Error ? err.message : String(err)}`)
+  }
 }
 
 /** Global drag overlay: drag files over the window to attach (Claude style). */
@@ -416,6 +542,32 @@ export function apply(ctx: {
         })
       },
       UploadButton
+    )
+  )
+  ctx.slots.inject('conversation.input.left', () =>
+    ctx.slots.register(
+      {
+        name: 'conversation.input.left',
+        id: 'dsh-file-upload-mic',
+        order: 1,
+        inject: (sessionId: string) => {
+          const actx = ctx.sessions.scope(sessionId)
+          return {
+            attach: (files: File[]) => attachFiles(actx, files, sessionId),
+            insert: (text: string) => {
+              const conversation = actx.get('conversation')
+              const input = conversation?.input.for(actx)
+              const state = input?.state.getSnapshot()
+              actx.emit('slash/input-insert-text', {
+                text,
+                span: { start: state?.draft.length ?? 0, end: state?.draft.length ?? 0, draftRev: state?.draftRev ?? 0 }
+              })
+            },
+            maxSec: MAX_RECORD_SEC
+          }
+        }
+      },
+      MicButton
     )
   )
   ctx.slots.inject('conversation.input.dock', () =>

@@ -1,7 +1,7 @@
 {
   "name": "dsh-file-upload",
-  "version": "0.3.0",
-  "description": "DeepSeek Harness dual-face plugin: Claude-style drag-and-drop / paperclip file upload, content sniffing, document-to-Markdown fully bundled (MarkItDown engine, 20+ formats, image OCR — no downloads, no Python), text inlining, read_document tool.",
+  "version": "0.4.0",
+  "description": "DeepSeek Harness dual-face plugin: Claude-style drag-and-drop / paperclip uploads, fully bundled document→Markdown (MarkItDown engine, 20+ formats, image OCR), text inlining, voice input, audio transcription (optional ASR), read_document tool.",
   "keywords": [
     "deepseek",
     "harness",

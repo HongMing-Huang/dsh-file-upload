@@ -50,6 +50,11 @@ export interface FileUploadConfig {
   cacheMaxBytes: number
   markitdownBin: string
   markitdownTimeoutMs: number
+  maxRecordSec: number
+  asrEndpoint: string
+  asrApiKeyEnv: string
+  asrModel: string
+  asrMaxBytes: number
   uploadDir: string
 }
 
@@ -84,6 +89,16 @@ export const Config = z.object({
   markitdownBin: z.string().default(''),
   /** Timeout for one MarkItDown CLI invocation. */
   markitdownTimeoutMs: z.number().default(120000),
+  /** Max voice recording length in seconds (client mic). */
+  maxRecordSec: z.number().default(60),
+  /** Optional OpenAI-compatible ASR endpoint for audio files; empty disables. */
+  asrEndpoint: z.string().default(''),
+  /** Env var holding the ASR API key. */
+  asrApiKeyEnv: z.string().default('OPENAI_API_KEY'),
+  /** ASR model name. */
+  asrModel: z.string().default('whisper-1'),
+  /** Max audio bytes transcribed inline. */
+  asrMaxBytes: z.number().default(25 * MEBIBYTE),
   /** Upload storage root when no sessions service is available. */
   uploadDir: z.string().default(join(process.cwd(), 'uploads'))
 })
@@ -183,6 +198,16 @@ export function apply(ctx: any, config: FileUploadConfig): void {
         inlineTextLimit: config.inlineTextLimit,
         previewTextLimit: config.previewTextLimit,
         defaultDir,
+        asr:
+          config.asrEndpoint !== ''
+            ? {
+                endpoint: config.asrEndpoint,
+                apiKeyEnv: config.asrApiKeyEnv,
+                model: config.asrModel,
+                timeoutMs: 60000
+              }
+            : undefined,
+        asrMaxBytes: config.asrMaxBytes,
         sessionCwd: (sessionId: string) => {
           const session = ctx.sessions.get(sessionId)
           return session === undefined ? undefined : session.header.cwd
