@@ -16,6 +16,7 @@ import { join } from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { sniff } from './detect.ts'
 import type { SniffResult } from './detect.ts'
+import { decodeText } from './convert.ts'
 
 export interface UploadOptions {
   /** Byte cap for one upload body. */
@@ -71,11 +72,9 @@ export function sanitizeSessionId(id: string): string {
   return cleaned === '' ? 'anonymous' : cleaned
 }
 
-/** Decode text bytes for inline/preview payloads (UTF-16 BOM aware). */
+/** Decode text bytes for inline/preview payloads (UTF-16 BOM aware, GB18030 via TextDecoder). */
 export function decodeForInline(data: Buffer, encoding: 'utf8' | 'utf16le' | 'gb18030' | undefined): string {
-  if (encoding === 'utf16le') return data.toString('utf16le')
-  if (encoding === 'gb18030') return data.toString('utf8')
-  return data.toString('utf8')
+  return decodeText(data, encoding)
 }
 
 export function createUploadHandler(options: UploadOptions) {

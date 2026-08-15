@@ -122,13 +122,23 @@ export function apply(ctx: any, config: FileUploadConfig): void {
 
   const cache = new ParseCache(config.cacheEntries, config.cacheMaxBytes)
 
-  // MarkItDown probe is async; resolve lazily once at startup. The resolved
-  // binary is written back into the config object so read_document picks it
-  // up without a restart.
+  // Shared mutable tool configuration: the MarkItDown probe below writes the
+  // resolved binary back here, so read_document picks it up without a restart
+  // even when the CLI was found on PATH (auto-detect mode).
+  const toolConfig = {
+    readLimit: config.readLimit,
+    maxFileBytes: config.maxFileBytes,
+    sheetRowLimit: config.sheetRowLimit,
+    maxSheets: config.maxSheets,
+    markitdownBin: config.markitdownBin,
+    markitdownTimeoutMs: config.markitdownTimeoutMs
+  }
+
+  // MarkItDown probe is async; resolve lazily once at startup.
   let markitdownReady: Promise<string> | null = null
   const markitdown = () => {
     markitdownReady ??= resolveMarkitdownBin(config.markitdownBin).then((bin) => {
-      config.markitdownBin = bin
+      toolConfig.markitdownBin = bin
       if (bin !== '') {
         console.log(`[dsh-file-upload] MarkItDown CLI enabled: ${bin} — PDF/DOCX/XLSX/PPTX/HTML/images will convert to Markdown`)
       } else {
@@ -148,20 +158,7 @@ export function apply(ctx: any, config: FileUploadConfig): void {
     text: 'Files uploaded by the user live under .dsh-uploads/<sessionId>/ inside the workspace. Read them with the read_document tool, which converts PDF/DOCX/XLSX and text files to Markdown and pages through long documents with offset and limit. Prefer read_document over read for these files. For uploaded image files, use the official read_image tool (or read_document when MarkItDown is enabled, which describes images via OCR).'
   })
 
-  ctx.tools.register(
-    defineReadDocumentTool(
-      ctx,
-      {
-        readLimit: config.readLimit,
-        maxFileBytes: config.maxFileBytes,
-        sheetRowLimit: config.sheetRowLimit,
-        maxSheets: config.maxSheets,
-        markitdownBin: config.markitdownBin,
-        markitdownTimeoutMs: config.markitdownTimeoutMs
-      },
-      cache
-    )
-  )
+  ctx.tools.register(defineReadDocumentTool(ctx, toolConfig, cache))
   const defaultDir = config.uploadDir ?? join(process.cwd(), 'uploads')
   ctx.effect(() =>
     ctx.webServer.register({
