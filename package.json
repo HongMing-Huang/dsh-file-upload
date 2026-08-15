@@ -1,7 +1,7 @@
 {
   "name": "dsh-file-upload",
-  "version": "0.1.0",
-  "description": "DeepSeek Harness dual-face plugin: Claude-style drag-and-drop / paperclip file upload, content sniffing, document-to-Markdown conversion (built-in JS parsers with optional Microsoft MarkItDown CLI), text inlining into the message, and a read_document tool for the agent.",
+  "version": "0.2.0",
+  "description": "DeepSeek Harness dual-face plugin: Claude-style drag-and-drop / paperclip file upload, content sniffing, document-to-Markdown (bundled markitdown-node engine + auto-installed official MarkItDown CLI), text inlining, read_document tool.",
   "keywords": [
     "deepseek",
     "harness",
@@ -26,6 +26,7 @@
   },
   "files": [
     "lib",
+    "scripts",
     "cordis.patch.yml",
     "LICENSE",
     "CHANGELOG.md",
@@ -78,9 +79,11 @@
     "typescript": "^5.7.2"
   },
   "scripts": {
+    "postinstall": "node scripts/setup-markitdown.mjs",
     "build": "tsc -p tsconfig.build.json && node build.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test test/*.test.ts",
+    "setup-markitdown": "node scripts/setup-markitdown.mjs --force",
     "prepublishOnly": "npm run build && npm test"
   }
 }

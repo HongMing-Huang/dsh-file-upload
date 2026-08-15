@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-15
+
+### Added
+
+- **MarkItDown CLI is now bundled**: the official Microsoft MarkItDown CLI is
+  auto-installed into an isolated venv (`$DSH_HOME/markitdown/venv`) by a
+  `postinstall` script when Python >= 3.10 is present — no manual pip steps.
+- Startup auto-discovery chain: explicit `markitdownBin` → PATH →
+  auto-installed CLI (marker-based) → lazy one-time auto-install.
+- `pnpm setup-markitdown` for manual reinstall/upgrade.
+- Graceful degradation: no Python / failed install / blocked postinstall
+  falls back to the bundled markitdown-node engine (20+ formats), so
+  document → Markdown always works.
+
+### Fixed
+
+- Installer verifies the CLI via `--version` (first-run `--help` imports the
+  full converter registry and could exceed the probe timeout).
+
 ## [0.1.0] - 2026-08-15
 
 ### Added
@@ -40,5 +59,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mutable tool config (no restart needed when found on PATH).
 - GB18030-encoded files inline with correct decoding via TextDecoder.
 
-[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.2.0
 [0.1.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.1.0

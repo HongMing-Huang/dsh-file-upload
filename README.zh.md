@@ -15,7 +15,7 @@
 - **附件卡片**:按类型着色的徽标卡(PDF 红 / DOC 蓝 / XLS 绿 / TXT 灰 / ZIP 紫 / JSON 金),显示名称、大小,可移除
 - **文本直插(Claude 风格)**:小的文本文件(代码/JSON/CSV/日志/配置…)上传后**内容直接进输入框**,模型第一眼就看到文件内容;大文本插入路径引用
 - **文档转 Markdown(开箱即用,非可选)**:内置 [markitdown-node](https://www.npmjs.com/package/markitdown-node) 引擎(微软 MarkItDown 的 TypeScript 移植),覆盖 PDF/DOCX/PPTX/XLSX/HTML/CSV/JSON/XML/ZIP/Jupyter/图片 OCR 等 20+ 格式,**装完即用,零外部依赖**;
-- **MarkItDown CLI 增强(可选)**:检测到微软官方 [MarkItDown](https://github.com/microsoft/markitdown) CLI 时自动启用,进一步支持音频转写、EPUB 等;内置引擎始终兜底
+- **MarkItDown CLI 内置打包**:官方 [MarkItDown](https://github.com/microsoft/markitdown) CLI 随插件自动安装(检测 Python 即装),支持音频转写、EPUB 等;内置引擎始终兜底
 - **`read_document` 工具**:行号分页、`offset`/`limit` 翻页、字节预算 LRU 缓存(文件改动自动失效)、大小预检、走 `ctx.fs`(继承沙箱与 fs 观察策略)
 - **安全**:loopback-only、文件名消毒、会话隔离存储(`.dsh-uploads/<sessionId>`)、sha256 去重、并发限流、TTL 清扫
 
@@ -32,32 +32,25 @@ dsh plugin --profile web add dsh-file-upload
 2. 小文本文件内容自动进入输入框;文档显示为附件卡,路径随消息发出;
 3. agent 对文档调用 `read_document <路径>` 读取全文(自动转 Markdown,可翻页)。
 
-### MarkItDown CLI(可选增强,非必需)
+### MarkItDown CLI(内置打包,自动安装)
 
-文档转 Markdown **默认可用**(内置引擎,零配置)。微软官方 CLI 提供额外格式(音频转写、EPUB 等),推荐安装(Python 3.10–3.13):
+**微软官方 MarkItDown CLI 随插件内置,自动安装,无需手动操作:**
 
-微软官方 [MarkItDown](https://github.com/microsoft/markitdown) 把 PDF/Word/Excel/PPT/HTML/图片(OCR)/音频转成 Markdown。推荐安装(建议 Python 3.10–3.13):
+- 插件安装时(`postinstall`)自动探测系统 Python(≥ 3.10),在独立虚拟环境(`$DSH_HOME/markitdown/venv`)中安装官方 CLI —— 不影响系统 Python;
+- 插件启动时自动发现:显式配置 → PATH → 自动安装的 CLI,一路找到即用;
+- 没有 Python 或安装失败时自动降级到内置 markitdown-node 引擎(20+ 格式),**功能始终可用**;
+- 手动重装/升级:`pnpm setup-markitdown`(或 `npm run setup-markitdown`)。
 
-```sh
-# 方式一:全局安装(核心办公格式)
-pip install 'markitdown[docx,pdf,xlsx,pptx]'
+> ⚠️ pnpm ≥ 10 默认阻止 postinstall 脚本:安装时若提示授权构建脚本,允许 `dsh-file-upload` 即可启用自动安装(不授权则使用内置引擎,功能不受影响)。
+>
+> ⚠️ 不要手动 `pip install 'markitdown[all]'`:在较新 Python(3.14+)上部分可选依赖无法解析,会回退到 0.0.2 旧版。内置安装脚本使用已验证的 `markitdown[docx,pdf,xlsx,pptx]`。
 
-# 方式二:虚拟环境(推荐,避免污染系统 Python)
-python3 -m venv ~/.venvs/markitdown
-~/.venvs/markitdown/bin/pip install 'markitdown[docx,pdf,xlsx,pptx]'
-```
-
-> ⚠️ 不要用 `markitdown[all]`:在较新 Python(3.14+)上部分可选依赖无法解析,会导致回退安装到 0.0.2 旧版。核心格式用上面的 extras 列表即可;音频转写(`audio-transcription`/`youtube-transcription`)和 OCR(需要 LLM 凭据)按需追加。
-
-插件启动时自动探测 `markitdown` 命令(PATH 或 venv 路径显式指定):
+自定义 CLI 路径(一般不需要):
 
 ```yaml
-# cordis.patch.yml 或 profile patch
-- insert:
-    - id: file-upload
-      name: 'dsh-file-upload'
-      config:
-        markitdownBin: ~/.venvs/markitdown/bin/markitdown   # 显式指定;留空 = 自动探测 PATH
+- id: file-upload
+  config:
+    markitdownBin: /path/to/your/markitdown   # 显式指定;留空 = 自动(内置安装优先)
 ```
 
 启动日志会显示 `[dsh-file-upload] MarkItDown CLI enabled: …`(未找到时提示安装命令)。

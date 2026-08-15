@@ -22,6 +22,12 @@ import { probeMarkitdown } from './convert.ts'
 const execFileAsync = promisify(execFile)
 const execFileAsyncSafe = execFileAsync as (file: string, args: string[], opts: object) => Promise<{ stdout: string; stderr: string }>
 
+// Lazy loader for the bundled MarkItDown installer (postinstall runs it once;
+// apply() may also trigger it when no CLI was found). Resolved from lib/ at
+// runtime, so `../scripts` points at the package root's scripts/.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const setupModule = () => import(/* @vite-ignore */ '../scripts/setup-markitdown.mjs' as string) as Promise<any>
+
 /** Cordis plugin name — must match the row id in cordis.patch.yml. */
 export const name = 'dsh-file-upload'
 
@@ -90,13 +96,29 @@ function assertPositiveInteger(value: number, label: string): void {
   if (!Number.isInteger(value) || value < 1) throw new Error(`dsh-file-upload: ${label} must be a positive integer`)
 }
 
-/** Resolve the effective MarkItDown binary: configured value, else PATH probe. */
+/**
+ * Resolve the effective MarkItDown binary, in order:
+ *   1. explicitly configured `markitdownBin`;
+ *   2. a `markitdown` on PATH;
+ *   3. the CLI auto-installed by the bundled installer (venv + marker);
+ *   4. best-effort lazy install (one-time, never blocks boot).
+ */
 async function resolveMarkitdownBin(configured: string): Promise<string> {
   if (configured !== '') return (await probeMarkitdown(configured)) ? configured : ''
   try {
     await execFileAsyncSafe('markitdown', ['--help'], { timeout: 10000 })
     return 'markitdown'
   } catch {
+    // fall through
+  }
+  try {
+    const setup = await setupModule()
+    const markerBin = setup.readMarker()
+    if (markerBin !== '') return markerBin
+    const bin = await setup.installMarkitdown()
+    return bin
+  } catch (err) {
+    console.warn('[dsh-file-upload] MarkItDown auto-install check failed (non-fatal):', err)
     return ''
   }
 }
@@ -146,7 +168,7 @@ export function apply(ctx: any, config: FileUploadConfig): void {
       } else {
         console.log(
           '[dsh-file-upload] Document → Markdown ready out of the box: bundled markitdown-node engine (PDF/DOCX/XLSX/PPTX/HTML/CSV/JSON/…, image OCR). ' +
-            'Install the official MarkItDown CLI (pip install "markitdown[docx,pdf,xlsx,pptx]") and set markitdownBin for extra formats like audio transcription.'
+            'MarkItDown CLI will be auto-installed when Python >= 3.10 is available (or set markitdownBin explicitly).'
         )
       }
       return bin
