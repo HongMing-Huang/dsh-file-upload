@@ -2,6 +2,11 @@
 
 **DeepSeek Harness (dsh) 文件消息插件** —— Claude 桌面端风格的拖拽/回形针文件上传,内容嗅探、文档转 Markdown(内置 JS 解析 + 可选微软 MarkItDown CLI),小文本直插输入框,`read_document` 工具让 agent 分页读取。
 
+[![npm](https://img.shields.io/npm/v/dsh-file-upload)](https://www.npmjs.com/package/dsh-file-upload)
+[![CI](https://github.com/HongMing-Huang/dsh-file-upload/actions/workflows/ci.yml/badge.svg)](https://github.com/HongMing-Huang/dsh-file-upload/actions/workflows/ci.yml)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Awesome DSH Plugin](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com)
+
 [English](README.md) | 中文
 
 ## 能力
