@@ -5,7 +5,7 @@ import { promisify } from 'node:util'
 import { mkdtempSync, writeFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { convertMarkitdown, probeMarkitdown, convertJs } from '../src/convert.ts'
+import { convertMarkitdown, probeMarkitdown, convertJs, convertMarkitdownNode, convertDocument } from '../src/convert.ts'
 import { sniff } from '../src/detect.ts'
 
 const execFileAsync = promisify(execFile) as (file: string, args: string[], opts: object) => Promise<{ stdout: string; stderr: string }>
@@ -35,7 +35,32 @@ test('convertMarkitdown: converts a markdown file', { skip: !existsSync(bin) }, 
   const result = await convertMarkitdown(bin, file, 60000)
   assert.match(result.markdown, /# Hello/)
   assert.match(result.markdown, /- a/)
-  assert.equal(result.backend, 'markitdown')
+  assert.equal(result.backend, 'markitdown-cli')
+})
+
+test('convertMarkitdownNode: bundled engine converts DOCX out of the box', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'dshfu-'))
+  const docx = join(dir, 'sample.docx')
+  const html = join(dir, 'sample.html')
+  writeFileSync(html, '<html><body><h1>Title</h1><p>Hello <b>world</b></p></body></html>')
+  const { spawnSync } = await import('node:child_process')
+  const conv = spawnSync('textutil', ['-convert', 'docx', html, '-output', docx], { encoding: 'utf8' })
+  if (conv.status !== 0 || !existsSync(docx)) return // skip when no docx generator
+  const result = await convertMarkitdownNode(docx)
+  assert.equal(result.backend, 'markitdown-node')
+  assert.match(result.markdown, /Title/i)
+})
+
+test('convertDocument: text fast-path bypasses engines', async () => {
+  const data = Buffer.from('plain text here\n', 'utf8')
+  const r = sniff(data, 'x.txt')
+  const result = await convertDocument('/tmp/whatever.txt', data, r, {
+    maxFileBytes: 1 << 20,
+    sheetRowLimit: 100,
+    maxSheets: 3
+  })
+  assert.equal(result.backend, 'js')
+  assert.equal(result.markdown, 'plain text here\n')
 })
 
 test('convertMarkitdown: converts a DOCX via markitdown extras', { skip: !existsSync(bin) }, async () => {

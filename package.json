@@ -60,6 +60,7 @@
   },
   "dependencies": {
     "mammoth": "^1.8.0",
+    "markitdown-node": "^1.5.2",
     "pdfjs-dist": "^4.10.38",
     "read-excel-file": "^5.8.7"
   },

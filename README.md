@@ -14,9 +14,8 @@ English | [中文](README.zh.md)
 - **上传**:composer 回形针按钮 + 全局拖拽(拖动文件到窗口任意位置 → "松开以添加文件"遮罩 → 松开即上传),多文件支持
 - **附件卡片**:按类型着色的徽标卡(PDF 红 / DOC 蓝 / XLS 绿 / TXT 灰 / ZIP 紫 / JSON 金),显示名称、大小,可移除
 - **文本直插(Claude 风格)**:小的文本文件(代码/JSON/CSV/日志/配置…)上传后**内容直接进输入框**,模型第一眼就看到文件内容;大文本插入路径引用
-- **文档转 Markdown**:PDF/DOCX/XLSX 上传后由 `read_document` 按需转换——
-  - 默认内置 JS 解析器(零外部依赖,离线可用)
-  - 检测到微软 [MarkItDown](https://github.com/microsoft/markitdown) CLI 后自动启用,覆盖更多格式(PPTX/HTML/EPUB/图片 OCR/音频转写)
+- **文档转 Markdown(开箱即用,非可选)**:内置 [markitdown-node](https://www.npmjs.com/package/markitdown-node) 引擎(微软 MarkItDown 的 TypeScript 移植),覆盖 PDF/DOCX/PPTX/XLSX/HTML/CSV/JSON/XML/ZIP/Jupyter/图片 OCR 等 20+ 格式,**装完即用,零外部依赖**;
+- **MarkItDown CLI 增强(可选)**:检测到微软官方 [MarkItDown](https://github.com/microsoft/markitdown) CLI 时自动启用,进一步支持音频转写、EPUB 等;内置引擎始终兜底
 - **`read_document` 工具**:行号分页、`offset`/`limit` 翻页、字节预算 LRU 缓存(文件改动自动失效)、大小预检、走 `ctx.fs`(继承沙箱与 fs 观察策略)
 - **安全**:loopback-only、文件名消毒、会话隔离存储(`.dsh-uploads/<sessionId>`)、sha256 去重、并发限流、TTL 清扫
 
@@ -33,9 +32,9 @@ dsh plugin --profile web add dsh-file-upload
 2. 小文本文件内容自动进入输入框;文档显示为附件卡,路径随消息发出;
 3. agent 对文档调用 `read_document <路径>` 读取全文(自动转 Markdown,可翻页)。
 
-### Enable MarkItDown (optional, recommended)
+### MarkItDown CLI(可选增强,非必需)
 
-Microsoft's [MarkItDown](https://github.com/microsoft/markitdown) converts PDF/Word/Excel/PPT/HTML/images (OCR)/audio to Markdown. Recommended install (Python 3.10–3.13):
+文档转 Markdown **默认可用**(内置引擎,零配置)。微软官方 CLI 提供额外格式(音频转写、EPUB 等),推荐安装(Python 3.10–3.13):
 
 ```sh
 # Global install (core office formats)
@@ -65,8 +64,8 @@ Startup logs show `[dsh-file-upload] MarkItDown CLI enabled: …` (or the instal
 | Scenario | Path |
 |---|---|
 | Model accepts image input (or a vision bridge like dsh-vision-router is installed) | agent uses the official `read_image` tool |
-| MarkItDown enabled with LLM credentials (OCR) | `read_document <image path>` → MarkItDown returns a text description |
-| Neither | image stays a path reference (same as official behavior) |
+| Default (no vision route) | `read_document <image path>` → bundled engine runs OCR (Tesseract, 110+ languages) and returns a text description |
+| MarkItDown CLI with LLM credentials | `read_document <image path>` → official CLI describes the image |
 
 The injected systemPrompt covers this guidance; the agent picks the right path automatically.
 

@@ -134,17 +134,19 @@ export function apply(ctx: any, config: FileUploadConfig): void {
     markitdownTimeoutMs: config.markitdownTimeoutMs
   }
 
-  // MarkItDown probe is async; resolve lazily once at startup.
+  // MarkItDown probe is async; resolve lazily once at startup. The bundled
+  // markitdown-node engine is always available (works out of the box); the
+  // official Python CLI, when found, upgrades conversions further.
   let markitdownReady: Promise<string> | null = null
   const markitdown = () => {
     markitdownReady ??= resolveMarkitdownBin(config.markitdownBin).then((bin) => {
       toolConfig.markitdownBin = bin
       if (bin !== '') {
-        console.log(`[dsh-file-upload] MarkItDown CLI enabled: ${bin} — PDF/DOCX/XLSX/PPTX/HTML/images will convert to Markdown`)
+        console.log(`[dsh-file-upload] MarkItDown CLI enabled: ${bin} — official engine (audio transcription, EPUB, …) takes over conversions`)
       } else {
         console.log(
-          '[dsh-file-upload] MarkItDown CLI not found — using built-in JS parsers (text/PDF/DOCX/XLSX). ' +
-            'Install with: pip install "markitdown[docx,pdf,xlsx,pptx]" and set markitdownBin (or add it to PATH) for more formats.'
+          '[dsh-file-upload] Document → Markdown ready out of the box: bundled markitdown-node engine (PDF/DOCX/XLSX/PPTX/HTML/CSV/JSON/…, image OCR). ' +
+            'Install the official MarkItDown CLI (pip install "markitdown[docx,pdf,xlsx,pptx]") and set markitdownBin for extra formats like audio transcription.'
         )
       }
       return bin

@@ -1,16 +1,16 @@
 /** read_document tool: page through uploaded documents with on-demand
- * conversion to Markdown (built-in JS parsers or the MarkItDown CLI when
- * configured). Reads through ctx.fs, so workspace resolution, sandbox policy
- * and fs-observation policy behave exactly like the built-in read tool.
- * Results are cached with a byte-budgeted LRU keyed by (targetKey, version,
- * format), so re-reads after an edit re-parse while identical files hit the
- * cache.
+ * conversion to Markdown (text fast-path, optional MarkItDown CLI, bundled
+ * markitdown-node engine, JS fallback). Reads through ctx.fs, so workspace
+ * resolution, sandbox policy and fs-observation policy behave exactly like
+ * the built-in read tool. Results are cached with a byte-budgeted LRU keyed
+ * by (targetKey, version, format), so re-reads after an edit re-parse while
+ * identical files hit the cache.
  */
 
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { FsError, type FsTarget, type FsVersion } from '@deepseek-ai/dsh-fs'
 import { sniff } from './detect.ts'
-import { convertJs, convertMarkitdown, decodeText } from './convert.ts'
+import { convertDocument } from './convert.ts'
 import type { ConvertOptions } from './convert.ts'
 
 export interface ReadDocumentConfig {
@@ -196,23 +196,11 @@ export function defineReadDocumentTool(ctx: {
       const cacheKey = `${target.targetKey}:${JSON.stringify(info.version)}:${sniffResult.type}`
       let markdown = cache.get(cacheKey)
       if (markdown === undefined) {
-        if (sniffResult.type === 'text') {
-          markdown = decodeText(Buffer.from(bytes), sniffResult.encoding)
-        } else if (config.markitdownBin !== undefined && config.markitdownBin !== '') {
-          // MarkItDown covers pdf/docx/xlsx/images (OCR via LLM)/html/pptx/audio…
-          const result = await convertMarkitdown(config.markitdownBin, target.displayPath, config.markitdownTimeoutMs ?? 120000)
-          markdown = result.markdown
-        } else if (sniffResult.type === 'image') {
-          // No MarkItDown: images go through the official read_image path
-          // (requires an image-capable route or a vision bridge plugin).
-          throw new FsError(
-            `cannot read "${target.displayPath}": image files need the official read_image tool (or install MarkItDown and set markitdownBin for OCR)`,
-            'FS_NOT_TEXT'
-          )
-        } else {
-          const result = await convertJs(Buffer.from(bytes), sniffResult, convertOptions)
-          markdown = result.markdown
-        }
+        // Unified chain: text fast-path → MarkItDown CLI (when enabled) →
+        // bundled markitdown-node engine (PDF/DOCX/XLSX/PPTX/HTML/CSV/…,
+        // images via OCR) → lightweight JS parsers.
+        const result = await convertDocument(target.displayPath, Buffer.from(bytes), sniffResult, convertOptions)
+        markdown = result.markdown
         cache.set(cacheKey, markdown)
       }
 
