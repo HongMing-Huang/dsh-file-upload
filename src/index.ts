@@ -201,8 +201,27 @@ export function apply(ctx: any, config: FileUploadConfig): void {
   ctx.systemPrompt.section({
     name: 'tool:read-document',
     order: 110,
-    text: 'Files uploaded by the user live under .dsh-uploads/<sessionId>/ inside the workspace. Read them with the read_document tool, which converts PDF/DOCX/XLSX and text files to Markdown and pages through long documents with offset and limit. Prefer read_document over read for these files. For uploaded image files, use the official read_image tool (or read_document when MarkItDown is enabled, which describes images via OCR).'
+    text: 'Files uploaded by the user live under .dsh-uploads/<sessionId>/ inside the workspace. Read them with the read_document tool, which converts PDF/DOCX/XLSX and text files to Markdown and pages through long documents with offset and limit. Prefer read_document over read for these files. For uploaded image files: if the official read_image tool is available (current model supports image input), use it to see the image directly; otherwise call read_document on the image path, which returns an OCR text description via the bundled engine.'
   })
+
+  // Detect whether a session's routed model accepts image input, so the
+  // agent is told to use the official read_image tool (native) or OCR
+  // (read_document). Mirrors the official read_image route gate.
+  const resolveImageMode = async (sessionId: string): Promise<'native' | 'ocr'> => {
+    try {
+      const llm = ctx.get('llm')
+      if (llm === undefined) return 'ocr'
+      const session = ctx.sessions.get(sessionId)
+      const header = session?.requestHeader?.() ?? undefined
+      const provider = header?.config?.provider
+      const model = header?.config?.model
+      if (provider === undefined || model === undefined) return 'ocr'
+      const info = await llm.resolveModelInfo(provider, model)
+      return info.inputModalities?.includes('image') === true ? 'native' : 'ocr'
+    } catch {
+      return 'ocr'
+    }
+  }
 
   ctx.tools.register(defineReadDocumentTool(ctx, toolConfig, cache))
   const defaultDir = config.uploadDir ?? join(process.cwd(), 'uploads')
@@ -227,6 +246,7 @@ export function apply(ctx: any, config: FileUploadConfig): void {
         },
         asrKey: resolveAsrKey,
         asrMaxBytes: config.asrMaxBytes,
+        imageMode: resolveImageMode,
         sessionCwd: (sessionId: string) => {
           const session = ctx.sessions.get(sessionId)
           return session === undefined ? undefined : session.header.cwd

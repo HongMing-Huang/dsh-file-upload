@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.2] - 2026-08-16
 
+### Added
+
+- **Image handling auto-adapts to the routed model**: at upload time the
+  plugin resolves the session's provider/model through
+  `ctx.llm.resolveModelInfo` and checks `inputModalities` — mirroring the
+  official `read_image` route gate. Multimodal routes get `imageMode: native`
+  (the message tells the agent to use the official `read_image` tool; the
+  image enters model context directly); text-only or unknown routes get
+  `imageMode: ocr` (the agent reads via `read_document`, bundled OCR).
+- systemPrompt updated to describe both paths precisely.
+
+### Changed
+
+- ASR key resolved through the dsh credentials seam (`ctx.credentials.resolve`
+  per upload: inherited env → `$DSH_HOME/.credentials.yaml` → project .env),
+  so a Models-page key just works and hot-updates without restart. Standard
+  OpenAI endpoint by default; `asrEndpoint` overrides.
+- `@deepseek-ai/dsh-credentials` peer dependency; ASR integration tests.
+
 ### Changed
 
 - **ASR key comes from the dsh credentials seam, not the plugin's own env

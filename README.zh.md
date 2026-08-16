@@ -57,15 +57,16 @@ dsh plugin --profile web add dsh-file-upload
 [dsh-file-upload] Document → Markdown ready: bundled MarkItDown engine (20+ formats, image OCR) — fully packaged, no downloads, no Python.
 ```
 
-### 图片怎么处理
+### 图片怎么处理(按你的模型自动适配)
 
-| 场景 | 路径 |
+插件在**上传时自动检测当前会话模型的图像能力**,并告诉 agent 正确的看图方式:
+
+| 检测到的路由 | 行为 |
 |---|---|
-| 模型支持图像输入(或已装视觉桥接插件如 dsh-vision-router) | agent 用官方 `read_image` 工具读取 |
-| 默认(无视觉路由) | `read_document <图片路径>` → 内置引擎 OCR(Tesseract)返回文字描述 |
-| 官方 MarkItDown CLI + LLM 凭据 | `read_document <图片路径>` → CLI 描述图片 |
+| **多模态模型**(声明 `image` 输入,如 GPT-4o / Qwen-VL / Claude / Gemini) | 上传响应带 `imageMode: native`,消息提示 agent 用官方 `read_image` 工具——图片直接进入模型上下文 |
+| **纯文本模型**(或无法确定) | `imageMode: ocr`,agent 对图片路径调用 `read_document`——内置引擎 OCR(Tesseract,110+ 语言)返回文字描述 |
 
-注入的 systemPrompt 已包含上述指引,agent 会自动选择合适路径。
+检测逻辑与官方 `read_image` 的路由门控一致(`ctx.llm.resolveModelInfo` + `inputModalities`),绝不会声称路由模型不支持的图像能力。
 
 ### 语音输入(零配置)
 

@@ -126,6 +126,7 @@ interface UploadResponse {
   label?: string
   inlineText?: string
   preview?: string
+  imageMode?: 'native' | 'ocr'
   error?: string
 }
 
@@ -177,6 +178,16 @@ async function uploadFile(actx: ActionContext, file: File, sessionId: string): P
   if (typeof payload.inlineText === 'string') {
     // Claude-desktop-style: the file content lands in the composer directly.
     const text = `[file: ${name}]\n${payload.inlineText}`
+    actx.emit('slash/input-insert-text', {
+      text,
+      span: { start: state.draft.length, end: state.draft.length, draftRev: state.draftRev }
+    })
+    return payload.path
+  }
+
+  if (payload.sniffedType === 'image' && payload.imageMode === 'native') {
+    // Multimodal route: the agent reads the image directly with read_image.
+    const text = `[图片: ${name}] 当前模型支持图像输入,请用 read_image 工具查看 ${payload.path}`
     actx.emit('slash/input-insert-text', {
       text,
       span: { start: state.draft.length, end: state.draft.length, draftRev: state.draftRev }

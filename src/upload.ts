@@ -50,6 +50,12 @@ export interface UploadOptions {
   asrKey?: () => Promise<string | undefined>
   /** Max audio bytes that may be transcribed inline (0 = disabled). */
   asrMaxBytes?: number
+  /**
+   * Resolve whether the session's routed model accepts image input.
+   * `'native'` → the agent reads images with the official `read_image` tool;
+   * `'ocr'` → the bundled engine OCRs them via `read_document`.
+   */
+  imageMode?: (sessionId: string) => Promise<'native' | 'ocr'>
   now?: () => number
 }
 
@@ -62,6 +68,7 @@ export interface UploadedMeta {
   inlineText?: string
   preview?: string
   transcript?: string
+  imageMode?: 'native' | 'ocr'
   deduplicated?: boolean
 }
 
@@ -198,6 +205,16 @@ export function createUploadHandler(options: UploadOptions) {
         }
       }
 
+      // Images: report how the agent should read them — natively via the
+      // official read_image tool (multimodal route) or OCR via read_document.
+      if (sniffResult.type === 'image' && options.imageMode !== undefined) {
+        try {
+          meta.imageMode = await options.imageMode(storage.sessionId)
+        } catch {
+          meta.imageMode = 'ocr'
+        }
+      }
+
       // Audio: transcribe automatically when an ASR endpoint is configured.
       // The API key is resolved per operation through the DSH credentials
       // seam, so a key changed in the Models page reaches the next upload
@@ -225,6 +242,7 @@ export function createUploadHandler(options: UploadOptions) {
           ...(meta.inlineText !== undefined ? { inlineText: meta.inlineText } : {}),
           ...(meta.preview !== undefined ? { preview: meta.preview } : {}),
           ...(meta.transcript !== undefined ? { transcript: meta.transcript } : {}),
+          ...(meta.imageMode !== undefined ? { imageMode: meta.imageMode } : {}),
           ...(meta.deduplicated ? { deduplicated: true } : {})
         })
       )

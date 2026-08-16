@@ -60,15 +60,16 @@ Startup log (bundled mode):
 [dsh-file-upload] Document → Markdown ready: bundled MarkItDown engine (20+ formats, image OCR) — fully packaged, no downloads, no Python.
 ```
 
-### How images are handled
+### How images are handled (auto-adapted to your model)
 
-| Scenario | Path |
+The plugin **detects your session's model capability at upload time** and tells the agent the right way to read the image:
+
+| Detected route | What happens |
 |---|---|
-| Model accepts image input (or a vision bridge like dsh-vision-router is installed) | agent uses the official `read_image` tool |
-| Default (no vision route) | `read_document <image path>` → bundled engine runs OCR (Tesseract) and returns a text description |
-| Official MarkItDown CLI with LLM credentials | `read_document <image path>` → CLI describes the image |
+| **Multimodal model** (declares `image` input, e.g. GPT-4o / Qwen-VL / Claude / Gemini) | upload response carries `imageMode: native`; the message tells the agent to use the official `read_image` tool — the image enters model context directly |
+| **Text-only model** (or unknown) | `imageMode: ocr`; the agent uses `read_document` on the image path — the bundled engine runs OCR (Tesseract, 110+ languages) and returns a text description |
 
-The injected systemPrompt covers this guidance; the agent picks the right path automatically.
+The detection mirrors the official `read_image` route gate (`ctx.llm.resolveModelInfo` + `inputModalities`), so it never claims image support that the routed model does not declare.
 
 ### Voice input (zero-config)
 
