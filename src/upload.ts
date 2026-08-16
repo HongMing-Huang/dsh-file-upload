@@ -294,19 +294,36 @@ export function createUploadHandler(options: UploadOptions) {
   }
 }
 
-/** Periodically remove upload directories older than the TTL. */
-export function createSweeper(rootDir: string, ttlMs: number, intervalMs: number, now: () => number = Date.now): () => void {
+/**
+ * Periodically remove upload directories older than the TTL. Scans multiple
+ * roots: the fallback `defaultDir` plus every session workspace's
+ * `.dsh-uploads` directory (resolved live each sweep), so files stored under
+ * session cwds are swept too — not just the no-session fallback root.
+ */
+export function createSweeper(
+  roots: Array<string | (() => string | undefined)>,
+  ttlMs: number,
+  intervalMs: number,
+  now: () => number = Date.now
+): () => void {
   if (intervalMs <= 0) return () => undefined
   const timer = setInterval(() => {
     void (async () => {
       try {
-        const sessionDirs = await readdir(rootDir).catch(() => [])
-        for (const sessionDir of sessionDirs) {
-          const dir = join(rootDir, sessionDir)
-          const info = await stat(dir).catch(() => null)
-          if (info === null) continue
-          if (now() - info.mtimeMs > ttlMs) {
-            await rm(dir, { recursive: true, force: true })
+        const seen = new Set<string>()
+        for (const rootEntry of roots) {
+          const root = typeof rootEntry === 'function' ? rootEntry() : rootEntry
+          if (root === undefined || seen.has(root)) continue
+          seen.add(root)
+          const uploadRoot = join(root, '.dsh-uploads')
+          const sessionDirs = await readdir(uploadRoot).catch(() => [])
+          for (const sessionDir of sessionDirs) {
+            const dir = join(uploadRoot, sessionDir)
+            const info = await stat(dir).catch(() => null)
+            if (info === null) continue
+            if (now() - info.mtimeMs > ttlMs) {
+              await rm(dir, { recursive: true, force: true })
+            }
           }
         }
       } catch (err) {

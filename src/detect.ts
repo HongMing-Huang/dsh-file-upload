@@ -110,10 +110,14 @@ export function sniff(data: Buffer, fileName: string): SniffResult {
   }
 
   // Audio containers: WAV (RIFF....WAVE), MP3 (ID3 or 0xFF sync frames),
-  // M4A/MP4 (ftyp), FLAC (fLaC), OGG (OggS), WebM/Matroska (1A45DFA3).
-  const audio = /^RIFF....WAVE|^ID3|^\xFF\xFB|^\xFF\xF3|^\xFF\xF2|^fLaC|^OggS|^\x1A\x45\xDF\xA3|....ftyp/
+  // M4A/MP4 (ftyp — gated on a media extension so plain text cannot match),
+  // FLAC (fLaC), OGG (OggS), WebM/Matroska (1A45DFA3).
+  const AUDIO_EXTS = new Set(['wav', 'mp3', 'm4a', 'mp4', 'aac', 'flac', 'ogg', 'opus', 'webm', 'mka', 'aiff'])
+  const audio = /^RIFF....WAVE|^ID3|^\xFF\xFB|^\xFF\xF3|^\xFF\xF2|^fLaC|^OggS|^\x1A\x45\xDF\xA3|^[\x00-\x7f]{4}ftyp/
   if (audio.test(head.toString('latin1'))) {
-    return { type: 'audio', ext, label: ext === '' ? 'AUDIO' : ext.toUpperCase(), likelyText: false }
+    if (!/^[\x00-\x7f]{4}ftyp/.test(head.toString('latin1')) || AUDIO_EXTS.has(ext)) {
+      return { type: 'audio', ext, label: ext === '' ? 'AUDIO' : ext.toUpperCase(), likelyText: false }
+    }
   }
 
   // UTF-16 text legitimately contains NUL bytes; honor its BOM before the

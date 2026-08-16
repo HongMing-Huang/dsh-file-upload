@@ -255,7 +255,24 @@ export function apply(ctx: any, config: FileUploadConfig): void {
     })
   )
 
-  const disposeSweeper = createSweeper(defaultDir, config.uploadTtlMs, config.sweepIntervalMs)
+  // Sweep every upload root: the fallback dir plus each live session's
+  // workspace `.dsh-uploads` (session cwds resolved per sweep, so files under
+  // session workspaces age out too — not just the no-session fallback root).
+  const disposeSweeper = createSweeper(
+    [
+      defaultDir,
+      () => {
+        // All live sessions, in creation order (official SessionStore.list).
+        for (const session of ctx.sessions.list()) {
+          const cwd = session.header?.cwd
+          if (cwd !== undefined) return cwd
+        }
+        return undefined
+      }
+    ],
+    config.uploadTtlMs,
+    config.sweepIntervalMs
+  )
   ctx.on('dispose', disposeSweeper)
 
   // Kick the MarkItDown probe in the background so the first read_document

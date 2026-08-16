@@ -66,6 +66,20 @@ test('sniff: FLAC audio', () => {
   assert.equal(r.type, 'audio')
 })
 
+test('sniff: text file starting with ftyp-like bytes is NOT audio', () => {
+  // "1234ftyp" would match a naive ftyp regex; with no media extension it
+  // must fall through to text detection.
+  const data = Buffer.from('1234ftyp-this-is-plain-text-content', 'utf8')
+  const r = sniff(data, 'notes.txt')
+  assert.equal(r.type, 'text')
+})
+
+test('sniff: M4A with ftyp header and media extension', () => {
+  const data = Buffer.concat([Buffer.from([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70]), Buffer.alloc(16, 0)])
+  const r = sniff(data, 'song.m4a')
+  assert.equal(r.type, 'audio')
+})
+
 test('sniff: UTF-16 LE BOM detection', () => {
   const data = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from('hi', 'utf16le')])
   const r = sniff(data, 'doc.txt')

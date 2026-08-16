@@ -23,9 +23,20 @@ interface UploadMeta {
   label: string
   status: 'uploading' | 'ready' | 'error'
   error?: string
+  previewUrl?: string
 }
 
-const uploadMeta = new Map<string, UploadMeta>()
+/** Per-session attachment metadata: Map<sessionId, Map<path, meta>>. */
+const uploadMetaBySession = new Map<string, Map<string, UploadMeta>>()
+
+function metaFor(sessionId: string): Map<string, UploadMeta> {
+  let m = uploadMetaBySession.get(sessionId)
+  if (m === undefined) {
+    m = new Map()
+    uploadMetaBySession.set(sessionId, m)
+  }
+  return m
+}
 let uploadError: { seq: number; text: string } | null = null
 let errorSeq = 0
 const errorListeners = new Set<() => void>()
@@ -165,11 +176,12 @@ async function uploadFile(actx: ActionContext, file: File, sessionId: string): P
   if (typeof payload.path !== 'string') throw new Error('missing path in response')
   const name = payload.name ?? file.name
   const bytes = payload.bytes ?? file.size
-  uploadMeta.set(payload.path, {
+  metaFor(sessionId).set(payload.path, {
     name,
     bytes,
     label: payload.label ?? name.slice(name.lastIndexOf('.') + 1).toUpperCase(),
-    status: 'ready'
+    status: 'ready',
+    ...(file.type.startsWith('image/') ? { previewUrl: URL.createObjectURL(file) } : {})
   })
   clearUploadError()
 
@@ -380,7 +392,7 @@ async function recordAndAttach(attach: (files: File[]) => Promise<void>, maxSec:
 }
 
 /** Global drag overlay: drag files over the window to attach (Claude style). */
-function DragOverlay({ attach, sessionId }: { attach: (files: File[]) => Promise<void>; sessionId: string }) {
+function DragOverlay({ attach }: { attach: (files: File[]) => Promise<void> }) {
   const [active, setActive] = useState(false)
   const depth = useRef(0)
   const overlayRef = useRef<HTMLDivElement | null>(null)
@@ -421,7 +433,7 @@ function DragOverlay({ attach, sessionId }: { attach: (files: File[]) => Promise
       document.removeEventListener('dragleave', onDragLeave)
       document.removeEventListener('drop', onDrop)
     }
-  }, [attach, sessionId])
+  }, [attach])
 
   return (
     <div ref={overlayRef} className={`dsh-upload-overlay${active ? ' active' : ''}`}>
@@ -455,7 +467,7 @@ function UploadDock({ attach, sessionId }: DockProps) {
   }, [])
 
   const removeCard = (ref: string): void => {
-    uploadMeta.delete(ref)
+    metaFor(sessionId).delete(ref)
     setMetaVersion((v) => v + 1)
     void fetch('/api/upload', {
       method: 'DELETE',
@@ -466,7 +478,7 @@ function UploadDock({ attach, sessionId }: DockProps) {
     }).catch(() => undefined)
   }
 
-  const entries = Array.from(uploadMeta.entries())
+  const entries = Array.from(metaFor(sessionId).entries())
 
   return (
     <>
@@ -476,9 +488,18 @@ function UploadDock({ attach, sessionId }: DockProps) {
             const badge = badgeStyle(meta.name)
             return (
               <div key={ref} className="dsh-upload-card">
-                <div className="dsh-upload-badge" style={{ background: badge.bg }}>
-                  {badge.ext}
-                </div>
+                {meta.previewUrl !== undefined ? (
+                  <img
+                    src={meta.previewUrl}
+                    alt={meta.name}
+                    className="dsh-upload-thumb"
+                    style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6 }}
+                  />
+                ) : (
+                  <div className="dsh-upload-badge" style={{ background: badge.bg }}>
+                    {badge.ext}
+                  </div>
+                )}
                 <div className="dsh-upload-name" title={meta.name}>
                   {meta.name}
                 </div>
@@ -511,7 +532,7 @@ function UploadDock({ attach, sessionId }: DockProps) {
           </button>
         </div>
       )}
-      <DragOverlay attach={attach} sessionId={sessionId} />
+      <DragOverlay attach={attach} />
     </>
   )
 }
