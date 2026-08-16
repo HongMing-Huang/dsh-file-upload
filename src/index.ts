@@ -177,6 +177,32 @@ export function apply(ctx: any, config: FileUploadConfig): void {
     return markitdownReady
   }
 
+  // Audio transcription, zero-config: an explicit `asrEndpoint` wins; otherwise
+  // the standard OpenAI endpoint activates automatically whenever the key env
+  // var (default OPENAI_API_KEY) is present — the same credential convention
+  // dsh itself uses. Voice recording input always works in the browser.
+  const resolvedAsr =
+    config.asrEndpoint !== ''
+      ? {
+          endpoint: config.asrEndpoint,
+          apiKeyEnv: config.asrApiKeyEnv,
+          model: config.asrModel,
+          timeoutMs: 60000
+        }
+      : process.env[config.asrApiKeyEnv] !== undefined && process.env[config.asrApiKeyEnv] !== ''
+        ? {
+            endpoint: 'https://api.openai.com/v1/audio/transcriptions',
+            apiKeyEnv: config.asrApiKeyEnv,
+            model: config.asrModel,
+            timeoutMs: 60000
+          }
+        : undefined
+  if (resolvedAsr !== undefined) {
+    console.log(`[dsh-file-upload] Audio transcription ready (${resolvedAsr.endpoint}, model ${resolvedAsr.model}) — uploaded audio transcribes automatically`)
+  } else {
+    console.log('[dsh-file-upload] Voice recording input ready in the browser; audio-file transcription activates automatically when an ASR key (e.g. $OPENAI_API_KEY) is present')
+  }
+
   ctx.systemPrompt.section({
     name: 'tool:read-document',
     order: 110,
@@ -198,15 +224,7 @@ export function apply(ctx: any, config: FileUploadConfig): void {
         inlineTextLimit: config.inlineTextLimit,
         previewTextLimit: config.previewTextLimit,
         defaultDir,
-        asr:
-          config.asrEndpoint !== ''
-            ? {
-                endpoint: config.asrEndpoint,
-                apiKeyEnv: config.asrApiKeyEnv,
-                model: config.asrModel,
-                timeoutMs: 60000
-              }
-            : undefined,
+        asr: resolvedAsr,
         asrMaxBytes: config.asrMaxBytes,
         sessionCwd: (sessionId: string) => {
           const session = ctx.sessions.get(sessionId)

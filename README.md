@@ -9,6 +9,11 @@
 
 English | [中文](README.zh.md)
 
+> **Zero-config, install-and-use.** Every feature works out of the box with
+> sensible defaults — no Python, no downloads, no picking backends. The only
+> optional knob is an ASR key for audio-file transcription, and even that is
+> auto-detected from the standard `OPENAI_API_KEY` credential.
+
 ## Features
 
 - **Upload** — composer paperclip button plus a global drag-and-drop overlay ("release to attach"), multi-file support.
@@ -65,20 +70,24 @@ Startup log (bundled mode):
 
 The injected systemPrompt covers this guidance; the agent picks the right path automatically.
 
-### Voice input
+### Voice input (zero-config)
 
-- **Record** — the mic button in the composer records up to `maxRecordSec` (default 60 s); the transcript (browser Web Speech API) lands in the composer as editable text, so you can review it before sending.
-- **Audio files** — uploaded audio is stored like any file attachment; with a configured ASR endpoint (OpenAI-compatible `/audio/transcriptions`) the plugin transcribes it automatically and sends the transcript with the message.
+- **Record** — the mic button in the composer works immediately (browser Web Speech API, no setup); the transcript lands in the composer as editable text, review it before sending.
+- **Audio files** — uploaded audio is transcribed **automatically** when an OpenAI-compatible ASR key is available: the plugin auto-detects the standard `OPENAI_API_KEY` credential (no configuration needed) and uses `https://api.openai.com/v1/audio/transcriptions`; the transcript travels with the message. Without a key, audio uploads still work as regular file attachments.
+- Override the endpoint/model only if you need to (e.g. a self-hosted ASR):
 
 ```yaml
 - id: file-upload
   config:
-    asrEndpoint: ''               # e.g. https://api.openai.com/v1/audio/transcriptions
+    asrEndpoint: ''               # empty = auto (standard OpenAI endpoint when a key is present)
     asrApiKeyEnv: OPENAI_API_KEY  # env var holding the ASR key
     asrModel: whisper-1
 ```
 
 ## Configuration
+
+> All fields have sensible defaults — you can install and use the plugin
+> without touching any of them. Tune only what you need.
 
 | Field | Default | Description |
 |---|---|---|

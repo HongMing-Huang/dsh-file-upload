@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-08-16
+
+### Changed
+
+- **Zero-config ASR auto-detection**: when `asrEndpoint` is empty and the
+  `asrApiKeyEnv` credential (default `OPENAI_API_KEY`) is present, the
+  standard OpenAI endpoint (`https://api.openai.com/v1/audio/transcriptions`)
+  activates automatically — audio-file transcription now works with no
+  configuration at all.
+- Startup logs report the resolved audio mode (auto-enabled endpoint or
+  browser-only voice input).
+- README (en/zh) states the zero-config promise: every feature works out of
+  the box; all config fields have sensible defaults.
+
 ## [0.4.0] - 2026-08-15
 
 ### Added
@@ -93,7 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mutable tool config (no restart needed when found on PATH).
 - GB18030-encoded files inline with correct decoding via TextDecoder.
 
-[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.4.1
 [0.4.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.4.0
 [0.3.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.3.0
 [0.2.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.2.0

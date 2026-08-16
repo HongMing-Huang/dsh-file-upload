@@ -9,6 +9,8 @@
 
 [English](README.md) | 中文
 
+> **零配置,安装即用。** 所有功能开箱即用,带合理默认——不需要 Python、不需要下载、不需要挑选后端。唯一可选的是音频文件转写的 ASR 密钥,而它也会从标准的 `OPENAI_API_KEY` 凭据自动检测。
+
 ## 功能
 
 - **上传**:composer 回形针按钮 + 全局拖拽(拖动文件到窗口任意位置 → "松开以添加文件"遮罩 → 松开即上传),多文件支持。
@@ -65,20 +67,23 @@ dsh plugin --profile web add dsh-file-upload
 
 注入的 systemPrompt 已包含上述指引,agent 会自动选择合适路径。
 
-### 语音输入
+### 语音输入(零配置)
 
-- **录音**:composer 的麦克风按钮最多录制 `maxRecordSec`(默认 60 秒);转写文本(浏览器 Web Speech API)以可编辑文本形式进入输入框,发送前可修改。
-- **音频文件**:上传的音频按文件附件存储;配置了 ASR 端点(OpenAI 兼容 `/audio/transcriptions`)后,插件自动转写并把转写文本随消息发出。
+- **录音**:composer 的麦克风按钮开箱即用(浏览器 Web Speech API,无需任何设置);转写文本以可编辑形式进入输入框,发送前可修改。
+- **音频文件**:有 OpenAI 兼容 ASR 密钥时,上传的音频**自动转写**——插件自动检测标准 `OPENAI_API_KEY` 凭据(无需配置),使用 `https://api.openai.com/v1/audio/transcriptions`,转写文本随消息发出;没有密钥时,音频仍作为普通文件附件上传。
+- 仅在需要时(如自建 ASR 服务)覆盖端点/模型:
 
 ```yaml
 - id: file-upload
   config:
-    asrEndpoint: ''               # 例如 https://api.openai.com/v1/audio/transcriptions
+    asrEndpoint: ''               # 空 = 自动(有密钥时用标准 OpenAI 端点)
     asrApiKeyEnv: OPENAI_API_KEY  # 存放 ASR 密钥的环境变量名
     asrModel: whisper-1
 ```
 
 ## 配置
+
+> 所有字段都有合理默认——安装后直接使用,无需修改任何配置。按需调整即可。
 
 | 字段 | 默认 | 说明 |
 |---|---|---|
