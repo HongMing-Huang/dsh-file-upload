@@ -15,7 +15,8 @@
 
 - **上传**:composer 回形针按钮 + 全局拖拽(拖动文件到窗口任意位置 → "松开以添加文件"遮罩 → 松开即上传),多文件支持。
 - **附件卡片**:按类型着色的徽标卡(PDF 红 / DOC 蓝 / XLS 绿 / TXT 灰 / ZIP 紫 / JSON 金),显示名称与大小,可移除。
-- **文本直插(Claude 风格)**:小的文本文件(代码/JSON/CSV/日志/配置…)通过官方 `slash/input-insert-text` 事件**内容直接进输入框**,模型第一眼就能看到;大文本插入路径引用并附预览。
+- **文本直插(Claude 风格)**:小的文本文件(代码/JSON/CSV/日志/配置…)通过官方 `slash/input-insert-text` 事件**内容直接进输入框**,模型第一眼就能看到;大文本插入 **Codex 风格 `@相对路径` 引用**(附预览)。
+- **Codex 风格 `@` 引用**:上传后在输入框输入 `@` 即可按相对路径选择已上传文件,以 mention 形式插入;agent 用 `read_document` 读取(消息历史中就是路径引用文本,与 Codex 一致,不渲染附件卡)。
 - **文档转 Markdown(全部内置打包)**:MarkItDown 引擎随插件发布(微软 MarkItDown 的 TypeScript 移植 `markitdown-node`):PDF / DOCX / PPTX / XLSX / HTML / CSV / JSON / XML / RSS / Atom / ZIP / Jupyter / 图片 OCR / 音频转写。**无需 Python、无需下载、无需配置。**
 - **图片 OCR 默认可用**:上传的图片可通过 `read_document` 读取(Tesseract,110+ 语言),无需任何视觉插件。
 - **语音输入**:麦克风录音,转写文本直进输入框(浏览器 Web Speech API,零依赖);音频文件按文件附件上传。

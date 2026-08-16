@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Codex-style `@` mentions**: after upload, type `@` in the composer to
+  pick any uploaded file by relative path; references insert as mentions and
+  the agent reads them with `read_document` (message history shows the
+  `@relative/path` text — same model as Codex, no attachment cards).
+- **Relative paths**: the upload response carries the file's path relative to
+  the session workspace, used for `@` mentions and clipboard text.
 - **Image handling auto-adapts to the routed model**: at upload time the
   plugin resolves the session's provider/model through
   `ctx.llm.resolveModelInfo` and checks `inputModalities` — mirroring the

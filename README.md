@@ -18,7 +18,8 @@ English | [中文](README.zh.md)
 
 - **Upload** — composer paperclip button plus a global drag-and-drop overlay ("release to attach"), multi-file support.
 - **Attachment cards** — color-coded type badges (PDF red / DOC blue / XLS green / TXT gray / ZIP purple / JSON gold) with name and size; removable.
-- **Text inlining (Claude style)** — small text files (code, JSON, CSV, logs, config) are inserted **directly into the composer** via the official `slash/input-insert-text` event, so the model sees the content immediately; larger text files insert a path reference with a preview.
+- **Text inlining (Claude style)** — small text files (code, JSON, CSV, logs, config) are inserted **directly into the composer** via the official `slash/input-insert-text` event, so the model sees the content immediately; larger text files insert a **Codex-style `@relative/path` reference** (with preview).
+- **Codex-style `@` mentions** — after uploading, type `@` in the composer to pick any uploaded file by its relative path; the reference is inserted as a mention and the agent reads it with `read_document`.
 - **Document → Markdown, fully bundled** — the MarkItDown engine ships inside the plugin (Microsoft MarkItDown TypeScript port, `markitdown-node`): PDF / DOCX / PPTX / XLSX / HTML / CSV / JSON / XML / RSS / Atom / ZIP / Jupyter / image OCR / audio transcription. **No Python, no downloads, no setup.**
 - **Image OCR by default** — uploaded images are readable through `read_document` (Tesseract, 110+ languages); no vision plugin required.
 - **Voice input** — record from the mic and transcribe straight into the composer (browser Web Speech API, zero dependencies); audio files upload as file attachments.

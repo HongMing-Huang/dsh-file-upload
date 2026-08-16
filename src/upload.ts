@@ -12,7 +12,7 @@
 
 import { createHash } from 'node:crypto'
 import { mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, relative, sep } from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { sniff } from './detect.ts'
 import type { SniffResult } from './detect.ts'
@@ -110,15 +110,15 @@ export function createUploadHandler(options: UploadOptions) {
 
   let inflight = 0
 
-  async function storageDirFor(req: IncomingMessage): Promise<{ dir: string; sessionId: string } | null> {
+  async function storageDirFor(req: IncomingMessage): Promise<{ dir: string; sessionId: string; cwd: string } | null> {
     const raw = req.headers['x-session-id']
     const sessionId = typeof raw === 'string' ? sanitizeSessionId(raw) : 'anonymous'
     if (sessionCwd !== undefined) {
       const cwd = await sessionCwd(sessionId)
       if (cwd === undefined) return null
-      return { dir: join(cwd, '.dsh-uploads', sessionId), sessionId }
+      return { dir: join(cwd, '.dsh-uploads', sessionId), sessionId, cwd }
     }
-    return { dir: join(defaultDir, '.dsh-uploads', sessionId), sessionId }
+    return { dir: join(defaultDir, '.dsh-uploads', sessionId), sessionId, cwd: defaultDir }
   }
 
   async function handlePost(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -230,10 +230,13 @@ export function createUploadHandler(options: UploadOptions) {
         }
       }
 
+      const relativePath = relative(storage.cwd, dest).split(sep).join('/')
+
       res.writeHead(200, { 'content-type': 'application/json' })
       res.end(
         JSON.stringify({
           path: meta.path,
+          relativePath,
           name: meta.name,
           bytes: meta.bytes,
           sessionId: meta.sessionId,

@@ -24,6 +24,7 @@ interface UploadMeta {
   status: 'uploading' | 'ready' | 'error'
   error?: string
   previewUrl?: string
+  relativePath?: string
 }
 
 /** Per-session attachment metadata: Map<sessionId, Map<path, meta>>. */
@@ -138,6 +139,7 @@ interface UploadResponse {
   inlineText?: string
   preview?: string
   imageMode?: 'native' | 'ocr'
+  relativePath?: string
   error?: string
 }
 
@@ -181,6 +183,7 @@ async function uploadFile(actx: ActionContext, file: File, sessionId: string): P
     bytes,
     label: payload.label ?? name.slice(name.lastIndexOf('.') + 1).toUpperCase(),
     status: 'ready',
+    ...(payload.relativePath !== undefined ? { relativePath: payload.relativePath } : {}),
     ...(file.type.startsWith('image/') ? { previewUrl: URL.createObjectURL(file) } : {})
   })
   clearUploadError()
@@ -207,15 +210,17 @@ async function uploadFile(actx: ActionContext, file: File, sessionId: string): P
     return payload.path
   }
 
-  // Larger text or documents: insert a path reference; the agent reads it
-  // with read_document (converted to Markdown on demand).
+  // Larger text or documents: insert a path reference (Codex-style
+  // `@relative/path`); the agent reads it with read_document (converted to
+  // Markdown on demand).
+  const refText = payload.relativePath !== undefined ? `@${payload.relativePath}` : payload.path
   const label = payload.preview !== undefined ? `[file: ${name}] (preview) ${payload.preview}` : ''
   actx.emit('slash/input-insert-reference', {
     reference: {
       source: SOURCE_NAME,
       ref: payload.path,
       label,
-      clipboardText: payload.path
+      clipboardText: refText
     },
     span: {
       start: state.draft.length,
@@ -555,8 +560,36 @@ export function apply(ctx: {
     ctx.inputTriggers.registerSource({
       trigger: '@',
       name: SOURCE_NAME,
-      candidates: async () => [],
-      onPick: () => undefined,
+      // Codex-style: pick an already-uploaded file by its relative path.
+      candidates: async (projection: { sessionId: string }) => {
+        const metas = uploadMetaBySession.get(projection.sessionId)
+        if (metas === undefined) return []
+        return Array.from(metas.entries()).map(([path, meta]) => ({
+          name: meta.relativePath ?? path,
+          description: `${meta.label} · ${formatBytes(meta.bytes)}`,
+          icon: '📎'
+        }))
+      },
+      onPick: (pick: {
+        candidate: { name: string }
+        session: { sessionId: string }
+      }): { insert: { source: string; ref: string; label: string; clipboardText: string } } | undefined => {
+        const metas = uploadMetaBySession.get(pick.session.sessionId)
+        if (metas === undefined) return undefined
+        for (const [path, meta] of metas.entries()) {
+          if ((meta.relativePath ?? path) === pick.candidate.name) {
+            return {
+              insert: {
+                source: SOURCE_NAME,
+                ref: path,
+                label: meta.name,
+                clipboardText: `@${meta.relativePath ?? path}`
+              }
+            }
+          }
+        }
+        return undefined
+      },
       codec: {
         clipboardText: (ref: string) => ref,
         serialize: async (ref: string) => ref
