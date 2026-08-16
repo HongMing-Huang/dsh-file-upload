@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-16
+
+### Changed
+
+- **ASR key comes from the dsh credentials seam, not the plugin's own env
+  requirement**: `ctx.credentials.resolve` (inherited env → `$DSH_HOME/
+  .credentials.yaml` → project `.env`) resolves the ASR key **per upload**,
+  so a key configured in the Models page just works and a changed key
+  reaches the next upload without a restart. The standard OpenAI endpoint is
+  used by default; `asrEndpoint` overrides it.
+- `@deepseek-ai/dsh-credentials` added to peerDependencies.
+- ASR integration tests (multipart request against a mock endpoint, auth
+  header assertion, connection-failure rejection).
+
 ## [0.4.1] - 2026-08-16
 
 ### Changed
@@ -107,7 +121,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mutable tool config (no restart needed when found on PATH).
 - GB18030-encoded files inline with correct decoding via TextDecoder.
 
-[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.5.0
 [0.4.1]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.4.1
 [0.4.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.4.0
 [0.3.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.3.0

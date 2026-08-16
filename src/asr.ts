@@ -12,8 +12,8 @@ import { readFileSync } from 'node:fs'
 export interface AsrOptions {
   /** OpenAI-compatible endpoint, e.g. https://api.openai.com/v1/audio/transcriptions */
   endpoint: string
-  /** Env var holding the API key. */
-  apiKeyEnv: string
+  /** API key for the endpoint (resolved via the DSH credentials seam by the caller). */
+  apiKey: string
   /** Model name, e.g. whisper-1 */
   model: string
   /** Request timeout in ms. */
@@ -46,7 +46,7 @@ export async function transcribeAudio(
   options: AsrOptions
 ): Promise<string> {
   const { body, boundary } = buildForm(filePath, options.model)
-  const apiKey = process.env[options.apiKeyEnv] ?? ''
+  const apiKey = options.apiKey
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 60000)
   try {

@@ -17,6 +17,7 @@ import { join } from 'node:path'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import z from '@deepseek-ai/schemastery'
+import { credentialRef } from '@deepseek-ai/dsh-credentials'
 import { defineReadDocumentTool, ParseCache } from './tool.ts'
 import { createUploadHandler, createSweeper } from './upload.ts'
 import { probeMarkitdown } from './convert.ts'
@@ -28,7 +29,7 @@ const execFileAsyncSafe = execFileAsync as (file: string, args: string[], opts: 
 export const name = 'dsh-file-upload'
 
 /** Services required by this plugin. */
-export const inject = ['tools', 'fs', 'systemPrompt', 'webServer', 'sessions']
+export const inject = ['tools', 'fs', 'systemPrompt', 'webServer', 'sessions', 'credentials']
 
 const MEBIBYTE = 1024 * 1024
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -178,30 +179,24 @@ export function apply(ctx: any, config: FileUploadConfig): void {
   }
 
   // Audio transcription, zero-config: an explicit `asrEndpoint` wins; otherwise
-  // the standard OpenAI endpoint activates automatically whenever the key env
-  // var (default OPENAI_API_KEY) is present — the same credential convention
-  // dsh itself uses. Voice recording input always works in the browser.
-  const resolvedAsr =
-    config.asrEndpoint !== ''
-      ? {
-          endpoint: config.asrEndpoint,
-          apiKeyEnv: config.asrApiKeyEnv,
-          model: config.asrModel,
-          timeoutMs: 60000
-        }
-      : process.env[config.asrApiKeyEnv] !== undefined && process.env[config.asrApiKeyEnv] !== ''
-        ? {
-            endpoint: 'https://api.openai.com/v1/audio/transcriptions',
-            apiKeyEnv: config.asrApiKeyEnv,
-            model: config.asrModel,
-            timeoutMs: 60000
-          }
-        : undefined
-  if (resolvedAsr !== undefined) {
-    console.log(`[dsh-file-upload] Audio transcription ready (${resolvedAsr.endpoint}, model ${resolvedAsr.model}) — uploaded audio transcribes automatically`)
-  } else {
-    console.log('[dsh-file-upload] Voice recording input ready in the browser; audio-file transcription activates automatically when an ASR key (e.g. $OPENAI_API_KEY) is present')
+  // the standard OpenAI endpoint is used. The API key is resolved **per
+  // upload** through the dsh credentials seam (`ctx.credentials.resolve`) —
+  // inherited env → $DSH_HOME/.credentials.yaml → project .env — the same
+  // convention dsh itself uses, so a key configured in the Models page just
+  // works, and a changed key reaches the next upload without a restart.
+  const asrEndpoint = config.asrEndpoint !== '' ? config.asrEndpoint : 'https://api.openai.com/v1/audio/transcriptions'
+  const asrKeyRef = credentialRef(config.asrApiKeyEnv)
+  const resolveAsrKey = async (): Promise<string | undefined> => {
+    try {
+      const resolved = await ctx.credentials.resolve(asrKeyRef)
+      return resolved?.value
+    } catch {
+      return process.env[config.asrApiKeyEnv]
+    }
   }
+  console.log(
+    `[dsh-file-upload] Audio transcription ready (${asrEndpoint}, model ${config.asrModel}) — key auto-resolved from dsh credentials; voice input works in the browser`
+  )
 
   ctx.systemPrompt.section({
     name: 'tool:read-document',
@@ -224,7 +219,13 @@ export function apply(ctx: any, config: FileUploadConfig): void {
         inlineTextLimit: config.inlineTextLimit,
         previewTextLimit: config.previewTextLimit,
         defaultDir,
-        asr: resolvedAsr,
+        asr: {
+          endpoint: asrEndpoint,
+          apiKey: '',
+          model: config.asrModel,
+          timeoutMs: 60000
+        },
+        asrKey: resolveAsrKey,
         asrMaxBytes: config.asrMaxBytes,
         sessionCwd: (sessionId: string) => {
           const session = ctx.sessions.get(sessionId)

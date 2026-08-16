@@ -36,6 +36,9 @@ importers:
         specifier: ^5.8.7
         version: 5.8.8
     devDependencies:
+      '@deepseek-ai/dsh-credentials':
+        specifier: 0.1.0-rc.6
+        version: 0.1.0-rc.6(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-brand@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1)))(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1))
       '@types/node':
         specifier: ^26.2.0
         version: 26.2.0
@@ -142,6 +145,13 @@ packages:
     resolution: {integrity: sha512-aw8D4IOeMo11A3uxQeE4LFoW3bvaQnVkGFqqtS+lsINDARrOCJHXLUgecoKpys+Lc5erZZ4UQDnymJmL4OCcKA==}
     peerDependencies:
       '@deepseek-ai/cordis': ^4.0.1
+      '@deepseek-ai/dsh-invariants': ^0.1.0-rc.6
+
+  '@deepseek-ai/dsh-credentials@0.1.0-rc.6':
+    resolution: {integrity: sha512-zyYRs3A9gxfZjZfONzJdMhM0Gzbslpha+FGYkLDRAozgPj0N7mZdE+Qflx2V4WNrCnsSjuvOW0HFBxWtSRUTUw==}
+    peerDependencies:
+      '@deepseek-ai/cordis': ^4.0.1
+      '@deepseek-ai/dsh-brand': ^0.1.0-rc.6
       '@deepseek-ai/dsh-invariants': ^0.1.0-rc.6
 
   '@deepseek-ai/dsh-fs@0.1.0-rc.6':
@@ -2507,6 +2517,12 @@ snapshots:
       '@deepseek-ai/cordis': 4.0.1
       '@deepseek-ai/dsh-invariants': 0.1.0-rc.6(@deepseek-ai/cordis@4.0.1)
 
+  '@deepseek-ai/dsh-credentials@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-brand@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1)))(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1))':
+    dependencies:
+      '@deepseek-ai/cordis': 4.0.1
+      '@deepseek-ai/dsh-brand': 0.1.0-rc.6(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.0-rc.6(@deepseek-ai/cordis@4.0.1))
+      '@deepseek-ai/dsh-invariants': 0.1.0-rc.6(@deepseek-ai/cordis@4.0.1)
+
   '@deepseek-ai/dsh-fs@0.1.0-rc.6(6889042eed4b1d3d73c9a7bc6cc8e4e3)':
     dependencies:
       '@deepseek-ai/cordis': 4.0.1
@@ -3162,7 +3178,7 @@ snapshots:
       create-hash: 1.2.0
       evp_bytestokey: 1.0.3
       inherits: 2.0.4
-      safe-buffer: 5.1.2
+      safe-buffer: 5.2.1
 
   browserify-cipher@1.0.1:
     dependencies:
@@ -3175,7 +3191,7 @@ snapshots:
       cipher-base: 1.0.7
       des.js: 1.1.0
       inherits: 2.0.4
-      safe-buffer: 5.1.2
+      safe-buffer: 5.2.1
 
   browserify-rsa@4.1.1:
     dependencies:
@@ -3392,7 +3408,7 @@ snapshots:
       create-hash: 1.2.0
       inherits: 2.0.4
       ripemd160: 2.0.3
-      safe-buffer: 5.1.2
+      safe-buffer: 5.2.1
       sha.js: 2.4.12
 
   crypto-browserify@3.12.1:
@@ -3590,7 +3606,7 @@ snapshots:
   evp_bytestokey@1.0.3:
     dependencies:
       md5.js: 1.3.5
-      safe-buffer: 5.1.2
+      safe-buffer: 5.2.1
 
   exceljs@4.4.0:
     dependencies:
@@ -4136,9 +4152,9 @@ snapshots:
 
   md5.js@1.3.5:
     dependencies:
-      hash-base: 3.0.5
+      hash-base: 3.1.2
       inherits: 2.0.4
-      safe-buffer: 5.1.2
+      safe-buffer: 5.2.1
 
   mdn-data@2.27.1: {}
 
@@ -4425,7 +4441,7 @@ snapshots:
       create-hash: 1.2.0
       parse-asn1: 5.1.9
       randombytes: 2.1.0
-      safe-buffer: 5.1.2
+      safe-buffer: 5.2.1
 
   pump@2.0.1:
     dependencies:
@@ -4456,12 +4472,12 @@ snapshots:
 
   randombytes@2.1.0:
     dependencies:
-      safe-buffer: 5.1.2
+      safe-buffer: 5.2.1
 
   randomfill@1.0.4:
     dependencies:
       randombytes: 2.1.0
-      safe-buffer: 5.1.2
+      safe-buffer: 5.2.1
 
   react@18.3.1:
     dependencies:

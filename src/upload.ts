@@ -46,6 +46,8 @@ export interface UploadOptions {
   defaultDir: string
   /** Optional ASR configuration: audio uploads get transcribed when set. */
   asr?: AsrOptions
+  /** Resolve the ASR API key through the DSH credentials seam (per operation). */
+  asrKey?: () => Promise<string | undefined>
   /** Max audio bytes that may be transcribed inline (0 = disabled). */
   asrMaxBytes?: number
   now?: () => number
@@ -197,9 +199,15 @@ export function createUploadHandler(options: UploadOptions) {
       }
 
       // Audio: transcribe automatically when an ASR endpoint is configured.
+      // The API key is resolved per operation through the DSH credentials
+      // seam, so a key changed in the Models page reaches the next upload
+      // without a restart.
       if (sniffResult.type === 'audio' && options.asr !== undefined && audioSizeOk(dest, options.asrMaxBytes ?? 25 * 1024 * 1024)) {
         try {
-          meta.transcript = await transcribeAudio(dest, options.asr)
+          const apiKey = options.asrKey !== undefined ? await options.asrKey() : undefined
+          if (apiKey !== undefined && apiKey !== '') {
+            meta.transcript = await transcribeAudio(dest, { ...options.asr, apiKey })
+          }
         } catch (err) {
           console.warn(`[dsh-file-upload] audio transcription failed for ${name}:`, err)
         }
