@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Clipboard image paste**: Ctrl+V with an image in the clipboard now uploads
+  it through the same `/api/upload` path as the paperclip/drag flows, so the
+  agent receives a workspace-relative path to read. Only images are taken
+  over; plain text paste is left untouched for the composer.
+
 ## [0.4.2] - 2026-08-16
 
 ### Added
