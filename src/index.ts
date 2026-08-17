@@ -52,6 +52,7 @@ export interface FileUploadConfig {
   markitdownBin: string
   markitdownTimeoutMs: number
   maxRecordSec: number
+  voiceInput: boolean
   asrEndpoint: string
   asrApiKeyEnv: string
   asrModel: string
@@ -92,6 +93,8 @@ export const Config = z.object({
   markitdownTimeoutMs: z.number().default(120000),
   /** Max voice recording length in seconds (client mic). */
   maxRecordSec: z.number().default(60),
+  /** Show the voice-input (mic) button in the composer toolbar; false hides it. */
+  voiceInput: z.boolean().default(true),
   /** Optional OpenAI-compatible ASR endpoint for audio files; empty disables. */
   asrEndpoint: z.string().default(''),
   /** Env var holding the ASR API key. */
@@ -252,6 +255,24 @@ export function apply(ctx: any, config: FileUploadConfig): void {
           return session === undefined ? undefined : session.header.cwd
         }
       })
+    })
+  )
+
+  // Client configuration endpoint: the browser bundle fetches this once at
+  // startup to learn runtime preferences (e.g. whether to show the voice-input
+  // button). Plain JSON, no secrets; the client defaults to showing the button
+  // when the fetch fails, so this is purely additive.
+  ctx.effect(() =>
+    ctx.webServer.register({
+      kind: 'exact',
+      path: '/_dsh/file-upload/config',
+      handler: (_req: unknown, res: { setHeader: (k: string, v: string) => void; writeHead: (s: number, h: Record<string, string>) => void; end: (b: string) => void }) => {
+        const body = JSON.stringify({ voiceInput: config.voiceInput })
+        res.setHeader('Content-Type', 'application/json; charset=utf-8')
+        res.setHeader('Cache-Control', 'no-store')
+        res.writeHead(200, { 'Content-Length': String(Buffer.byteLength(body)) })
+        res.end(body)
+      }
     })
   )
 

@@ -286,9 +286,26 @@ function MicButton({
   insert: (text: string) => void
   maxSec: number
 }) {
+  const [hidden, setHidden] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    fetch('/_dsh/file-upload/config', { method: 'GET' })
+      .then((res) => (res.ok ? res.json() : Promise.resolve(null)))
+      .then((cfg: { voiceInput?: boolean } | null) => {
+        if (!cancelled && cfg?.voiceInput === false) setHidden(true)
+      })
+      .catch(() => {
+        /* fetch failed: default to showing the button */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
   const [recording, setRecording] = useState(false)
   const recRef = useRef<{ stop: () => void } | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  if (hidden) return null
 
   const stop = () => {
     recRef.current?.stop()
@@ -428,15 +445,35 @@ function DragOverlay({ attach }: { attach: (files: File[]) => Promise<void> }) {
       if (files.length > 0) void attach(files)
     }
 
+    // Clipboard image paste: Ctrl+V with an image in the clipboard uploads it
+    // through the same /api/upload path as the paperclip/drag flows, so the
+    // agent receives a workspace-relative path it can read. Only images are
+    // taken over — plain text paste is left untouched for the composer.
+    const onPaste = (e: ClipboardEvent): void => {
+      const items = e.clipboardData?.items
+      if (items === undefined || items.length === 0) return
+      const files: File[] = []
+      for (const item of items) {
+        if (item.kind !== 'file') continue
+        const file = item.getAsFile()
+        if (file !== null && file.type.startsWith('image/')) files.push(file)
+      }
+      if (files.length === 0) return
+      e.preventDefault()
+      void attach(files)
+    }
+
     document.addEventListener('dragenter', onDragEnter)
     document.addEventListener('dragover', onDragOver)
     document.addEventListener('dragleave', onDragLeave)
     document.addEventListener('drop', onDrop)
+    document.addEventListener('paste', onPaste, true)
     return () => {
       document.removeEventListener('dragenter', onDragEnter)
       document.removeEventListener('dragover', onDragOver)
       document.removeEventListener('dragleave', onDragLeave)
       document.removeEventListener('drop', onDrop)
+      document.removeEventListener('paste', onPaste, true)
     }
   }, [attach])
 
@@ -609,6 +646,9 @@ export function apply(ctx: {
       UploadButton
     )
   )
+  // Voice-input (mic) button. The button renders itself hidden when the host
+  // config disables it (voiceInput: false) — the MicButton component fetches
+  // the flag from /_dsh/file-upload/config at mount.
   ctx.slots.inject('conversation.input.left', () =>
     ctx.slots.register(
       {
