@@ -286,9 +286,26 @@ function MicButton({
   insert: (text: string) => void
   maxSec: number
 }) {
+  const [hidden, setHidden] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    fetch('/_dsh/file-upload/config', { method: 'GET' })
+      .then((res) => (res.ok ? res.json() : Promise.resolve(null)))
+      .then((cfg: { voiceInput?: boolean } | null) => {
+        if (!cancelled && cfg?.voiceInput === false) setHidden(true)
+      })
+      .catch(() => {
+        /* fetch failed: default to showing the button */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
   const [recording, setRecording] = useState(false)
   const recRef = useRef<{ stop: () => void } | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  if (hidden) return null
 
   const stop = () => {
     recRef.current?.stop()
@@ -629,6 +646,9 @@ export function apply(ctx: {
       UploadButton
     )
   )
+  // Voice-input (mic) button. The button renders itself hidden when the host
+  // config disables it (voiceInput: false) — the MicButton component fetches
+  // the flag from /_dsh/file-upload/config at mount.
   ctx.slots.inject('conversation.input.left', () =>
     ctx.slots.register(
       {

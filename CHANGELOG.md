@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   it through the same `/api/upload` path as the paperclip/drag flows, so the
   agent receives a workspace-relative path to read. Only images are taken
   over; plain text paste is left untouched for the composer.
+- **`voiceInput` config**: a new boolean option (`voiceInput: false`) hides the
+  voice-input (mic) button from the composer toolbar. The client fetches the
+  flag from a `/_dsh/file-upload/config` endpoint at mount; missing config
+  (or a failed fetch) keeps the button visible for backward compatibility.
 
 ## [0.4.2] - 2026-08-16
 
