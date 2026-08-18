@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-08-18
+
+### Added
+
+- **Codex-style `@` file mentions**: after upload, type `@` in the composer
+  to pick any uploaded file by its relative path; the reference inserts as a
+  mention (official `ReferenceInsert` outcome) and the agent reads it with
+  `read_document`. Message history shows `@relative/path` text — same model
+  as OpenAI Codex, no attachment cards.
+- **Relative paths in upload responses** (`relativePath`, relative to the
+  session workspace) used for `@` mentions and clipboard text.
+
+### Fixed
+
+- **TTL sweep now covers session workspaces**: the sweeper scans every live
+  session's `.dsh-uploads` via `ctx.sessions.list()` (files previously never
+  aged out outside the fallback dir).
+- **Client attachment state is per-session** — no cross-session card leakage.
+- **Image thumbnails** in the composer dock.
+- **ftyp audio sniffing gated on media extensions** — plain text can no
+  longer be misclassified as audio.
+
 ## [0.4.2] - 2026-08-16
 
 ### Added
@@ -146,7 +168,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mutable tool config (no restart needed when found on PATH).
 - GB18030-encoded files inline with correct decoding via TextDecoder.
 
-[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.4.3
 [0.4.2]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.4.2
 [0.4.1]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.4.1
 [0.4.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.4.0
