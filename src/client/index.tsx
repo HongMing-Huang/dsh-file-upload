@@ -40,9 +40,9 @@ function metaFor(sessionId: string): Map<string, UploadMeta> {
 }
 let uploadError: { seq: number; text: string } | null = null
 let errorSeq = 0
-const errorListeners = new Set<() => void>()
+const errorListeners = new Set<(err: { seq: number; text: string } | null) => void>()
 
-function subscribeErrors(listener: () => void): () => void {
+function subscribeErrors(listener: (err: { seq: number; text: string } | null) => void): () => void {
   errorListeners.add(listener)
   return () => {
     errorListeners.delete(listener)
@@ -51,12 +51,12 @@ function subscribeErrors(listener: () => void): () => void {
 
 function setUploadError(text: string): void {
   uploadError = { seq: ++errorSeq, text }
-  for (const listener of errorListeners) listener()
+  for (const listener of errorListeners) listener(uploadError)
 }
 
 function clearUploadError(): void {
   uploadError = null
-  for (const listener of errorListeners) listener()
+  for (const listener of errorListeners) listener(null)
 }
 
 function badgeStyle(name: string): { bg: string; ext: string } {
@@ -214,7 +214,7 @@ async function uploadFile(actx: ActionContext, file: File, sessionId: string): P
   // `@relative/path`); the agent reads it with read_document (converted to
   // Markdown on demand).
   const refText = payload.relativePath !== undefined ? `@${payload.relativePath}` : payload.path
-  const label = payload.preview !== undefined ? `[file: ${name}] (preview) ${payload.preview}` : ''
+  const label = `[file: ${name}]`
   actx.emit('slash/input-insert-reference', {
     reference: {
       source: SOURCE_NAME,
@@ -404,14 +404,25 @@ function DragOverlay({ attach }: { attach: (files: File[]) => Promise<void> }) {
 
   useEffect(() => {
     const hasFiles = (e: DragEvent): boolean => Array.from(e.dataTransfer?.types ?? []).includes('Files')
+    // The official conversation image overlay listens on document bubble
+    // phase and steals non-image drags ("仅支持 PNG、JPG、WebP、GIF").
+    // Register capture-phase here and stop propagation for non-image-only
+    // drags so the plugin's overlay/attach wins.
+    const dragIsImageOnly = (e: DragEvent): boolean => {
+      const items = Array.from(e.dataTransfer?.items ?? []).filter((it) => it.kind === 'file')
+      if (items.length === 0) return false
+      return items.every((it) => /^image\/(png|jpe?g|webp|gif)$/i.test(it.type))
+    }
 
     const onDragEnter = (e: DragEvent): void => {
       if (!hasFiles(e)) return
+      if (!dragIsImageOnly(e)) e.stopImmediatePropagation()
       depth.current += 1
       setActive(true)
     }
     const onDragOver = (e: DragEvent): void => {
       if (!hasFiles(e)) return
+      if (!dragIsImageOnly(e)) e.stopImmediatePropagation()
       e.preventDefault()
     }
     const onDragLeave = (e: DragEvent): void => {
@@ -421,6 +432,7 @@ function DragOverlay({ attach }: { attach: (files: File[]) => Promise<void> }) {
     }
     const onDrop = (e: DragEvent): void => {
       if (!hasFiles(e)) return
+      if (!dragIsImageOnly(e)) e.stopImmediatePropagation()
       e.preventDefault()
       depth.current = 0
       setActive(false)
@@ -428,15 +440,15 @@ function DragOverlay({ attach }: { attach: (files: File[]) => Promise<void> }) {
       if (files.length > 0) void attach(files)
     }
 
-    document.addEventListener('dragenter', onDragEnter)
-    document.addEventListener('dragover', onDragOver)
-    document.addEventListener('dragleave', onDragLeave)
-    document.addEventListener('drop', onDrop)
+    document.addEventListener('dragenter', onDragEnter, true)
+    document.addEventListener('dragover', onDragOver, true)
+    document.addEventListener('dragleave', onDragLeave, true)
+    document.addEventListener('drop', onDrop, true)
     return () => {
-      document.removeEventListener('dragenter', onDragEnter)
-      document.removeEventListener('dragover', onDragOver)
-      document.removeEventListener('dragleave', onDragLeave)
-      document.removeEventListener('drop', onDrop)
+      document.removeEventListener('dragenter', onDragEnter, true)
+      document.removeEventListener('dragover', onDragOver, true)
+      document.removeEventListener('dragleave', onDragLeave, true)
+      document.removeEventListener('drop', onDrop, true)
     }
   }, [attach])
 
@@ -524,7 +536,7 @@ function UploadDock({ attach, sessionId }: DockProps) {
           })}
         </div>
       )}
-      {error !== null && (
+      {error != null && typeof error.text === 'string' && (
         <div className="dsh-upload-error">
           <span className="dsh-upload-error-text">{error.text}</span>
           <button
