@@ -74,6 +74,14 @@ export function sanitizeFileName(raw: string): string {
   return name === '' ? 'upload.bin' : name
 }
 
+/** Sanitize a relative path for display: strip absolute prefixes, dot segments, control chars. */
+export function sanitizeRelativePath(raw: string): string {
+  const cleaned = raw.replace(/[\u0000-\u001f\u007f]/g, '')
+  const segments = cleaned.split(/[\\/]/).filter((s) => s !== '' && s !== '.' && s !== '..')
+  if (segments.length === 0) return ''
+  return segments.join('/').slice(0, 240)
+}
+
 /** Session ids are opaque tokens; still constrain them to a safe alphabet. */
 export function sanitizeSessionId(id: string): string {
   const cleaned = id.replace(/[^A-Za-z0-9_-]+/g, '_').slice(0, 80)
@@ -150,6 +158,13 @@ export function createUploadHandler(options: UploadOptions) {
       } catch {
         // fall through to the default name
       }
+      let relPath = ''
+      try {
+        const relHeader = String(req.headers['x-file-relpath'] ?? '')
+        if (relHeader !== '') relPath = sanitizeRelativePath(decodeURIComponent(relHeader))
+      } catch {
+        // fall through
+      }
       const name = sanitizeFileName(rawName)
       const ext = name.slice(name.lastIndexOf('.') + 1).toLowerCase()
       if (allowedExtensions.length > 0 && !allowedExtensions.includes(ext)) {
@@ -179,7 +194,7 @@ export function createUploadHandler(options: UploadOptions) {
         ...(deduplicated ? { deduplicated: true } : {})
       }
 
-      const relativePath = relative(storage.cwd, dest).split(sep).join('/')
+      const relativePath = relPath !== '' ? relPath : relative(storage.cwd, dest).split(sep).join('/')
 
       // Images: report how the agent should read them — natively via the
       // official read_image tool (multimodal route or a vision bridge like

@@ -151,10 +151,13 @@ async function uploadFile(actx: ActionContext, file: File, sessionId: string): P
   if (conversation === undefined) throw new Error('conversation service unavailable')
   const input = conversation.input.for(actx)
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const relPath = (file as any).relPath as string | undefined
   const res = await fetch('/api/upload', {
     method: 'POST',
     headers: {
       'x-file-name': encodeURIComponent(file.name),
+      ...(relPath !== undefined ? { 'x-file-relpath': encodeURIComponent(relPath) } : {}),
       'x-session-id': sessionId
     },
     body: file
@@ -225,6 +228,64 @@ async function uploadFile(actx: ActionContext, file: File, sessionId: string): P
   return payload.path
 }
 
+/** Recursively collect files from dropped dataTransfer items (folder support). */
+async function collectDroppedFiles(items: DataTransferItemList | null): Promise<File[]> {
+  if (items === null) return []
+  const files: File[] = []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const walk = async (entry: any, prefix: string): Promise<void> => {
+    if (entry === null) return
+    if (entry.isFile) {
+      const file = await new Promise<File | null>((resolve) => entry.file(resolve))
+      if (file !== null) {
+        if (prefix !== '') {
+          const rel = `${prefix}/${file.name}`
+          Object.defineProperty(file, 'relPath', { value: rel })
+        }
+        files.push(file)
+      }
+      return
+    }
+    if (entry.isDirectory) {
+      const reader = entry.createReader()
+      // readEntries returns in batches; loop until empty.
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const entries = await new Promise<any[]>((resolve) => reader.readEntries(resolve))
+        if (entries.length === 0) break
+        for (const child of entries) await walk(child, prefix === '' ? entry.name : `${prefix}/${entry.name}`)
+      }
+    }
+  }
+  const jobs: Promise<void>[] = []
+  for (let i = 0; i < items.length; i += 1) {
+    const item = items[i]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null
+    if (entry !== null) {
+      jobs.push(walk(entry, ''))
+    } else {
+      const f = item.getAsFile()
+      if (f !== null) files.push(f)
+    }
+  }
+  await Promise.all(jobs)
+  return files
+}
+
+/** Files carried by a paste event (images and files). */
+function filesFromClipboard(e: ClipboardEvent): File[] {
+  const items = e.clipboardData?.items
+  const files: File[] = []
+  if (items !== undefined) {
+    for (let i = 0; i < items.length; i += 1) {
+      const f = items[i].getAsFile()
+      if (f !== null) files.push(f)
+    }
+  }
+  return files
+}
+
 async function attachFiles(actx: ActionContext, files: File[], sessionId: string): Promise<void> {
   for (const file of files) {
     try {
@@ -265,6 +326,74 @@ function UploadButton({ attach }: UploadButtonProps) {
         <IconPaperclipOutline16 size={14} />
       </button>
     </Tooltip>
+  )
+}
+
+/** Global drag overlay + paste: drag files/folders anywhere over the window
+ * or paste images/files into the composer to attach (Claude/Codex style). */
+function DragOverlay({ attach }: { attach: (files: File[]) => Promise<void> }) {
+  const [active, setActive] = useState(false)
+  const depth = useRef(0)
+
+  useEffect(() => {
+    const hasFiles = (e: DragEvent): boolean => Array.from(e.dataTransfer?.types ?? []).includes('Files')
+
+    const onDragEnter = (e: DragEvent): void => {
+      if (!hasFiles(e)) return
+      depth.current += 1
+      setActive(true)
+    }
+    const onDragOver = (e: DragEvent): void => {
+      if (!hasFiles(e)) return
+      e.preventDefault()
+    }
+    const onDragLeave = (e: DragEvent): void => {
+      if (!hasFiles(e)) return
+      depth.current = Math.max(0, depth.current - 1)
+      if (depth.current === 0) setActive(false)
+    }
+    const onDrop = (e: DragEvent): void => {
+      if (!hasFiles(e)) return
+      e.preventDefault()
+      depth.current = 0
+      setActive(false)
+      void (async () => {
+        // Folder support: walk dropped entries (files + directories).
+        const files = await collectDroppedFiles(e.dataTransfer?.items ?? null)
+        if (files.length > 0) await attach(files)
+      })()
+    }
+
+    // Paste support: images/files pasted into the composer upload too.
+    const onPaste = (e: ClipboardEvent): void => {
+      const files = filesFromClipboard(e)
+      if (files.length > 0 && files.some((f) => f.type.startsWith('image/') || f.type !== '')) {
+        e.preventDefault()
+        void attach(files)
+      }
+    }
+
+    document.addEventListener('dragenter', onDragEnter)
+    document.addEventListener('dragover', onDragOver)
+    document.addEventListener('dragleave', onDragLeave)
+    document.addEventListener('drop', onDrop)
+    document.addEventListener('paste', onPaste)
+    return () => {
+      document.removeEventListener('dragenter', onDragEnter)
+      document.removeEventListener('dragover', onDragOver)
+      document.removeEventListener('dragleave', onDragLeave)
+      document.removeEventListener('drop', onDrop)
+      document.removeEventListener('paste', onPaste)
+    }
+  }, [attach])
+
+  return (
+    <div className={`dsh-upload-overlay${active ? ' active' : ''}`}>
+      <div className="dsh-upload-overlay-box">
+        <div>松开以添加文件</div>
+        <div className="dsh-upload-overlay-hint">文件/文件夹将上传到当前会话,agent 可读取其内容</div>
+      </div>
+    </div>
   )
 }
 
