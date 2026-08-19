@@ -1,6 +1,6 @@
 # dsh-file-upload
 
-**DeepSeek Harness (dsh) 文件消息插件。** Claude 桌面端风格的拖拽/回形针文件上传,内容嗅探,文档转 Markdown 全部内置打包(MarkItDown 引擎,20+ 格式,图片 OCR),小文本直插输入框,语音输入,以及供 agent 使用的 `read_document` 工具。
+**DeepSeek Harness (dsh) 文件消息插件。** Claude/Codex 风格上传——拖拽(文件与文件夹)、回形针选择、粘贴即传、多文件支持;内容嗅探;文档转 Markdown 全部内置打包(MarkItDown 引擎,20+ 格式,图片 OCR);Codex 风格 `@相对路径` 引用;文本模型的图片自动讲解;以及供 agent 使用的 `read_document` 工具。
 
 [![npm](https://img.shields.io/npm/v/dsh-file-upload)](https://www.npmjs.com/package/dsh-file-upload)
 [![CI](https://github.com/HongMing-Huang/dsh-file-upload/actions/workflows/ci.yml/badge.svg)](https://github.com/HongMing-Huang/dsh-file-upload/actions/workflows/ci.yml)
@@ -9,7 +9,7 @@
 
 [English](README.md) | 中文
 
-> **零配置,安装即用。** 所有功能开箱即用,带合理默认——不需要 Python、不需要下载、不需要挑选后端。唯一可选的是音频文件转写的 ASR 密钥,而它也会从标准的 `OPENAI_API_KEY` 凭据自动检测。
+> **零配置,安装即用。** 所有功能开箱即用,带合理默认——不需要 Python、不需要下载、不需要挑选后端。图片讲解自动发现视觉端点(本地 Ollama → OpenAI 兼容 key,走 DSH 凭据体系)。
 
 ## 功能
 
@@ -118,7 +118,7 @@ src/
 ├── upload.ts       # 上传路由:loopback/会话/大小/去重/TTL
 ├── tool.ts         # read_document:ctx.fs 读取 + 分页 + LRU 缓存
 └── client/
-    └── index.tsx   # 回形针 + 拖拽遮罩 + 麦克风 + 附件卡片
+    └── index.tsx   # 回形针 + 拖拽(文件/文件夹) + 粘贴 + 附件卡片
 ```
 
 双面插件:`dsh.bundle`(host)+ `dsh.client`(web UI)。无任何官方补丁,全部走官方 seam(`ctx.webServer` / `ctx.tools` / `ctx.systemPrompt` / `ctx.sessions` / `slash/input-insert-text` / `slash/input-insert-reference`)。

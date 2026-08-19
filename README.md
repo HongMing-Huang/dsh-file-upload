@@ -1,6 +1,6 @@
 # dsh-file-upload
 
-**File-message plugin for DeepSeek Harness (dsh).** Claude-desktop-style drag-and-drop and paperclip uploads, content sniffing, fully bundled document → Markdown conversion (MarkItDown engine, 20+ formats, image OCR), text inlining into the composer, voice-to-text input, and a `read_document` tool for agents.
+**File-message plugin for DeepSeek Harness (dsh).** Claude/Codex-style uploads — drag-and-drop (files and folders), paperclip picker, paste-to-attach, multi-file support; content sniffing; fully bundled document → Markdown conversion (MarkItDown engine, 20+ formats, image OCR); Codex-style `@relative/path` references; automatic image explanations for text-only models; and a `read_document` tool for agents.
 
 [![npm](https://img.shields.io/npm/v/dsh-file-upload)](https://www.npmjs.com/package/dsh-file-upload)
 [![CI](https://github.com/HongMing-Huang/dsh-file-upload/actions/workflows/ci.yml/badge.svg)](https://github.com/HongMing-Huang/dsh-file-upload/actions/workflows/ci.yml)
@@ -10,9 +10,9 @@
 English | [中文](README.zh.md)
 
 > **Zero-config, install-and-use.** Every feature works out of the box with
-> sensible defaults — no Python, no downloads, no picking backends. The only
-> optional knob is an ASR key for audio-file transcription, and even that is
-> auto-detected from the standard `OPENAI_API_KEY` credential.
+> sensible defaults — no Python, no downloads, no picking backends. Image
+> explanations auto-discover a vision endpoint (local Ollama → OpenAI-compatible
+> key from the dsh credentials seam).
 
 ## Features
 
@@ -122,7 +122,7 @@ src/
 ├── upload.ts       # upload route: loopback/session/size/dedup/TTL
 ├── tool.ts         # read_document: ctx.fs reads + paging + LRU cache
 └── client/
-    └── index.tsx   # paperclip + drag overlay + mic + attachment cards
+    └── index.tsx   # paperclip + drag (files/folders) + paste + cards
 ```
 
 Dual-face plugin: `dsh.bundle` (host) + `dsh.client` (web UI). No official patches — everything uses official seams (`ctx.webServer`, `ctx.tools`, `ctx.systemPrompt`, `ctx.sessions`, `slash/input-insert-text`, `slash/input-insert-reference`).
