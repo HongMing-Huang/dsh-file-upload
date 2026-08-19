@@ -14,8 +14,6 @@ import { Tooltip, IconPaperclipOutline16, IconCloseOutline16 } from '@deepseek-a
 
 const SOURCE_NAME = 'dsh-file-upload'
 const STYLE_TAG = 'dsh-file-upload/style.css'
-/** Mirrors the host `maxRecordSec` default; the host config wins for uploads. */
-const MAX_RECORD_SEC = 60
 
 interface UploadMeta {
   name: string
@@ -103,8 +101,6 @@ function injectCss(): void {
 .dsh-upload-overlay.active{opacity:1}
 .dsh-upload-overlay-box{border:2px dashed var(--dsw-alias-border-accent,rgba(99,132,255,.55));border-radius:16px;padding:28px 44px;color:var(--dsw-alias-label-primary,inherit);font-size:15px;display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--dsw-specific-input-major,rgba(127,127,127,.08))}
 .dsh-upload-overlay-hint{font-size:12px;color:var(--dsw-alias-label-tertiary,inherit)}
-.dsh-mic-btn.recording{color:#e5484d;animation:dsh-mic-pulse 1s ease-in-out infinite}
-@keyframes dsh-mic-pulse{0%,100%{opacity:1}50%{opacity:.35}}
 `
   document.head.appendChild(tag)
 }
@@ -136,9 +132,8 @@ interface UploadResponse {
   bytes?: number
   sniffedType?: string
   label?: string
-  inlineText?: string
-  preview?: string
   imageMode?: 'native' | 'ocr'
+  imageDescription?: string
   relativePath?: string
   error?: string
 }
@@ -190,19 +185,17 @@ async function uploadFile(actx: ActionContext, file: File, sessionId: string): P
 
   const state = input.state.getSnapshot()
 
-  if (typeof payload.inlineText === 'string') {
-    // Claude-desktop-style: the file content lands in the composer directly.
-    const text = `[file: ${name}]\n${payload.inlineText}`
-    actx.emit('slash/input-insert-text', {
-      text,
-      span: { start: state.draft.length, end: state.draft.length, draftRev: state.draftRev }
-    })
-    return payload.path
-  }
-
-  if (payload.sniffedType === 'image' && payload.imageMode === 'native') {
-    // Multimodal route: the agent reads the image directly with read_image.
-    const text = `[图片: ${name}] 当前模型支持图像输入,请用 read_image 工具查看 ${payload.path}`
+  if (payload.sniffedType === 'image') {
+    // Images: multimodal routes → agent uses the official read_image tool;
+    // text-only routes → a vision description was generated, insert it so
+    // the agent sees the image content immediately.
+    const description =
+      payload.imageMode === 'native'
+        ? `当前模型支持图像输入,请用 read_image 工具查看 ${payload.path}`
+        : payload.imageDescription !== undefined
+          ? `图片内容描述:\n${payload.imageDescription}\n(原始文件: ${payload.path})`
+          : `请用 read_document 工具查看图片 ${payload.path}`
+    const text = `[图片: ${name}] ${description}`
     actx.emit('slash/input-insert-text', {
       text,
       span: { start: state.draft.length, end: state.draft.length, draftRev: state.draftRev }
@@ -271,182 +264,6 @@ function UploadButton({ attach }: UploadButtonProps) {
         <IconPaperclipOutline16 size={14} />
       </button>
     </Tooltip>
-  )
-}
-
-/** Voice input button: Web Speech API live dictation into the composer.
- * Falls back to MediaRecorder + file upload when speech recognition is
- * unavailable (the host transcribes audio files when ASR is configured). */
-function MicButton({
-  attach,
-  insert,
-  maxSec
-}: {
-  attach: (files: File[]) => Promise<void>
-  insert: (text: string) => void
-  maxSec: number
-}) {
-  const [recording, setRecording] = useState(false)
-  const recRef = useRef<{ stop: () => void } | null>(null)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const stop = () => {
-    recRef.current?.stop()
-    recRef.current = null
-    setRecording(false)
-    if (timeoutRef.current !== null) {
-      clearTimeout(timeoutRef.current)
-      timeoutRef.current = null
-    }
-  }
-
-  const toggle = () => {
-    if (recording) {
-      stop()
-      return
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition
-    if (SR !== undefined) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rec = new SR() as any
-      rec.lang = navigator.language || 'zh-CN'
-      rec.continuous = true
-      rec.interimResults = true
-      let draft = ''
-      const actx = null as unknown
-      rec.onresult = (event: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }>> }) => {
-        let text = ''
-        for (let i = event.resultIndex; i < event.results.length; i += 1) {
-          const item = event.results[i]
-          if (item.length > 0) text += item[0].transcript
-        }
-        draft = text
-      }
-      rec.onend = () => {
-        setRecording(false)
-        if (timeoutRef.current !== null) {
-          clearTimeout(timeoutRef.current)
-          timeoutRef.current = null
-        }
-        if (draft.trim() !== '') insert(draft.trim())
-      }
-      rec.onerror = () => {
-        setRecording(false)
-        setUploadError('语音识别不可用,已切换为录音文件上传')
-        // Fall back to recording an audio file.
-        void recordAndAttach(attach, maxSec)
-      }
-      recRef.current = { stop: () => rec.stop() }
-      setRecording(true)
-      rec.start()
-      timeoutRef.current = setTimeout(stop, maxSec * 1000)
-      return
-    }
-    // No Web Speech API: record an audio file and upload it.
-    void recordAndAttach(attach, maxSec)
-  }
-
-  return (
-    <Tooltip label={recording ? '停止录音' : '语音输入'} side="top">
-      <button
-        type="button"
-        className={`dsh-upload-btn dsh-mic-btn${recording ? ' recording' : ''}`}
-        aria-label="语音输入"
-        onClick={toggle}
-      >
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path
-            d="M8 1.5a2.5 2.5 0 0 0-2.5 2.5v4a2.5 2.5 0 0 0 5 0V4A2.5 2.5 0 0 0 8 1.5Z"
-            fill="currentColor"
-          />
-          <path
-            d="M3.5 7.5a.75.75 0 0 1 1.5 0 2.5 2.5 0 0 0 5 0 .75.75 0 0 1 1.5 0 4 4 0 0 1-3.25 3.94V13H10a.75.75 0 0 1 0 1.5H6A.75.75 0 0 1 6 13h1.75v-1.56A4 4 0 0 1 4.5 8a.75.75 0 0 1 .5-.75.75.75 0 0 1 .5-.5Z"
-            fill="currentColor"
-            transform="translate(0 -1)"
-          />
-        </svg>
-      </button>
-    </Tooltip>
-  )
-}
-
-/** MediaRecorder fallback: record an audio file and upload it. */
-async function recordAndAttach(attach: (files: File[]) => Promise<void>, maxSec: number): Promise<void> {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mime = (window as any).MediaRecorder.isTypeSupported?.('audio/webm') ? 'audio/webm' : ''
-    const recorder = new MediaRecorder(stream, mime !== '' ? { mimeType: mime } : undefined)
-    const chunks: Blob[] = []
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunks.push(e.data)
-    }
-    recorder.onstop = () => {
-      stream.getTracks().forEach((t) => t.stop())
-      const blob = new Blob(chunks, { type: mime || 'audio/webm' })
-      const ext = mime.includes('mp4') ? 'm4a' : 'webm'
-      const file = new File([blob], `voice-${Date.now()}.${ext}`, { type: blob.type })
-      void attach([file])
-    }
-    recorder.start()
-    setTimeout(() => recorder.stop(), maxSec * 1000)
-  } catch (err) {
-    setUploadError(`无法访问麦克风: ${err instanceof Error ? err.message : String(err)}`)
-  }
-}
-
-/** Global drag overlay: drag files over the window to attach (Claude style). */
-function DragOverlay({ attach }: { attach: (files: File[]) => Promise<void> }) {
-  const [active, setActive] = useState(false)
-  const depth = useRef(0)
-  const overlayRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    const hasFiles = (e: DragEvent): boolean => Array.from(e.dataTransfer?.types ?? []).includes('Files')
-
-    const onDragEnter = (e: DragEvent): void => {
-      if (!hasFiles(e)) return
-      depth.current += 1
-      setActive(true)
-    }
-    const onDragOver = (e: DragEvent): void => {
-      if (!hasFiles(e)) return
-      e.preventDefault()
-    }
-    const onDragLeave = (e: DragEvent): void => {
-      if (!hasFiles(e)) return
-      depth.current = Math.max(0, depth.current - 1)
-      if (depth.current === 0) setActive(false)
-    }
-    const onDrop = (e: DragEvent): void => {
-      if (!hasFiles(e)) return
-      e.preventDefault()
-      depth.current = 0
-      setActive(false)
-      const files = Array.from(e.dataTransfer?.files ?? [])
-      if (files.length > 0) void attach(files)
-    }
-
-    document.addEventListener('dragenter', onDragEnter)
-    document.addEventListener('dragover', onDragOver)
-    document.addEventListener('dragleave', onDragLeave)
-    document.addEventListener('drop', onDrop)
-    return () => {
-      document.removeEventListener('dragenter', onDragEnter)
-      document.removeEventListener('dragover', onDragOver)
-      document.removeEventListener('dragleave', onDragLeave)
-      document.removeEventListener('drop', onDrop)
-    }
-  }, [attach])
-
-  return (
-    <div ref={overlayRef} className={`dsh-upload-overlay${active ? ' active' : ''}`}>
-      <div className="dsh-upload-overlay-box">
-        <div>松开以添加文件</div>
-        <div className="dsh-upload-overlay-hint">文件将上传到当前会话，agent 可读取其内容</div>
-      </div>
-    </div>
   )
 }
 
@@ -607,32 +424,6 @@ export function apply(ctx: {
         })
       },
       UploadButton
-    )
-  )
-  ctx.slots.inject('conversation.input.left', () =>
-    ctx.slots.register(
-      {
-        name: 'conversation.input.left',
-        id: 'dsh-file-upload-mic',
-        order: 1,
-        inject: (sessionId: string) => {
-          const actx = ctx.sessions.scope(sessionId)
-          return {
-            attach: (files: File[]) => attachFiles(actx, files, sessionId),
-            insert: (text: string) => {
-              const conversation = actx.get('conversation')
-              const input = conversation?.input.for(actx)
-              const state = input?.state.getSnapshot()
-              actx.emit('slash/input-insert-text', {
-                text,
-                span: { start: state?.draft.length ?? 0, end: state?.draft.length ?? 0, draftRev: state?.draftRev ?? 0 }
-              })
-            },
-            maxSec: MAX_RECORD_SEC
-          }
-        }
-      },
-      MicButton
     )
   )
   ctx.slots.inject('conversation.input.dock', () =>

@@ -18,6 +18,7 @@ import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import z from '@deepseek-ai/schemastery'
 import { credentialRef } from '@deepseek-ai/dsh-credentials'
+import { describeImage } from './vision.ts'
 import { defineReadDocumentTool, ParseCache } from './tool.ts'
 import { createUploadHandler, createSweeper } from './upload.ts'
 import { probeMarkitdown } from './convert.ts'
@@ -51,11 +52,10 @@ export interface FileUploadConfig {
   cacheMaxBytes: number
   markitdownBin: string
   markitdownTimeoutMs: number
-  maxRecordSec: number
-  asrEndpoint: string
-  asrApiKeyEnv: string
-  asrModel: string
-  asrMaxBytes: number
+  visionEndpoint: string
+  visionModel: string
+  visionApiKeyEnv: string
+  visionMaxBytes: number
   uploadDir: string
 }
 
@@ -90,16 +90,14 @@ export const Config = z.object({
   markitdownBin: z.string().default(''),
   /** Timeout for one MarkItDown CLI invocation. */
   markitdownTimeoutMs: z.number().default(120000),
-  /** Max voice recording length in seconds (client mic). */
-  maxRecordSec: z.number().default(60),
-  /** Optional OpenAI-compatible ASR endpoint for audio files; empty disables. */
-  asrEndpoint: z.string().default(''),
-  /** Env var holding the ASR API key. */
-  asrApiKeyEnv: z.string().default('OPENAI_API_KEY'),
-  /** ASR model name. */
-  asrModel: z.string().default('whisper-1'),
-  /** Max audio bytes transcribed inline. */
-  asrMaxBytes: z.number().default(25 * MEBIBYTE),
+  /** OpenAI-compatible vision endpoint for image descriptions (text-only models). */
+  visionEndpoint: z.string().default('https://api.openai.com/v1/chat/completions'),
+  /** Vision-capable model id. */
+  visionModel: z.string().default('gpt-4o-mini'),
+  /** Env var holding the vision API key (resolved via dsh credentials). */
+  visionApiKeyEnv: z.string().default('OPENAI_API_KEY'),
+  /** Max image bytes accepted by the vision endpoint. */
+  visionMaxBytes: z.number().default(10 * MEBIBYTE),
   /** Upload storage root when no sessions service is available. */
   uploadDir: z.string().default(join(process.cwd(), 'uploads'))
 })
@@ -139,7 +137,8 @@ export function apply(ctx: any, config: FileUploadConfig): void {
     ['maxSheets', config.maxSheets],
     ['cacheEntries', config.cacheEntries],
     ['cacheMaxBytes', config.cacheMaxBytes],
-    ['markitdownTimeoutMs', config.markitdownTimeoutMs]
+    ['markitdownTimeoutMs', config.markitdownTimeoutMs],
+    ['visionMaxBytes', config.visionMaxBytes]
   ] as const) {
     assertPositiveInteger(value, label)
   }
@@ -178,24 +177,31 @@ export function apply(ctx: any, config: FileUploadConfig): void {
     return markitdownReady
   }
 
-  // Audio transcription, zero-config: an explicit `asrEndpoint` wins; otherwise
-  // the standard OpenAI endpoint is used. The API key is resolved **per
-  // upload** through the dsh credentials seam (`ctx.credentials.resolve`) —
-  // inherited env → $DSH_HOME/.credentials.yaml → project .env — the same
-  // convention dsh itself uses, so a key configured in the Models page just
-  // works, and a changed key reaches the next upload without a restart.
-  const asrEndpoint = config.asrEndpoint !== '' ? config.asrEndpoint : 'https://api.openai.com/v1/audio/transcriptions'
-  const asrKeyRef = credentialRef(config.asrApiKeyEnv)
-  const resolveAsrKey = async (): Promise<string | undefined> => {
+  // Image description, zero-config: the API key is resolved per upload
+  // through the dsh credentials seam (`ctx.credentials.resolve`) — inherited
+  // env → $DSH_HOME/.credentials.yaml → project .env. A Models-page key just
+  // works; multimodal routes skip this and use the official read_image tool.
+  const visionKeyRef = credentialRef(config.visionApiKeyEnv)
+  const resolveVisionKey = async (): Promise<string> => {
     try {
-      const resolved = await ctx.credentials.resolve(asrKeyRef)
-      return resolved?.value
+      const resolved = await ctx.credentials.resolve(visionKeyRef)
+      return resolved?.value ?? ''
     } catch {
-      return process.env[config.asrApiKeyEnv]
+      return process.env[config.visionApiKeyEnv] ?? ''
     }
   }
+  const vision = async (filePath: string, name: string): Promise<string> => {
+    const apiKey = await resolveVisionKey()
+    return describeImage(filePath, {
+      endpoint: config.visionEndpoint,
+      model: config.visionModel,
+      apiKey,
+      timeoutMs: 60000,
+      maxBytes: config.visionMaxBytes
+    })
+  }
   console.log(
-    `[dsh-file-upload] Audio transcription ready (${asrEndpoint}, model ${config.asrModel}) — key auto-resolved from dsh credentials; voice input works in the browser`
+    `[dsh-file-upload] Image descriptions ready (${config.visionModel}) — key auto-resolved from dsh credentials; multimodal routes use read_image directly`
   )
 
   ctx.systemPrompt.section({
@@ -238,14 +244,7 @@ export function apply(ctx: any, config: FileUploadConfig): void {
         inlineTextLimit: config.inlineTextLimit,
         previewTextLimit: config.previewTextLimit,
         defaultDir,
-        asr: {
-          endpoint: asrEndpoint,
-          apiKey: '',
-          model: config.asrModel,
-          timeoutMs: 60000
-        },
-        asrKey: resolveAsrKey,
-        asrMaxBytes: config.asrMaxBytes,
+        vision,
         imageMode: resolveImageMode,
         sessionCwd: (sessionId: string) => {
           const session = ctx.sessions.get(sessionId)

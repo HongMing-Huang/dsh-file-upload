@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-19
+
+### Changed
+
+- **Codex-style file presentation**: uploaded files are referenced as
+  `@relative/path` mentions — the raw file content is never dumped into the
+  composer (removed text inlining).
+- **Voice input removed** (mic button, Web Speech API, MediaRecorder
+  fallback and the ASR transcription pipeline were unreliable in practice).
+  Audio files still upload as ordinary attachments.
+- **Mature image handling**: multimodal routes use the official `read_image`
+  tool; text-only routes get an automatic **vision description** through an
+  OpenAI-compatible endpoint (`gpt-4o-mini` default) with the key resolved
+  from the dsh credentials seam — no OCR-quality issues.
+- New config: `visionEndpoint`, `visionModel`, `visionApiKeyEnv`,
+  `visionMaxBytes`; removed `asr*` / `maxRecordSec`.
+
 ## [0.4.3] - 2026-08-18
 
 ### Added
@@ -168,7 +185,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mutable tool config (no restart needed when found on PATH).
 - GB18030-encoded files inline with correct decoding via TextDecoder.
 
-[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.5.0
 [0.4.3]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.4.3
 [0.4.2]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.4.2
 [0.4.1]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.4.1

@@ -17,8 +17,6 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { sniff } from './detect.ts'
 import type { SniffResult } from './detect.ts'
 import { decodeText } from './convert.ts'
-import { transcribeAudio, audioSizeOk } from './asr.ts'
-import type { AsrOptions } from './asr.ts'
 
 export interface UploadOptions {
   /** Byte cap for one upload body. */
@@ -44,18 +42,14 @@ export interface UploadOptions {
   sessionCwd?: (sessionId: string) => string | undefined | Promise<string | undefined>
   /** Fallback storage root when no sessions service is available. */
   defaultDir: string
-  /** Optional ASR configuration: audio uploads get transcribed when set. */
-  asr?: AsrOptions
-  /** Resolve the ASR API key through the DSH credentials seam (per operation). */
-  asrKey?: () => Promise<string | undefined>
-  /** Max audio bytes that may be transcribed inline (0 = disabled). */
-  asrMaxBytes?: number
   /**
    * Resolve whether the session's routed model accepts image input.
    * `'native'` → the agent reads images with the official `read_image` tool;
-   * `'ocr'` → the bundled engine OCRs them via `read_document`.
+   * `'ocr'` → a visual description is generated via `vision`.
    */
   imageMode?: (sessionId: string) => Promise<'native' | 'ocr'>
+  /** Generate a text description of an image (vision endpoint, mature OCR). */
+  vision?: (filePath: string, name: string) => Promise<string>
   now?: () => number
 }
 
@@ -65,10 +59,8 @@ export interface UploadedMeta {
   bytes: number
   sessionId: string
   sniff: SniffResult
-  inlineText?: string
-  preview?: string
-  transcript?: string
   imageMode?: 'native' | 'ocr'
+  imageDescription?: string
   deduplicated?: boolean
 }
 
@@ -88,11 +80,6 @@ export function sanitizeSessionId(id: string): string {
   return cleaned === '' ? 'anonymous' : cleaned
 }
 
-/** Decode text bytes for inline/preview payloads (UTF-16 BOM aware, GB18030 via TextDecoder). */
-export function decodeForInline(data: Buffer, encoding: 'utf8' | 'utf16le' | 'gb18030' | undefined): string {
-  return decodeText(data, encoding)
-}
-
 export function createUploadHandler(options: UploadOptions) {
   const {
     maxBytes,
@@ -103,8 +90,6 @@ export function createUploadHandler(options: UploadOptions) {
     defaultDir,
     inlineTextLimit,
     previewTextLimit,
-    asr: asrOptions,
-    asrMaxBytes,
     now = () => Date.now()
   } = options
 
@@ -194,43 +179,22 @@ export function createUploadHandler(options: UploadOptions) {
         ...(deduplicated ? { deduplicated: true } : {})
       }
 
-      // Claude-desktop-style inline text: small text files return their full
-      // content so the client can insert it straight into the composer.
-      if (sniffResult.type === 'text' && sniffResult.likelyText) {
-        const text = decodeForInline(data, sniffResult.encoding)
-        if (text.length <= inlineTextLimit) {
-          meta.inlineText = text
-        } else {
-          meta.preview = text.slice(0, previewTextLimit)
-        }
-      }
+      const relativePath = relative(storage.cwd, dest).split(sep).join('/')
 
       // Images: report how the agent should read them — natively via the
-      // official read_image tool (multimodal route) or OCR via read_document.
+      // official read_image tool (multimodal route) or a visual description
+      // generated through the vision endpoint (mature fallback for
+      // text-only models).
       if (sniffResult.type === 'image' && options.imageMode !== undefined) {
         try {
           meta.imageMode = await options.imageMode(storage.sessionId)
+          if (meta.imageMode === 'ocr' && options.vision !== undefined) {
+            meta.imageDescription = await options.vision(dest, meta.name)
+          }
         } catch {
           meta.imageMode = 'ocr'
         }
       }
-
-      // Audio: transcribe automatically when an ASR endpoint is configured.
-      // The API key is resolved per operation through the DSH credentials
-      // seam, so a key changed in the Models page reaches the next upload
-      // without a restart.
-      if (sniffResult.type === 'audio' && options.asr !== undefined && audioSizeOk(dest, options.asrMaxBytes ?? 25 * 1024 * 1024)) {
-        try {
-          const apiKey = options.asrKey !== undefined ? await options.asrKey() : undefined
-          if (apiKey !== undefined && apiKey !== '') {
-            meta.transcript = await transcribeAudio(dest, { ...options.asr, apiKey })
-          }
-        } catch (err) {
-          console.warn(`[dsh-file-upload] audio transcription failed for ${name}:`, err)
-        }
-      }
-
-      const relativePath = relative(storage.cwd, dest).split(sep).join('/')
 
       res.writeHead(200, { 'content-type': 'application/json' })
       res.end(
@@ -242,10 +206,8 @@ export function createUploadHandler(options: UploadOptions) {
           sessionId: meta.sessionId,
           sniffedType: meta.sniff.type,
           label: meta.sniff.label,
-          ...(meta.inlineText !== undefined ? { inlineText: meta.inlineText } : {}),
-          ...(meta.preview !== undefined ? { preview: meta.preview } : {}),
-          ...(meta.transcript !== undefined ? { transcript: meta.transcript } : {}),
           ...(meta.imageMode !== undefined ? { imageMode: meta.imageMode } : {}),
+          ...(meta.imageDescription !== undefined ? { imageDescription: meta.imageDescription } : {}),
           ...(meta.deduplicated ? { deduplicated: true } : {})
         })
       )

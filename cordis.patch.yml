@@ -18,8 +18,7 @@
         inlineTextLimit: 8192
         previewTextLimit: 2048
         markitdownBin: ''
-        maxRecordSec: 60
-        asrEndpoint: ''
-        asrApiKeyEnv: OPENAI_API_KEY
-        asrModel: whisper-1
-        asrMaxBytes: 26214400
+        visionEndpoint: https://api.openai.com/v1/chat/completions
+        visionModel: gpt-4o-mini
+        visionApiKeyEnv: OPENAI_API_KEY
+        visionMaxBytes: 10485760

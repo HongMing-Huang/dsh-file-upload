@@ -18,11 +18,10 @@ English | [中文](README.zh.md)
 
 - **Upload** — composer paperclip button plus a global drag-and-drop overlay ("release to attach"), multi-file support.
 - **Attachment cards** — color-coded type badges (PDF red / DOC blue / XLS green / TXT gray / ZIP purple / JSON gold) with name and size; removable.
-- **Text inlining (Claude style)** — small text files (code, JSON, CSV, logs, config) are inserted **directly into the composer** via the official `slash/input-insert-text` event, so the model sees the content immediately; larger text files insert a **Codex-style `@relative/path` reference** (with preview).
-- **Codex-style `@` mentions** — after uploading, type `@` in the composer to pick any uploaded file by its relative path; the reference is inserted as a mention and the agent reads it with `read_document`.
+- **Codex-style file references** — uploaded files appear in the message as `@relative/path` references (like OpenAI Codex), never as raw content dumped into the composer; the agent reads the file with `read_document` (converted to Markdown on demand).
+- **Codex-style `@` mentions** — type `@` in the composer to pick any uploaded file by its relative path; the reference inserts as a mention.
 - **Document → Markdown, fully bundled** — the MarkItDown engine ships inside the plugin (Microsoft MarkItDown TypeScript port, `markitdown-node`): PDF / DOCX / PPTX / XLSX / HTML / CSV / JSON / XML / RSS / Atom / ZIP / Jupyter / image OCR / audio transcription. **No Python, no downloads, no setup.**
-- **Image OCR by default** — uploaded images are readable through `read_document` (Tesseract, 110+ languages); no vision plugin required.
-- **Voice input** — record from the mic and transcribe straight into the composer (browser Web Speech API, zero dependencies); audio files upload as file attachments.
+- **Mature image handling** — multimodal routes use the official `read_image` tool (image enters model context); text-only routes get an automatic **visual description** generated through a vision model (OpenAI-compatible, key auto-resolved from dsh credentials), so the agent sees the image content without OCR-quality issues.
 - **`read_document` tool for agents** — line-numbered paging (`offset`/`limit`), byte-budgeted LRU cache (invalidated on file change), size pre-checks, reads through `ctx.fs` (inherits sandbox and fs-observation policy).
 - **Security** — loopback-only uploads, sanitized file names, session-isolated storage (`.dsh-uploads/<sessionId>`), sha256 content dedup, bounded concurrency, TTL sweep.
 
@@ -61,30 +60,16 @@ Startup log (bundled mode):
 [dsh-file-upload] Document → Markdown ready: bundled MarkItDown engine (20+ formats, image OCR) — fully packaged, no downloads, no Python.
 ```
 
-### How images are handled (auto-adapted to your model)
+### How images are handled (mature, auto-adapted)
 
-The plugin **detects your session's model capability at upload time** and tells the agent the right way to read the image:
+The plugin **detects your session's model capability at upload time**:
 
 | Detected route | What happens |
 |---|---|
-| **Multimodal model** (declares `image` input, e.g. GPT-4o / Qwen-VL / Claude / Gemini) | upload response carries `imageMode: native`; the message tells the agent to use the official `read_image` tool — the image enters model context directly |
-| **Text-only model** (or unknown) | `imageMode: ocr`; the agent uses `read_document` on the image path — the bundled engine runs OCR (Tesseract, 110+ languages) and returns a text description |
+| **Multimodal model** (declares `image` input, e.g. GPT-4o / Qwen-VL / Claude / Gemini) | `imageMode: native` — the message tells the agent to use the official `read_image` tool; the image enters model context directly |
+| **Text-only model** (or unknown) | a **vision model describes the image automatically** (OpenAI-compatible endpoint, `gpt-4o-mini` default, key auto-resolved from dsh credentials); the description travels with the message, so the agent sees the image content immediately — no OCR-quality issues |
 
-The detection mirrors the official `read_image` route gate (`ctx.llm.resolveModelInfo` + `inputModalities`), so it never claims image support that the routed model does not declare.
-
-### Voice input (zero-config)
-
-- **Record** — the mic button in the composer works immediately (browser Web Speech API, no setup); the transcript lands in the composer as editable text, review it before sending.
-- **Audio files** — uploaded audio is transcribed **automatically** when an OpenAI-compatible ASR key is available: the plugin auto-detects the standard `OPENAI_API_KEY` credential (no configuration needed) and uses `https://api.openai.com/v1/audio/transcriptions`; the transcript travels with the message. Without a key, audio uploads still work as regular file attachments.
-- Override the endpoint/model only if you need to (e.g. a self-hosted ASR):
-
-```yaml
-- id: file-upload
-  config:
-    asrEndpoint: ''               # empty = auto (standard OpenAI endpoint when a key is present)
-    asrApiKeyEnv: OPENAI_API_KEY  # env var holding the ASR key
-    asrModel: whisper-1
-```
+The detection mirrors the official `read_image` route gate (`ctx.llm.resolveModelInfo` + `inputModalities`). Without a vision key, images still upload as path references the agent can read.
 
 ## Configuration
 
@@ -108,10 +93,10 @@ The detection mirrors the official `read_image` route gate (`ctx.llm.resolveMode
 | `cacheMaxBytes` | 67108864 (64 MB) | Parse-cache byte budget |
 | `markitdownBin` | `''` | Optional MarkItDown CLI path; empty = auto-detect PATH |
 | `markitdownTimeoutMs` | 120000 | Timeout for one CLI invocation |
-| `maxRecordSec` | 60 | Max voice recording length (seconds) |
-| `asrEndpoint` | `''` | Optional OpenAI-compatible ASR endpoint for audio files |
-| `asrApiKeyEnv` | `OPENAI_API_KEY` | Env var holding the ASR API key |
-| `asrModel` | `whisper-1` | ASR model name |
+| `visionEndpoint` | `https://api.openai.com/v1/chat/completions` | OpenAI-compatible vision endpoint for image descriptions |
+| `visionModel` | `gpt-4o-mini` | Vision-capable model id |
+| `visionApiKeyEnv` | `OPENAI_API_KEY` | Env var holding the vision key (dsh credentials seam) |
+| `visionMaxBytes` | 10485760 (10 MB) | Max image bytes sent to the vision endpoint |
 
 ## Development
 
@@ -129,7 +114,7 @@ src/
 ├── detect.ts       # content sniffing (never trusts extensions)
 ├── convert.ts      # MarkItDown engine + optional CLI backend
 ├── upload.ts       # upload route: loopback/session/size/dedup/TTL
-├── asr.ts          # audio transcription (OpenAI-compatible endpoint)
+├── vision.ts       # image descriptions (vision endpoint)
 ├── tool.ts         # read_document: ctx.fs reads + paging + LRU cache
 └── client/
     └── index.tsx   # paperclip + drag overlay + mic + attachment cards

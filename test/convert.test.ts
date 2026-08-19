@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { decodeText } from '../src/convert.ts'
-import { sanitizeFileName, sanitizeSessionId, decodeForInline } from '../src/upload.ts'
+import { sanitizeFileName, sanitizeSessionId } from '../src/upload.ts'
 
 test('decodeText: utf8', () => {
   assert.equal(decodeText(Buffer.from('hello', 'utf8'), 'utf8'), 'hello')
@@ -29,7 +29,3 @@ test('sanitizeSessionId: constrains to safe alphabet', () => {
   assert.equal(sanitizeSessionId(''), 'anonymous')
 })
 
-test('decodeForInline: strips BOM gracefully', () => {
-  const data = Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('hi', 'utf8')])
-  assert.equal(decodeForInline(data, 'utf8'), '\ufeffhi')
-})

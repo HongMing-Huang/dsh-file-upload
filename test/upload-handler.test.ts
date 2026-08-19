@@ -31,7 +31,7 @@ function startUploadServer(): Promise<{ server: ReturnType<typeof createServer>;
   })
 }
 
-test('upload handler: inline text for small text file', async () => {
+test('upload handler: text file uploads with relative path reference', async () => {
   const { server, url } = await startUploadServer()
   try {
     const res = await fetch(`${url}/api/upload`, {
@@ -40,17 +40,18 @@ test('upload handler: inline text for small text file', async () => {
       body: 'hello upload'
     })
     assert.equal(res.status, 200)
-    const body = (await res.json()) as { path: string; name: string; sniffedType: string; inlineText?: string }
+    const body = (await res.json()) as { path: string; name: string; sniffedType: string; relativePath?: string; inlineText?: string }
     assert.equal(body.name, 'hello.txt')
     assert.equal(body.sniffedType, 'text')
-    assert.equal(body.inlineText, 'hello upload')
+    assert.equal(body.inlineText, undefined, 'no content inlining — Codex-style reference only')
+    assert.equal(typeof body.relativePath, 'string')
     assert.match(body.path, /\.dsh-uploads[/\\]good-session/)
   } finally {
     server.close()
   }
 })
 
-test('upload handler: code file inlines with sniffed type', async () => {
+test('upload handler: code file uploads as reference (no inlining)', async () => {
   const { server, url } = await startUploadServer()
   try {
     const res = await fetch(`${url}/api/upload`, {
@@ -59,9 +60,10 @@ test('upload handler: code file inlines with sniffed type', async () => {
       body: 'const a = 1;\n'
     })
     assert.equal(res.status, 200)
-    const body = (await res.json()) as { sniffedType: string; inlineText?: string }
+    const body = (await res.json()) as { sniffedType: string; inlineText?: string; relativePath?: string }
     assert.equal(body.sniffedType, 'text')
-    assert.equal(body.inlineText, 'const a = 1;\n')
+    assert.equal(body.inlineText, undefined)
+    assert.equal(typeof body.relativePath, 'string')
   } finally {
     server.close()
   }
