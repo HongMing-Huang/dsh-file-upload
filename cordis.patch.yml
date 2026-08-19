@@ -18,7 +18,3 @@
         inlineTextLimit: 8192
         previewTextLimit: 2048
         markitdownBin: ''
-        visionEndpoint: https://api.openai.com/v1/chat/completions
-        visionModel: gpt-4o-mini
-        visionApiKeyEnv: OPENAI_API_KEY
-        visionMaxBytes: 10485760

@@ -18,7 +18,7 @@
 - **Codex 风格文件引用**:上传的文件在消息中呈现为 `@相对路径` 引用(与 OpenAI Codex 一致),**不会把全文塞进输入框**;agent 用 `read_document` 读取(按需转 Markdown)。
 - **Codex 风格 `@` 引用**:上传后在输入框输入 `@` 即可按相对路径选择已上传文件,以 mention 形式插入。
 - **文档转 Markdown(全部内置打包)**:MarkItDown 引擎随插件发布(微软 MarkItDown 的 TypeScript 移植 `markitdown-node`):PDF / DOCX / PPTX / XLSX / HTML / CSV / JSON / XML / RSS / Atom / ZIP / Jupyter / 图片 OCR / 音频转写。**无需 Python、无需下载、无需配置。**
-- **成熟的图片处理**:多模态模型直接用官方 `read_image` 看图;文本模型上传时**自动生成视觉描述**(OpenAI 兼容视觉端点,key 从 DSH 凭据自动解析),agent 立即可见图片内容,无 OCR 质量困扰。
+- **成熟的图片处理**:自动检测多模态模型与视觉桥接插件(如 [dsh-vision-proxy](https://github.com/Flyvhidbwo/dsh-vision-proxy))——agent 走官方 `read_image`,图片直达模型;纯文本无桥接时图片以路径引用呈现,消息提示安装 dsh-vision-proxy(本地 Ollama 零配置即可识图)。
 - **`read_document` 工具(供 agent 使用)**:行号分页(`offset`/`limit`)、字节预算 LRU 缓存(文件改动自动失效)、大小预检、走 `ctx.fs`(继承沙箱与 fs 观察策略)。
 - **安全**:loopback-only 上传、文件名消毒、会话隔离存储(`.dsh-uploads/<sessionId>`)、sha256 内容去重、并发限流、TTL 清扫。
 
@@ -57,16 +57,17 @@ dsh plugin --profile web add dsh-file-upload
 [dsh-file-upload] Document → Markdown ready: bundled MarkItDown engine (20+ formats, image OCR) — fully packaged, no downloads, no Python.
 ```
 
-### 图片怎么处理(成熟方案,自动适配)
+### 图片怎么处理(成熟方案,与生态协同)
 
-插件在**上传时自动检测当前会话模型的图像能力**:
+插件在**上传时自动检测当前会话模型的图像能力**,不重复造视觉轮子:
 
 | 检测到的路由 | 行为 |
 |---|---|
 | **多模态模型**(声明 `image` 输入,如 GPT-4o / Qwen-VL / Claude / Gemini) | `imageMode: native`——消息提示 agent 用官方 `read_image` 工具,图片直接进入模型上下文 |
-| **纯文本模型**(或无法确定) | **自动调用视觉模型生成图片描述**(OpenAI 兼容端点,默认 `gpt-4o-mini`,key 从 DSH 凭据自动解析),描述随消息发出——agent 立即"看到"图片内容,无 OCR 质量问题 |
+| **已装视觉桥接**(如 [dsh-vision-proxy](https://github.com/Flyvhidbwo/dsh-vision-proxy)) | 自动识别(桥接路由声明了 image 能力)——同样走 native 路径:粘贴/上传图片,桥接自动转译给纯文本 DeepSeek |
+| **纯文本模型且无桥接** | 图片以路径引用呈现;上传消息提示安装 dsh-vision-proxy(本地 Ollama 零配置,多厂商 key 可选) |
 
-检测逻辑与官方 `read_image` 的路由门控一致(`ctx.llm.resolveModelInfo` + `inputModalities`)。没有视觉 key 时,图片仍以上传文件形式供 agent 读取。
+检测逻辑与官方 `read_image` 的路由门控一致(`ctx.llm.resolveModelInfo` + `inputModalities`),声明了 image 能力的桥接插件零配置即被识别。
 
 ## 配置
 
@@ -89,10 +90,6 @@ dsh plugin --profile web add dsh-file-upload
 | `cacheMaxBytes` | 67108864 (64MB) | 解析缓存字节预算 |
 | `markitdownBin` | `''` | 可选 MarkItDown CLI 路径;空 = 自动探测 PATH |
 | `markitdownTimeoutMs` | 120000 | 单次 CLI 调用超时 |
-| `visionEndpoint` | `https://api.openai.com/v1/chat/completions` | OpenAI 兼容视觉端点(图片描述) |
-| `visionModel` | `gpt-4o-mini` | 视觉模型名 |
-| `visionApiKeyEnv` | `OPENAI_API_KEY` | 视觉 key 的环境变量名(DSH 凭据体系) |
-| `visionMaxBytes` | 10485760 (10MB) | 发送给视觉端点的图片大小上限 |
 
 ## 开发
 
@@ -110,7 +107,6 @@ src/
 ├── detect.ts       # 内容嗅探(不信任扩展名)
 ├── convert.ts      # MarkItDown 引擎 + 可选 CLI 后端
 ├── upload.ts       # 上传路由:loopback/会话/大小/去重/TTL
-├── vision.ts       # 图片描述(视觉端点)
 ├── tool.ts         # read_document:ctx.fs 读取 + 分页 + LRU 缓存
 └── client/
     └── index.tsx   # 回形针 + 拖拽遮罩 + 麦克风 + 附件卡片

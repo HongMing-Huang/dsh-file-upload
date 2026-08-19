@@ -18,7 +18,6 @@ import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import z from '@deepseek-ai/schemastery'
 import { credentialRef } from '@deepseek-ai/dsh-credentials'
-import { describeImage } from './vision.ts'
 import { defineReadDocumentTool, ParseCache } from './tool.ts'
 import { createUploadHandler, createSweeper } from './upload.ts'
 import { probeMarkitdown } from './convert.ts'
@@ -52,10 +51,6 @@ export interface FileUploadConfig {
   cacheMaxBytes: number
   markitdownBin: string
   markitdownTimeoutMs: number
-  visionEndpoint: string
-  visionModel: string
-  visionApiKeyEnv: string
-  visionMaxBytes: number
   uploadDir: string
 }
 
@@ -90,14 +85,7 @@ export const Config = z.object({
   markitdownBin: z.string().default(''),
   /** Timeout for one MarkItDown CLI invocation. */
   markitdownTimeoutMs: z.number().default(120000),
-  /** OpenAI-compatible vision endpoint for image descriptions (text-only models). */
-  visionEndpoint: z.string().default('https://api.openai.com/v1/chat/completions'),
-  /** Vision-capable model id. */
-  visionModel: z.string().default('gpt-4o-mini'),
-  /** Env var holding the vision API key (resolved via dsh credentials). */
-  visionApiKeyEnv: z.string().default('OPENAI_API_KEY'),
-  /** Max image bytes accepted by the vision endpoint. */
-  visionMaxBytes: z.number().default(10 * MEBIBYTE),
+
   /** Upload storage root when no sessions service is available. */
   uploadDir: z.string().default(join(process.cwd(), 'uploads'))
 })
@@ -137,8 +125,7 @@ export function apply(ctx: any, config: FileUploadConfig): void {
     ['maxSheets', config.maxSheets],
     ['cacheEntries', config.cacheEntries],
     ['cacheMaxBytes', config.cacheMaxBytes],
-    ['markitdownTimeoutMs', config.markitdownTimeoutMs],
-    ['visionMaxBytes', config.visionMaxBytes]
+    ['markitdownTimeoutMs', config.markitdownTimeoutMs]
   ] as const) {
     assertPositiveInteger(value, label)
   }
@@ -177,37 +164,10 @@ export function apply(ctx: any, config: FileUploadConfig): void {
     return markitdownReady
   }
 
-  // Image description, zero-config: the API key is resolved per upload
-  // through the dsh credentials seam (`ctx.credentials.resolve`) — inherited
-  // env → $DSH_HOME/.credentials.yaml → project .env. A Models-page key just
-  // works; multimodal routes skip this and use the official read_image tool.
-  const visionKeyRef = credentialRef(config.visionApiKeyEnv)
-  const resolveVisionKey = async (): Promise<string> => {
-    try {
-      const resolved = await ctx.credentials.resolve(visionKeyRef)
-      return resolved?.value ?? ''
-    } catch {
-      return process.env[config.visionApiKeyEnv] ?? ''
-    }
-  }
-  const vision = async (filePath: string, name: string): Promise<string> => {
-    const apiKey = await resolveVisionKey()
-    return describeImage(filePath, {
-      endpoint: config.visionEndpoint,
-      model: config.visionModel,
-      apiKey,
-      timeoutMs: 60000,
-      maxBytes: config.visionMaxBytes
-    })
-  }
-  console.log(
-    `[dsh-file-upload] Image descriptions ready (${config.visionModel}) — key auto-resolved from dsh credentials; multimodal routes use read_image directly`
-  )
-
   ctx.systemPrompt.section({
     name: 'tool:read-document',
     order: 110,
-    text: 'Files uploaded by the user live under .dsh-uploads/<sessionId>/ inside the workspace. Read them with the read_document tool, which converts PDF/DOCX/XLSX and text files to Markdown and pages through long documents with offset and limit. Prefer read_document over read for these files. For uploaded image files: if the official read_image tool is available (current model supports image input), use it to see the image directly; otherwise call read_document on the image path, which returns an OCR text description via the bundled engine.'
+    text: 'Files uploaded by the user live under .dsh-uploads/<sessionId>/ inside the workspace. Read them with the read_document tool, which converts PDF/DOCX/XLSX and text files to Markdown and pages through long documents with offset and limit. Prefer read_document over read for these files. For uploaded image files: if the official read_image tool is available (current model supports image input — including vision bridges like dsh-vision-proxy), use it to see the image directly; otherwise the image is a path reference the user can view, and you can still read it via read_document (bundled OCR).'
   })
 
   // Detect whether a session's routed model accepts image input, so the
@@ -244,7 +204,6 @@ export function apply(ctx: any, config: FileUploadConfig): void {
         inlineTextLimit: config.inlineTextLimit,
         previewTextLimit: config.previewTextLimit,
         defaultDir,
-        vision,
         imageMode: resolveImageMode,
         sessionCwd: (sessionId: string) => {
           const session = ctx.sessions.get(sessionId)

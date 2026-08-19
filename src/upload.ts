@@ -48,8 +48,6 @@ export interface UploadOptions {
    * `'ocr'` → a visual description is generated via `vision`.
    */
   imageMode?: (sessionId: string) => Promise<'native' | 'ocr'>
-  /** Generate a text description of an image (vision endpoint, mature OCR). */
-  vision?: (filePath: string, name: string) => Promise<string>
   now?: () => number
 }
 
@@ -60,7 +58,6 @@ export interface UploadedMeta {
   sessionId: string
   sniff: SniffResult
   imageMode?: 'native' | 'ocr'
-  imageDescription?: string
   deduplicated?: boolean
 }
 
@@ -182,15 +179,12 @@ export function createUploadHandler(options: UploadOptions) {
       const relativePath = relative(storage.cwd, dest).split(sep).join('/')
 
       // Images: report how the agent should read them — natively via the
-      // official read_image tool (multimodal route) or a visual description
-      // generated through the vision endpoint (mature fallback for
-      // text-only models).
+      // official read_image tool (multimodal route or a vision bridge like
+      // dsh-vision-proxy, which our route gate detects automatically) or as
+      // a path reference (text-only route, user can install a vision bridge).
       if (sniffResult.type === 'image' && options.imageMode !== undefined) {
         try {
           meta.imageMode = await options.imageMode(storage.sessionId)
-          if (meta.imageMode === 'ocr' && options.vision !== undefined) {
-            meta.imageDescription = await options.vision(dest, meta.name)
-          }
         } catch {
           meta.imageMode = 'ocr'
         }
@@ -207,7 +201,6 @@ export function createUploadHandler(options: UploadOptions) {
           sniffedType: meta.sniff.type,
           label: meta.sniff.label,
           ...(meta.imageMode !== undefined ? { imageMode: meta.imageMode } : {}),
-          ...(meta.imageDescription !== undefined ? { imageDescription: meta.imageDescription } : {}),
           ...(meta.deduplicated ? { deduplicated: true } : {})
         })
       )

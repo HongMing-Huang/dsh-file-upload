@@ -21,7 +21,7 @@ English | [中文](README.zh.md)
 - **Codex-style file references** — uploaded files appear in the message as `@relative/path` references (like OpenAI Codex), never as raw content dumped into the composer; the agent reads the file with `read_document` (converted to Markdown on demand).
 - **Codex-style `@` mentions** — type `@` in the composer to pick any uploaded file by its relative path; the reference inserts as a mention.
 - **Document → Markdown, fully bundled** — the MarkItDown engine ships inside the plugin (Microsoft MarkItDown TypeScript port, `markitdown-node`): PDF / DOCX / PPTX / XLSX / HTML / CSV / JSON / XML / RSS / Atom / ZIP / Jupyter / image OCR / audio transcription. **No Python, no downloads, no setup.**
-- **Mature image handling** — multimodal routes use the official `read_image` tool (image enters model context); text-only routes get an automatic **visual description** generated through a vision model (OpenAI-compatible, key auto-resolved from dsh credentials), so the agent sees the image content without OCR-quality issues.
+- **Mature image handling** — multimodal routes (and vision bridges like [dsh-vision-proxy](https://github.com/Flyvhidbwo/dsh-vision-proxy)) are detected automatically: the agent uses the official `read_image` tool and the image reaches the model. Text-only routes keep the image as a path reference (install dsh-vision-proxy for instant image understanding — zero-config with local Ollama).
 - **`read_document` tool for agents** — line-numbered paging (`offset`/`limit`), byte-budgeted LRU cache (invalidated on file change), size pre-checks, reads through `ctx.fs` (inherits sandbox and fs-observation policy).
 - **Security** — loopback-only uploads, sanitized file names, session-isolated storage (`.dsh-uploads/<sessionId>`), sha256 content dedup, bounded concurrency, TTL sweep.
 
@@ -62,14 +62,15 @@ Startup log (bundled mode):
 
 ### How images are handled (mature, auto-adapted)
 
-The plugin **detects your session's model capability at upload time**:
+The plugin **detects your session's model capability at upload time** and coordinates with the ecosystem instead of reinventing vision:
 
 | Detected route | What happens |
 |---|---|
 | **Multimodal model** (declares `image` input, e.g. GPT-4o / Qwen-VL / Claude / Gemini) | `imageMode: native` — the message tells the agent to use the official `read_image` tool; the image enters model context directly |
-| **Text-only model** (or unknown) | a **vision model describes the image automatically** (OpenAI-compatible endpoint, `gpt-4o-mini` default, key auto-resolved from dsh credentials); the description travels with the message, so the agent sees the image content immediately — no OCR-quality issues |
+| **Vision bridge installed** ([dsh-vision-proxy](https://github.com/Flyvhidbwo/dsh-vision-proxy) and similar) | detected automatically (they declare image input on their route) — same native path: paste/upload images, the bridge transcribes them for text-only DeepSeek |
+| **Text-only model, no bridge** | the image stays a path reference; the upload message suggests installing dsh-vision-proxy (zero-config with local Ollama, multi-vendor keys optional) |
 
-The detection mirrors the official `read_image` route gate (`ctx.llm.resolveModelInfo` + `inputModalities`). Without a vision key, images still upload as path references the agent can read.
+The detection mirrors the official `read_image` route gate (`ctx.llm.resolveModelInfo` + `inputModalities`), so bridges that declare image input are picked up with zero configuration.
 
 ## Configuration
 
@@ -93,10 +94,6 @@ The detection mirrors the official `read_image` route gate (`ctx.llm.resolveMode
 | `cacheMaxBytes` | 67108864 (64 MB) | Parse-cache byte budget |
 | `markitdownBin` | `''` | Optional MarkItDown CLI path; empty = auto-detect PATH |
 | `markitdownTimeoutMs` | 120000 | Timeout for one CLI invocation |
-| `visionEndpoint` | `https://api.openai.com/v1/chat/completions` | OpenAI-compatible vision endpoint for image descriptions |
-| `visionModel` | `gpt-4o-mini` | Vision-capable model id |
-| `visionApiKeyEnv` | `OPENAI_API_KEY` | Env var holding the vision key (dsh credentials seam) |
-| `visionMaxBytes` | 10485760 (10 MB) | Max image bytes sent to the vision endpoint |
 
 ## Development
 
@@ -114,7 +111,6 @@ src/
 ├── detect.ts       # content sniffing (never trusts extensions)
 ├── convert.ts      # MarkItDown engine + optional CLI backend
 ├── upload.ts       # upload route: loopback/session/size/dedup/TTL
-├── vision.ts       # image descriptions (vision endpoint)
 ├── tool.ts         # read_document: ctx.fs reads + paging + LRU cache
 └── client/
     └── index.tsx   # paperclip + drag overlay + mic + attachment cards
