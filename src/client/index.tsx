@@ -133,6 +133,7 @@ interface UploadResponse {
   sniffedType?: string
   label?: string
   imageMode?: 'native' | 'ocr'
+  imageDescription?: string
   relativePath?: string
   error?: string
 }
@@ -186,12 +187,15 @@ async function uploadFile(actx: ActionContext, file: File, sessionId: string): P
 
   if (payload.sniffedType === 'image') {
     // Images: multimodal routes (incl. vision bridges like dsh-vision-proxy)
-    // → agent uses the official read_image tool; text-only routes → the
-    // image stays a path reference.
+    // → agent uses the official read_image tool; text-only routes → an
+    // automatic description ("讲解图片") was generated, insert it so the
+    // text-only model can reason about the image immediately.
     const description =
       payload.imageMode === 'native'
         ? `当前模型支持图像输入,请用 read_image 工具查看 ${payload.path}`
-        : `图片以文件形式上传(${payload.path});如需模型看图,请安装 dsh-vision-proxy 视觉桥接插件`
+        : payload.imageDescription !== undefined
+          ? `图片讲解(自动生成):\n${payload.imageDescription}\n原始文件: ${payload.path}`
+          : `图片以文件形式上传(${payload.path});未生成讲解,请用 read_document 工具读取`
     const text = `[图片: ${name}] ${description}`
     actx.emit('slash/input-insert-text', {
       text,

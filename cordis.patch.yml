@@ -18,3 +18,7 @@
         inlineTextLimit: 8192
         previewTextLimit: 2048
         markitdownBin: ''
+        visionEndpoint: ''
+        visionModel: ''
+        visionApiKeyEnv: OPENAI_API_KEY
+        visionMaxBytes: 10485760

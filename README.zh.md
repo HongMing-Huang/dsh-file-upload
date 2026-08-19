@@ -18,7 +18,7 @@
 - **Codex 风格文件引用**:上传的文件在消息中呈现为 `@相对路径` 引用(与 OpenAI Codex 一致),**不会把全文塞进输入框**;agent 用 `read_document` 读取(按需转 Markdown)。
 - **Codex 风格 `@` 引用**:上传后在输入框输入 `@` 即可按相对路径选择已上传文件,以 mention 形式插入。
 - **文档转 Markdown(全部内置打包)**:MarkItDown 引擎随插件发布(微软 MarkItDown 的 TypeScript 移植 `markitdown-node`):PDF / DOCX / PPTX / XLSX / HTML / CSV / JSON / XML / RSS / Atom / ZIP / Jupyter / 图片 OCR / 音频转写。**无需 Python、无需下载、无需配置。**
-- **成熟的图片处理**:自动检测多模态模型与视觉桥接插件(如 [dsh-vision-proxy](https://github.com/Flyvhidbwo/dsh-vision-proxy))——agent 走官方 `read_image`,图片直达模型;纯文本无桥接时图片以路径引用呈现,消息提示安装 dsh-vision-proxy(本地 Ollama 零配置即可识图)。
+- **图片自动讲解(文本模型也能看懂)**:上传图片后自动通过**视觉发现链**生成图片描述("讲解图片"),纯文本的 DeepSeek API 也能基于图片内容推理:显式 `visionEndpoint` → 本地 Ollama(如 DeepSeek-VL2,零配置)→ OpenAI 兼容端点(DSH 凭据 key)。多模态模型/视觉桥接则走官方 `read_image`。
 - **`read_document` 工具(供 agent 使用)**:行号分页(`offset`/`limit`)、字节预算 LRU 缓存(文件改动自动失效)、大小预检、走 `ctx.fs`(继承沙箱与 fs 观察策略)。
 - **安全**:loopback-only 上传、文件名消毒、会话隔离存储(`.dsh-uploads/<sessionId>`)、sha256 内容去重、并发限流、TTL 清扫。
 
@@ -57,17 +57,21 @@ dsh plugin --profile web add dsh-file-upload
 [dsh-file-upload] Document → Markdown ready: bundled MarkItDown engine (20+ formats, image OCR) — fully packaged, no downloads, no Python.
 ```
 
-### 图片怎么处理(成熟方案,与生态协同)
+### 图片怎么处理(自动讲解)
 
-插件在**上传时自动检测当前会话模型的图像能力**,不重复造视觉轮子:
+插件在**上传时自动检测当前会话模型的图像能力**:
 
 | 检测到的路由 | 行为 |
 |---|---|
-| **多模态模型**(声明 `image` 输入,如 GPT-4o / Qwen-VL / Claude / Gemini) | `imageMode: native`——消息提示 agent 用官方 `read_image` 工具,图片直接进入模型上下文 |
-| **已装视觉桥接**(如 [dsh-vision-proxy](https://github.com/Flyvhidbwo/dsh-vision-proxy)) | 自动识别(桥接路由声明了 image 能力)——同样走 native 路径:粘贴/上传图片,桥接自动转译给纯文本 DeepSeek |
-| **纯文本模型且无桥接** | 图片以路径引用呈现;上传消息提示安装 dsh-vision-proxy(本地 Ollama 零配置,多厂商 key 可选) |
+| **多模态模型**(声明 `image` 输入,如 GPT-4o / Qwen-VL / Claude / Gemini) | `imageMode: native`——agent 用官方 `read_image` 工具,图片直接进入模型上下文 |
+| **已装视觉桥接**(如 [dsh-vision-proxy](https://github.com/Flyvhidbwo/dsh-vision-proxy)) | 自动识别——同样走 native 路径 |
+| **纯文本模型**(DeepSeek API 即纯文本) | **自动生成图片描述**,随消息发出——模型立即基于图片内容推理 |
 
-检测逻辑与官方 `read_image` 的路由门控一致(`ctx.llm.resolveModelInfo` + `inputModalities`),声明了 image 能力的桥接插件零配置即被识别。
+**视觉发现链(零配置)**:① 显式 `visionEndpoint`/`visionModel` → ② **本地 Ollama**(`http://localhost:11434`,自动选择 VL 模型如 DeepSeek-VL2,图片不出本机)→ ③ OpenAI 标准端点(DSH 凭据 key)。
+
+> 说明:DeepSeek 官方 API 目前**不提供视觉输入**(多模态线 DeepSeek-VL2/Janus 为开源可自托管);通过 Ollama 本地部署 DeepSeek-VL2,即可获得完全本地的"官方 DeepSeek 视觉"体验。
+
+路由检测与官方 `read_image` 门控一致(`ctx.llm.resolveModelInfo` + `inputModalities`)。
 
 ## 配置
 
@@ -90,6 +94,10 @@ dsh plugin --profile web add dsh-file-upload
 | `cacheMaxBytes` | 67108864 (64MB) | 解析缓存字节预算 |
 | `markitdownBin` | `''` | 可选 MarkItDown CLI 路径;空 = 自动探测 PATH |
 | `markitdownTimeoutMs` | 120000 | 单次 CLI 调用超时 |
+| `visionEndpoint` | `''` | 图片讲解的视觉端点;空 = 自动(本地 Ollama → OpenAI 标准) |
+| `visionModel` | `''` | 视觉模型名;空 = 自动 |
+| `visionApiKeyEnv` | `OPENAI_API_KEY` | 视觉 key 的凭据引用(DSH 凭据体系) |
+| `visionMaxBytes` | 10485760 (10MB) | 发送给视觉端点的图片大小上限 |
 
 ## 开发
 
@@ -106,6 +114,7 @@ src/
 ├── index.ts        # 入口:apply + Config schema + 组装
 ├── detect.ts       # 内容嗅探(不信任扩展名)
 ├── convert.ts      # MarkItDown 引擎 + 可选 CLI 后端
+├── vision.ts       # 图片讲解(视觉发现链)
 ├── upload.ts       # 上传路由:loopback/会话/大小/去重/TTL
 ├── tool.ts         # read_document:ctx.fs 读取 + 分页 + LRU 缓存
 └── client/

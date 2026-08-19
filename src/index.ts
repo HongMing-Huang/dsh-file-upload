@@ -18,6 +18,7 @@ import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import z from '@deepseek-ai/schemastery'
 import { credentialRef } from '@deepseek-ai/dsh-credentials'
+import { describeImage } from './vision.ts'
 import { defineReadDocumentTool, ParseCache } from './tool.ts'
 import { createUploadHandler, createSweeper } from './upload.ts'
 import { probeMarkitdown } from './convert.ts'
@@ -51,6 +52,10 @@ export interface FileUploadConfig {
   cacheMaxBytes: number
   markitdownBin: string
   markitdownTimeoutMs: number
+  visionEndpoint: string
+  visionModel: string
+  visionApiKeyEnv: string
+  visionMaxBytes: number
   uploadDir: string
 }
 
@@ -86,6 +91,14 @@ export const Config = z.object({
   /** Timeout for one MarkItDown CLI invocation. */
   markitdownTimeoutMs: z.number().default(120000),
 
+  /** OpenAI-compatible vision endpoint for image descriptions; empty = auto (local Ollama → OpenAI standard). */
+  visionEndpoint: z.string().default(''),
+  /** Vision model id; empty = auto (Ollama vision model or gpt-4o-mini). */
+  visionModel: z.string().default(''),
+  /** Credential reference for the vision API key. */
+  visionApiKeyEnv: z.string().default('OPENAI_API_KEY'),
+  /** Max image bytes accepted by the vision endpoint. */
+  visionMaxBytes: z.number().default(10 * MEBIBYTE),
   /** Upload storage root when no sessions service is available. */
   uploadDir: z.string().default(join(process.cwd(), 'uploads'))
 })
@@ -125,7 +138,8 @@ export function apply(ctx: any, config: FileUploadConfig): void {
     ['maxSheets', config.maxSheets],
     ['cacheEntries', config.cacheEntries],
     ['cacheMaxBytes', config.cacheMaxBytes],
-    ['markitdownTimeoutMs', config.markitdownTimeoutMs]
+    ['markitdownTimeoutMs', config.markitdownTimeoutMs],
+    ['visionMaxBytes', config.visionMaxBytes]
   ] as const) {
     assertPositiveInteger(value, label)
   }
@@ -170,6 +184,30 @@ export function apply(ctx: any, config: FileUploadConfig): void {
     text: 'Files uploaded by the user live under .dsh-uploads/<sessionId>/ inside the workspace. Read them with the read_document tool, which converts PDF/DOCX/XLSX and text files to Markdown and pages through long documents with offset and limit. Prefer read_document over read for these files. For uploaded image files: if the official read_image tool is available (current model supports image input — including vision bridges like dsh-vision-proxy), use it to see the image directly; otherwise the image is a path reference the user can view, and you can still read it via read_document (bundled OCR).'
   })
 
+  // Image description ("讲解图片"), zero-config discovery chain:
+  // explicit endpoint → local Ollama (VL model) → OpenAI standard with a key
+  // from the dsh credentials seam. Text-only routes get the description so
+  // the text-only model can reason about the image.
+  const visionKeyRef = credentialRef(config.visionApiKeyEnv)
+  const resolveVisionKey = async (): Promise<string> => {
+    try {
+      const resolved = await ctx.credentials.resolve(visionKeyRef)
+      return resolved?.value ?? ''
+    } catch {
+      return process.env[config.visionApiKeyEnv] ?? ''
+    }
+  }
+  const vision = async (filePath: string, name: string): Promise<string> => {
+    return describeImage(filePath, {
+      endpoint: config.visionEndpoint,
+      model: config.visionModel,
+      apiKeyEnv: config.visionApiKeyEnv,
+      resolveKey: resolveVisionKey,
+      timeoutMs: 60000,
+      maxBytes: config.visionMaxBytes
+    })
+  }
+
   // Detect whether a session's routed model accepts image input, so the
   // agent is told to use the official read_image tool (native) or OCR
   // (read_document). Mirrors the official read_image route gate.
@@ -205,6 +243,7 @@ export function apply(ctx: any, config: FileUploadConfig): void {
         previewTextLimit: config.previewTextLimit,
         defaultDir,
         imageMode: resolveImageMode,
+        vision,
         sessionCwd: (sessionId: string) => {
           const session = ctx.sessions.get(sessionId)
           return session === undefined ? undefined : session.header.cwd

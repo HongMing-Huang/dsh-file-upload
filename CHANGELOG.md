@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-08-19
+
+### Added
+
+- **Image explanations ("讲解图片")** for text-only routes: upload an image
+  and the plugin automatically generates a description through a vision
+  discovery chain — ① explicit `visionEndpoint`/`visionModel`, ② local
+  Ollama auto-detected (picks a VL model such as DeepSeek-VL2, images stay
+  local), ③ OpenAI standard endpoint with a key from the dsh credentials
+  seam. The description travels with the message so the text-only DeepSeek
+  API can reason about the image.
+- Docs clarify that DeepSeek's official API has no vision input; the
+  open-source DeepSeek-VL2 line is the "official vision" via local
+  deployment (Ollama).
+- New config: `visionEndpoint`, `visionModel`, `visionApiKeyEnv`,
+  `visionMaxBytes`.
+
 ## [0.5.0] - 2026-08-19
 
 ### Changed
@@ -185,7 +202,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mutable tool config (no restart needed when found on PATH).
 - GB18030-encoded files inline with correct decoding via TextDecoder.
 
-[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/HongMing-Huang/dsh-file-upload/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.5.2
 [0.5.0]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.5.0
 [0.4.3]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.4.3
 [0.4.2]: https://github.com/HongMing-Huang/dsh-file-upload/releases/tag/v0.4.2
