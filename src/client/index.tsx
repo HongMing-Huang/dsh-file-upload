@@ -15,6 +15,48 @@ import { Tooltip, IconPaperclipOutline16, IconCloseOutline16 } from '@deepseek-a
 const SOURCE_NAME = 'dsh-file-upload'
 const STYLE_TAG = 'dsh-file-upload/style.css'
 
+/** Locale namespace owned by this plugin. */
+const NS = 'fileUpload'
+
+/** Translator bound to this plugin's locale namespace. */
+type Translator = (key: string, params?: Record<string, string>) => string
+
+/** Simplified Chinese dictionary (the key-set source of truth). */
+const zh: Record<string, string> = {
+  'http.413': '文件超过大小限制',
+  'http.415': '文件类型不被允许',
+  'http.403': '会话校验失败，请刷新页面重试',
+  'http.429': '上传太频繁，请稍后再试',
+  'upload.busy': '上传中…',
+  'upload.label': '上传文件',
+  'drag.title': '松开以添加文件',
+  'drag.desc': '文件/文件夹将上传到当前会话,agent 可读取其内容',
+  'card.remove': '移除',
+  'card.close': '关闭',
+  'image.native': '当前模型支持图像输入,请用 read_image 工具查看 {path}',
+  'image.description': '图片讲解(自动生成):\n{description}\n原始文件: {path}',
+  'image.file': '图片以文件形式上传({path});未生成讲解,请用 read_document 工具读取',
+  'image.tag': '[图片: {name}] {description}'
+}
+
+/** English dictionary, checked complete against the zh key set. */
+const en: Record<string, string> = {
+  'http.413': 'File exceeds the size limit',
+  'http.415': 'File type not allowed',
+  'http.403': 'Session validation failed; refresh the page and try again',
+  'http.429': 'Uploading too frequently; try again later',
+  'upload.busy': 'Uploading…',
+  'upload.label': 'Upload file',
+  'drag.title': 'Release to add files',
+  'drag.desc': 'Files/folders upload to the current session; the agent can read their contents',
+  'card.remove': 'Remove',
+  'card.close': 'Close',
+  'image.native': 'The current model supports image input; use the read_image tool to view {path}',
+  'image.description': 'Image description (auto-generated):\n{description}\nOriginal file: {path}',
+  'image.file': 'Image uploaded as a file ({path}); no description generated, use the read_document tool to read it',
+  'image.tag': '[image: {name}] {description}'
+}
+
 interface UploadMeta {
   name: string
   bytes: number
@@ -138,15 +180,15 @@ interface UploadResponse {
   error?: string
 }
 
-function httpErrorText(status: number): string {
-  if (status === 413) return '文件超过大小限制'
-  if (status === 415) return '文件类型不被允许'
-  if (status === 403) return '会话校验失败，请刷新页面重试'
-  if (status === 429) return '上传太频繁，请稍后再试'
+function httpErrorText(status: number, t: Translator): string {
+  if (status === 413) return t('http.413')
+  if (status === 415) return t('http.415')
+  if (status === 403) return t('http.403')
+  if (status === 429) return t('http.429')
   return `HTTP ${status}`
 }
 
-async function uploadFile(actx: ActionContext, file: File, sessionId: string): Promise<string | null> {
+async function uploadFile(actx: ActionContext, file: File, sessionId: string, t: Translator): Promise<string | null> {
   const conversation = actx.get('conversation')
   if (conversation === undefined) throw new Error('conversation service unavailable')
   const input = conversation.input.for(actx)
@@ -163,7 +205,7 @@ async function uploadFile(actx: ActionContext, file: File, sessionId: string): P
     body: file
   })
   if (!res.ok) {
-    let detail = httpErrorText(res.status)
+    let detail = httpErrorText(res.status, t)
     try {
       const payload = (await res.json()) as { error?: string }
       if (typeof payload.error === 'string') detail = payload.error
@@ -195,11 +237,11 @@ async function uploadFile(actx: ActionContext, file: File, sessionId: string): P
     // text-only model can reason about the image immediately.
     const description =
       payload.imageMode === 'native'
-        ? `当前模型支持图像输入,请用 read_image 工具查看 ${payload.path}`
+        ? t('image.native', { path: payload.path })
         : payload.imageDescription !== undefined
-          ? `图片讲解(自动生成):\n${payload.imageDescription}\n原始文件: ${payload.path}`
-          : `图片以文件形式上传(${payload.path});未生成讲解,请用 read_document 工具读取`
-    const text = `[图片: ${name}] ${description}`
+          ? t('image.description', { description: payload.imageDescription, path: payload.path })
+          : t('image.file', { path: payload.path })
+    const text = t('image.tag', { name, description })
     actx.emit('slash/input-insert-text', {
       text,
       span: { start: state.draft.length, end: state.draft.length, draftRev: state.draftRev }
@@ -286,10 +328,10 @@ function filesFromClipboard(e: ClipboardEvent): File[] {
   return files
 }
 
-async function attachFiles(actx: ActionContext, files: File[], sessionId: string): Promise<void> {
+async function attachFiles(actx: ActionContext, files: File[], sessionId: string, t: Translator): Promise<void> {
   for (const file of files) {
     try {
-      await uploadFile(actx, file, sessionId)
+      await uploadFile(actx, file, sessionId, t)
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : String(err))
     }
@@ -298,9 +340,10 @@ async function attachFiles(actx: ActionContext, files: File[], sessionId: string
 
 interface UploadButtonProps {
   attach: (files: File[]) => Promise<void>
+  t: Translator
 }
 
-function UploadButton({ attach }: UploadButtonProps) {
+function UploadButton({ attach, t }: UploadButtonProps) {
   const [busy, setBusy] = useState(false)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const pick = () => {
@@ -321,8 +364,8 @@ function UploadButton({ attach }: UploadButtonProps) {
     input.click()
   }
   return (
-    <Tooltip label={busy ? '上传中…' : '上传文件'} side="top">
-      <button type="button" className="dsh-upload-btn" aria-label="上传文件" disabled={busy} onClick={pick}>
+    <Tooltip label={busy ? t('upload.busy') : t('upload.label')} side="top">
+      <button type="button" className="dsh-upload-btn" aria-label={t('upload.label')} disabled={busy} onClick={pick}>
         <IconPaperclipOutline16 size={14} />
       </button>
     </Tooltip>
@@ -331,7 +374,7 @@ function UploadButton({ attach }: UploadButtonProps) {
 
 /** Global drag overlay + paste: drag files/folders anywhere over the window
  * or paste images/files into the composer to attach (Claude/Codex style). */
-function DragOverlay({ attach }: { attach: (files: File[]) => Promise<void> }) {
+function DragOverlay({ attach, t }: { attach: (files: File[]) => Promise<void>; t: Translator }) {
   const [active, setActive] = useState(false)
   const depth = useRef(0)
 
@@ -390,8 +433,8 @@ function DragOverlay({ attach }: { attach: (files: File[]) => Promise<void> }) {
   return (
     <div className={`dsh-upload-overlay${active ? ' active' : ''}`}>
       <div className="dsh-upload-overlay-box">
-        <div>松开以添加文件</div>
-        <div className="dsh-upload-overlay-hint">文件/文件夹将上传到当前会话,agent 可读取其内容</div>
+        <div>{t('drag.title')}</div>
+        <div className="dsh-upload-overlay-hint">{t('drag.desc')}</div>
       </div>
     </div>
   )
@@ -400,9 +443,10 @@ function DragOverlay({ attach }: { attach: (files: File[]) => Promise<void> }) {
 interface DockProps {
   attach: (files: File[]) => Promise<void>
   sessionId: string
+  t: Translator
 }
 
-function UploadDock({ attach, sessionId }: DockProps) {
+function UploadDock({ attach, sessionId, t }: DockProps) {
   const [metaVersion, setMetaVersion] = useState(0)
   const [error, setError] = useState<{ seq: number; text: string } | null>(null)
 
@@ -456,11 +500,11 @@ function UploadDock({ attach, sessionId }: DockProps) {
                   {meta.name}
                 </div>
                 <div className="dsh-upload-size">{formatBytes(meta.bytes)}</div>
-                <Tooltip label="移除" side="top">
+                <Tooltip label={t('card.remove')} side="top">
                   <button
                     type="button"
                     className="dsh-upload-remove"
-                    aria-label="移除"
+                    aria-label={t('card.remove')}
                     onClick={() => removeCard(ref)}
                   >
                     <IconCloseOutline16 size={12} />
@@ -477,14 +521,14 @@ function UploadDock({ attach, sessionId }: DockProps) {
           <button
             type="button"
             className="dsh-upload-remove"
-            aria-label="关闭"
+            aria-label={t('card.close')}
             onClick={() => setError(null)}
           >
             <IconCloseOutline16 size={12} />
           </button>
         </div>
       )}
-      <DragOverlay attach={attach} />
+      <DragOverlay attach={attach} t={t} />
     </>
   )
 }
@@ -501,8 +545,14 @@ export function apply(ctx: {
   sessions: {
     scope(sessionId: string): ActionContext
   }
+  locale: {
+    register(ns: string, dicts: Record<string, Record<string, string>>): void
+    bind(ns: string): Translator
+  }
 }): void {
   injectCss()
+  ctx.effect(() => ctx.locale.register(NS, { zh, en }))
+  const t = ctx.locale.bind(NS)
   ctx.effect(() =>
     ctx.inputTriggers.registerSource({
       trigger: '@',
@@ -549,8 +599,9 @@ export function apply(ctx: {
         name: 'conversation.input.left',
         id: 'dsh-file-upload-button',
         order: 0,
+        locale: NS,
         inject: (sessionId: string) => ({
-          attach: (files: File[]) => attachFiles(ctx.sessions.scope(sessionId), files, sessionId)
+          attach: (files: File[]) => attachFiles(ctx.sessions.scope(sessionId), files, sessionId, t)
         })
       },
       UploadButton
@@ -562,8 +613,9 @@ export function apply(ctx: {
         name: 'conversation.input.dock',
         id: 'dsh-file-upload-dock',
         order: 5,
+        locale: NS,
         inject: (sessionId: string) => ({
-          attach: (files: File[]) => attachFiles(ctx.sessions.scope(sessionId), files, sessionId)
+          attach: (files: File[]) => attachFiles(ctx.sessions.scope(sessionId), files, sessionId, t)
         })
       },
       UploadDock
@@ -578,6 +630,6 @@ declare const module: { exports: unknown } | undefined
 if (typeof module !== 'undefined' && module !== null) {
   module.exports = {
     apply,
-    inject: ['slots', 'inputTriggers', 'sessions']
+    inject: ['slots', 'inputTriggers', 'sessions', 'locale']
   }
 }

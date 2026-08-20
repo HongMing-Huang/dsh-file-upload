@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Localized client UI through the Harness locale system**: the paperclip
+  tooltip, drag-overlay copy, upload error messages and attachment-card
+  remove/close labels now resolve through a registered `fileUpload` locale
+  namespace (`zh`/`en`) instead of being hardcoded in Chinese, so the UI
+  follows the Harness language setting. The auto-inserted image description
+  text and the vision-description prompt now fall back to English.
+
 ## [0.5.2] - 2026-08-19
 
 ### Added
