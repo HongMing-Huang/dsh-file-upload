@@ -152,11 +152,11 @@ async function extractXlsx(data: Buffer, sheetRowLimit: number, maxSheets: numbe
   }
 
   if (sheetNames.length > sheets.length) {
-    parts.push(`… 另有 ${sheetNames.length - sheets.length} 个 sheet 未读取（上限 ${maxSheets}）`)
+    parts.push(`… ${sheetNames.length - sheets.length} more sheet(s) not read (limit ${maxSheets})`)
     truncated = true
   }
   if (sheetTruncated) {
-    parts.push(`… 已截断：每个 sheet 仅保留前 ${sheetRowLimit} 行，全簿共 ${totalRows} 行`)
+    parts.push(`… truncated: only the first ${sheetRowLimit} rows per sheet are kept, ${totalRows} rows total in the workbook`)
   }
 
   return { text: parts.join('\n\n'), truncated }
