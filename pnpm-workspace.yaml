@@ -1,0 +1,17 @@
+# pnpm 10+ 规范：overrides 与构建白名单须放此处（package.json 的 "pnpm" 字段在 pnpm 11 起被忽略）
+overrides:
+  # noop 替身：顶掉 sharp/tesseract 的 139MB 原生二进制（pnpm install 分钟级→秒级）
+  sharp: 'npm:noop2@2.0.0'
+  tesseract.js: 'npm:noop2@2.0.0'
+  # 钉回 main 同源版本，消除锁文件重生成噪声
+  react: 18.3.1
+  typescript: 5.9.3
+  '@deepseek-ai/dsh-credentials': 0.1.0-rc.6
+  '@deepseek-ai/dsh-fs': 0.1.0-rc.6
+  '@deepseek-ai/dsh-tools': 0.1.0-rc.6
+onlyBuiltDependencies:
+  # 仅 esbuild 需要跑 postinstall（二进制下载）；sharp/tesseract 已被 noop 替身顶掉
+  - esbuild
+allowBuilds:
+  # pnpm 11 supply-chain 默认拒绝构建脚本，此处显式放行（该键由 pnpm install 自动回写脚手架）
+  esbuild: true

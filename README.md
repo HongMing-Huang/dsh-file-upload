@@ -1,5 +1,8 @@
 # dsh-file-upload
 
+> **⚠️ ARCHIVED（已归档）** — 本插件已由仓库所有者于 2026-09-09 归档下线：不再维护、不再分发、不再安装。存量部署可继续使用已安装版本，但不接受 issue/PR。如需文件上传能力，请基于 harness 内建机制或社区替代方案。
+> **This plugin is archived as of 2026-09-09: no longer maintained, distributed, or installed.**
+
 **File-message plugin for DeepSeek Harness (dsh).** Claude/Codex-style uploads — drag-and-drop (files and folders), paperclip picker, paste-to-attach, multi-file support; content sniffing; fully bundled document → Markdown conversion (MarkItDown engine, 20+ formats, image OCR); Codex-style `@relative/path` references; automatic image explanations for text-only models; and a `read_document` tool for agents.
 
 [![npm](https://img.shields.io/npm/v/dsh-file-upload)](https://www.npmjs.com/package/dsh-file-upload)

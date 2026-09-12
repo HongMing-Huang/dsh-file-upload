@@ -1,6 +1,6 @@
 {
-  "name": "dsh-file-upload",
-  "version": "0.5.2",
+  "name": "@nelsonlongxiang/dsh-file-upload",
+  "version": "0.5.3",
   "description": "DeepSeek Harness dual-face plugin: Codex-style file references (@path), fully bundled document→Markdown (MarkItDown engine, 20+ formats), mature image handling (read_image for multimodal routes, automatic vision descriptions for text-only models), read_document tool.",
   "keywords": [
     "deepseek",
@@ -62,7 +62,9 @@
     "mammoth": "^1.8.0",
     "markitdown-node": "^1.5.2",
     "pdfjs-dist": "^4.10.38",
-    "read-excel-file": "^5.8.7"
+    "read-excel-file": "^5.8.7",
+    "sharp": "npm:noop2@2.0.0",
+    "tesseract.js": "npm:noop2@2.0.0"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",
@@ -83,6 +85,7 @@
     "build": "tsc -p tsconfig.build.json && node build.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test test/*.test.ts",
-    "prepublishOnly": "npm run build && npm test"
+    "prepublishOnly": "npm test && node build.mjs && node scripts/patch-markitdown.mjs && tsc -p tsconfig.build.json",
+    "postinstall": "node scripts/patch-markitdown.mjs"
   }
 }

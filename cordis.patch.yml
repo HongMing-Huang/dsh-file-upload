@@ -2,7 +2,7 @@
 # The row id must match the node half's exported cordis `name`.
 - insert:
     - id: file-upload
-      name: 'dsh-file-upload'
+      name: '@nelsonlongxiang/dsh-file-upload'
       config:
         uploadMaxBytes: 26214400
         allowedExtensions: []
