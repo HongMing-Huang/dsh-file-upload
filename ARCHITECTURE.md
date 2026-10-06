@@ -9,7 +9,7 @@
 | Field | Value |
 | --- | --- |
 | Package name | dsh-file-upload |
-| Version | 0.5.3 |
+| Version | 0.5.4 |
 | Layout archetype | single-package-src |
 | Primary language | typescript |
 | Languages by volume | typescript (1970 LOC), typescriptreact (580 LOC), javascript (27 LOC) |
@@ -22,7 +22,7 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 21 commits, last 2026-10-06T15:06:13+08:00, 2 dirty files |
+| Git | 22 commits, last 2026-10-06T15:13:30+08:00, 2 dirty files |
 
 ## 2. Layout at a glance
 
@@ -32,8 +32,8 @@
 | `.gitignore` | file | 1 | 15 | 0 | 0 |  |
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
 | `AGENTS.md` | file | 1 | 59 | 0 | 0 |  |
-| `ARCHITECTURE.md` | file | 1 | 217 | 0 | 0 |  |
-| `CHANGELOG.md` | file | 1 | 292 | 0 | 0 |  |
+| `ARCHITECTURE.md` | file | 1 | 218 | 0 | 0 |  |
+| `CHANGELOG.md` | file | 1 | 304 | 0 | 0 |  |
 | `CONTRIBUTING.md` | file | 1 | 46 | 0 | 0 |  |
 | `INSTALL.md` | file | 1 | 151 | 0 | 0 |  |
 | `LICENSE` | file | 1 | 0 | 0 | 0 |  |
@@ -43,7 +43,7 @@
 | `build.mjs` | file | 1 | 27 | 1 | 0 |  |
 | `cordis.patch.yml` | file | 1 | 30 | 0 | 0 |  |
 | `examples/` | directory | 1 | 33 | 0 | 0 | cordis.patch.yml 的本地覆盖示例，文档性质。 |
-| `package.json` | file | 1 | 91 | 0 | 0 |  |
+| `package.json` | file | 1 | 98 | 0 | 0 |  |
 | `pnpm-lock.yaml` | file | 1 | 0 | 0 | 0 |  |
 | `src/` | directory | 7 | 2036 | 7 | 0 |  |
 | `test/` | directory | 4 | 514 | 0 | 4 |  |
@@ -113,10 +113,10 @@ graph LR
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 32 (338 KB) |
+| Files tracked | 32 (339 KB) |
 | Source | 8 files / 2063 LOC |
 | Tests | 4 files / 514 LOC |
-| Docs | 8 files / 1064 LOC |
+| Docs | 8 files / 1077 LOC |
 | Config files | 10 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
@@ -127,7 +127,7 @@ graph LR
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
 | Most depended-on files | `src/convert.ts` (5), `src/detect.ts` (5), `src/upload.ts` (3) |
-| Churn hotspots (90d) | `README.md` (14), `README.zh.md` (14), `src/index.ts` (14) |
+| Churn hotspots (90d) | `CHANGELOG.md` (14), `README.md` (14), `README.zh.md` (14) |
 
 ## 6. Standards checklist
 
@@ -166,7 +166,7 @@ graph LR
 - **warn** `long-functions` — 1 function(s) exceed 150 lines; the longest is createUploadHandler at 200.
 - **warn** `no-linter` — No linter or formatter configuration found.
 - **info** `churn-hotspots` — 1 file(s) are both frequently changed and widely imported.
-- **info** `stale-entry-points` — 2 entry point(s) are untracked build output.
+- **info** `stale-entry-points` — 3 entry point(s) are untracked build output.
 
 <!-- BEGIN CURATED -->
 ## 8. Intent (curated — never regenerated)

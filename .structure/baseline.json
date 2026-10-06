@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-06T07:13:05.546Z",
+  "generatedAt": "2026-10-06T07:22:32.894Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
   "project": {
     "name": "dsh-file-upload",
-    "version": "0.5.3",
+    "version": "0.5.4",
     "primaryLanguage": "typescript",
     "languages": [
       {
@@ -54,14 +54,15 @@
       "LICENSE",
       "CHANGELOG.md",
       "README.md",
-      "README.zh.md"
+      "README.zh.md",
+      "INSTALL.md"
     ],
     "license": "MIT",
     "repositoryDeclared": true
   },
   "metrics": {
     "files": 32,
-    "bytes": 346501,
+    "bytes": 347643,
     "sourceFiles": 8,
     "testFiles": 4,
     "docFiles": 8,
@@ -77,7 +78,7 @@
     "vendoredFiles": 0,
     "sourceLoc": 2063,
     "testLoc": 514,
-    "docLoc": 1064,
+    "docLoc": 1077,
     "maxDepth": 2,
     "topLevelDirCount": 3,
     "topLevelEntryCount": 5,
@@ -193,7 +194,7 @@
       "path": "ARCHITECTURE.md",
       "type": "file",
       "files": 1,
-      "loc": 217,
+      "loc": 218,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -202,7 +203,7 @@
       "path": "CHANGELOG.md",
       "type": "file",
       "files": 1,
-      "loc": 292,
+      "loc": 304,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -292,7 +293,7 @@
       "path": "package.json",
       "type": "file",
       "files": 1,
-      "loc": 91,
+      "loc": 98,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -434,7 +435,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 16,
-      "loc": 1259,
+      "loc": 1279,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -454,7 +455,7 @@
       "directRootFiles": 16,
       "longestFile": {
         "path": "CHANGELOG.md",
-        "lines": 292
+        "lines": 304
       }
     },
     {
@@ -587,9 +588,13 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-06T15:06:13+08:00",
-    "commits": 21,
+    "lastCommitAt": "2026-10-06T15:13:30+08:00",
+    "commits": 22,
     "churn90d": [
+      {
+        "path": "CHANGELOG.md",
+        "commits": 14
+      },
       {
         "path": "README.md",
         "commits": 14
@@ -599,16 +604,12 @@
         "commits": 14
       },
       {
-        "path": "src/index.ts",
+        "path": "package.json",
         "commits": 14
       },
       {
-        "path": "CHANGELOG.md",
-        "commits": 13
-      },
-      {
-        "path": "package.json",
-        "commits": 13
+        "path": "src/index.ts",
+        "commits": 14
       },
       {
         "path": "src/upload.ts",
@@ -651,6 +652,14 @@
         "commits": 2
       },
       {
+        "path": ".structure/baseline.json",
+        "commits": 2
+      },
+      {
+        "path": "ARCHITECTURE.md",
+        "commits": 2
+      },
+      {
         "path": "examples/local-override.yml",
         "commits": 2
       },
@@ -661,18 +670,10 @@
       {
         "path": "src/convert.ts",
         "commits": 2
-      },
-      {
-        "path": "src/tool.ts",
-        "commits": 2
-      },
-      {
-        "path": "test/asr.test.ts",
-        "commits": 2
       }
     ],
     "churnFiles90d": 41,
     "dirtyFiles": 2
   },
-  "scanMs": 65
+  "scanMs": 83
 }

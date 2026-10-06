@@ -1,6 +1,6 @@
 {
   "name": "dsh-file-upload",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "DeepSeek Harness dual-face plugin: Codex-style file references (@path), fully bundled document→Markdown (MarkItDown engine, 20+ formats), mature image handling (read_image for multimodal routes, automatic vision descriptions for text-only models), read_document tool.",
   "keywords": [
     "deepseek",
@@ -19,9 +19,15 @@
   ],
   "type": "module",
   "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "exports": {
-    ".": "./lib/index.js",
-    "./client": "./lib/client.js",
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -30,7 +36,8 @@
     "LICENSE",
     "CHANGELOG.md",
     "README.md",
-    "README.zh.md"
+    "README.zh.md",
+    "INSTALL.md"
   ],
   "license": "MIT",
   "engines": {
