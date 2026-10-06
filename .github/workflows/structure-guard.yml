@@ -1,0 +1,32 @@
+# structure-guard: managed workflow — regenerate with `guard.mjs ci install --force`, remove with `guard.mjs ci remove`.
+name: structure-guard
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Structure and drift audit
+        run: node .dsh/structure-guard/scripts/guard.mjs audit . --json --out structure-report.json
+      # Add `--strict` above to fail the job on warnings as well as errors.
+      - name: Architecture digest is current
+        run: node .dsh/structure-guard/scripts/guard.mjs digest . --check
+      - name: Upload structure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: structure-report
+          path: structure-report.json
+          if-no-files-found: ignore

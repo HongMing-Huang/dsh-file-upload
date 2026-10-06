@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "$comment": "Project structure contract for the structure-guard skill. `modules` + `boundaries` are the declared standard; `audit` reports every violation. Edit deliberately, then run `guard.mjs baseline` to accept the new shape.",
+  "archetype": "single-package-src",
+  "ignore": [
+    "**/*.min.js",
+    "**/*.map",
+    ".dsh/structure-guard/**"
+  ],
+  "modules": [
+    {
+      "name": "entry",
+      "paths": [
+        "src/index.ts"
+      ],
+      "layer": 3
+    },
+    {
+      "name": "tool",
+      "paths": [
+        "src/tool.ts"
+      ],
+      "layer": 2
+    },
+    {
+      "name": "upload",
+      "paths": [
+        "src/upload.ts"
+      ],
+      "layer": 2
+    },
+    {
+      "name": "convert",
+      "paths": [
+        "src/convert.ts"
+      ],
+      "layer": 1
+    },
+    {
+      "name": "detect",
+      "paths": [
+        "src/detect.ts"
+      ],
+      "layer": 0
+    },
+    {
+      "name": "vision",
+      "paths": [
+        "src/vision.ts"
+      ],
+      "layer": 0
+    },
+    {
+      "name": "client",
+      "paths": [
+        "src/client/**"
+      ],
+      "layer": 0
+    },
+    {
+      "name": "build",
+      "paths": [
+        "build.mjs"
+      ],
+      "layer": null
+    },
+    {
+      "name": "tests",
+      "paths": [
+        "test/**"
+      ],
+      "layer": null
+    },
+    {
+      "name": "examples",
+      "paths": [
+        "examples/**"
+      ],
+      "layer": null
+    }
+  ],
+  "boundaries": [
+    {
+      "from": "detect",
+      "mayImport": []
+    },
+    {
+      "from": "vision",
+      "mayImport": []
+    },
+    {
+      "from": "convert",
+      "mayImport": [
+        "detect"
+      ]
+    },
+    {
+      "from": "upload",
+      "mayImport": [
+        "detect",
+        "convert"
+      ]
+    },
+    {
+      "from": "tool",
+      "mayImport": [
+        "detect",
+        "convert"
+      ]
+    },
+    {
+      "from": "client",
+      "mayImport": []
+    },
+    {
+      "from": "entry",
+      "mayImport": [
+        "tool",
+        "upload",
+        "convert",
+        "detect",
+        "vision"
+      ]
+    },
+    {
+      "from": "tests",
+      "mayImport": [
+        "*"
+      ]
+    },
+    {
+      "from": "examples",
+      "mayImport": [
+        "*"
+      ]
+    }
+  ],
+  "thresholds": {
+    "maxFileLines": 600,
+    "fileGrowthWarn": 0.4,
+    "locGrowthWarn": 0.6,
+    "testRatioDropWarn": 0.75,
+    "largestFileGrowthWarn": 1.5,
+    "dependencyJumpWarn": 8,
+    "newTopLevelSeverity": "warn"
+  },
+  "rules": {
+    "disabled": [],
+    "overrides": {
+      "long-functions": {
+        "params": {
+          "maxLines": 150,
+          "allow": [
+            "apply"
+          ]
+        },
+        "reason": "apply() is the Cordis plugin body: it registers services and tools in one closure scope, which is the framework's own shape (cordiverse/cordis plugins do the same). createUploadHandler stays under review and is tracked in ARCHITECTURE.md rather than exempted."
+      }
+    }
+  },
+  "naming": {
+    "files": {
+      "*.ts": "kebab",
+      "*.tsx": "kebab",
+      "*.mjs": "kebab"
+    },
+    "directories": {
+      "src/**": "kebab"
+    }
+  },
+  "describe": {
+    "entry": "宿主插件入口：注册上传服务与 read_document 工具，只做装配，不写业务逻辑。",
+    "tool": "面向模型的 read_document 工具定义、参数 schema 与解析缓存 ParseCache。",
+    "upload": "上传处理与清理：接收浏览器分片、落盘、哈希去重、定期回收临时文件。唯一允许写磁盘的模块。",
+    "convert": "文档转 Markdown 的适配层：唯一允许调用外部转换器（markitdown/mammoth/pdfjs/read-excel-file）的模块。",
+    "detect": "文件类型嗅探（魔数 + 扩展名）。叶子模块，不 import 项目内任何东西。",
+    "vision": "图片描述能力封装。叶子模块，供 entry 在需要视觉理解时调用。",
+    "client": "浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。",
+    "build": "构建脚本：tsc 产物之后的 client bundle 收尾。",
+    "tests": "node:test 测试，顶层 test/ + *.test.ts 命名。",
+    "examples": "cordis.patch.yml 的本地覆盖示例，文档性质。"
+  },
+  "digest": {
+    "path": "ARCHITECTURE.md"
+  },
+  "todo": []
+}

@@ -35,7 +35,7 @@ dsh plugin --profile web add dsh-file-upload
 ## Usage
 
 1. Click the paperclip in the composer toolbar, or drag files anywhere over the window;
-2. Small text files land directly in the composer; documents appear as attachment cards and their path is sent with the message;
+2. Files appear as attachment cards and their `@relative/path` reference is inserted into the composer — the raw content is never dumped into the chat; the agent reads the file with `read_document` when it needs the content;
 3. The agent reads documents with `read_document <path>` — converted to Markdown on demand, pageable with `offset`/`limit`.
 
 ### MarkItDown (fully bundled — no downloads, no setup)
@@ -49,7 +49,7 @@ dsh plugin --profile web add dsh-file-upload
 > Optional upgrade: if an official MarkItDown CLI already exists on your machine (or is set via `markitdownBin`), the plugin prefers it (adds EPUB and more); without one the bundled engine is always available.
 
 ```yaml
-- id: file-upload
+- id: dsh-file-upload
   config:
     markitdownBin: /path/to/your/markitdown   # optional; empty = bundled engine only
 ```
@@ -60,21 +60,24 @@ Startup log (bundled mode):
 [dsh-file-upload] Document → Markdown ready: bundled MarkItDown engine (20+ formats, image OCR) — fully packaged, no downloads, no Python.
 ```
 
-### How images are handled (auto-explained)
+### How images are handled (Codex-style reference + auto-explained)
 
-The plugin **detects your session's model capability at upload time**:
+Every uploaded file — images included — lands in the composer as a clean
+Codex-style `@relative/path` reference (the raw content and absolute host
+paths never appear in the chat). Images additionally get **content support**
+based on what your session's model can do, detected at upload time:
 
 | Detected route | What happens |
 |---|---|
-| **Multimodal model** (declares `image` input, e.g. GPT-4o / Qwen-VL / Claude / Gemini) | `imageMode: native` — the agent uses the official `read_image` tool; the image enters model context directly |
-| **Vision bridge installed** ([dsh-vision-proxy](https://github.com/Flyvhidbwo/dsh-vision-proxy) and similar) | detected automatically (they declare image input on their route) — same native path |
-| **Text-only model** (the DeepSeek API is text-only) | an automatic **image description** is generated via the vision discovery chain and inserted with the message — the model reasons about the image content immediately |
+| **Multimodal model** (declares `image` input, e.g. GPT-4o / Qwen-VL / Claude / Gemini) | the `@reference` is inserted; the agent calls the `read_image` tool and the image enters model context directly |
+| **A `read_image` tool is registered** (official tool or a vision bridge such as dsh-vision-toolkit) | detected automatically — same native path (the model fetches the image content itself) |
+| **Text-only model** (the DeepSeek API is text-only) | if a description can be generated, the message carries `[图片: name] 图片讲解: <description>` right before the `@reference`, so the text-only model reasons about the image content immediately; if no vision endpoint is configured, only the clean `@reference` is inserted (the agent can still OCR via `read_document`) |
 
-**Vision discovery chain** (zero-config): ① explicit `visionEndpoint`/`visionModel` → ② **local Ollama** at `http://localhost:11434` (picks a VL model such as DeepSeek-VL2 — images never leave the machine) → ③ OpenAI standard endpoint using a key from the dsh credentials seam.
+**Vision discovery chain** (zero-config, in order): ① explicit `visionEndpoint`/`visionModel` → ② **local Ollama** at `http://localhost:11434` (picks a VL model such as DeepSeek-VL2 — images never leave the machine) → ③ **DeepSeek official vision API** (`deepseek-v4-flash-vision-exp`, uses the `DEEPSEEK_API_KEY` already configured in your DSH credentials — no extra setup) → ④ OpenAI standard endpoint using a key from the dsh credentials seam. Without any of these, images upload as plain references (no fallback text).
 
-> Note: DeepSeek's official API does not offer vision input (the multimodal line — DeepSeek-VL2/Janus — is open-source and self-hostable); deploy DeepSeek-VL2 via Ollama for a fully local "official DeepSeek vision" experience.
+> **DeepSeek now has an official multimodal model**: [`deepseek-v4-flash-vision-exp`](https://api-docs.deepseek.com/guides/vision/) accepts JPEG/PNG/GIF/WebP via the standard OpenAI-compatible format. The plugin's vision chain picks it up automatically through your existing DeepSeek key, so uploading an image immediately produces a high-quality `[图片: name] 图片讲解: …` block for text-only models. You can also make DSH itself route images natively: add `deepseek-v4-flash-vision-exp` as a custom model of the deepseek-official provider with `inputModalities: ["text", "image"]` (settings → Models, or the `llm-deepseek.models` settings section) and switch the session to it — the plugin then detects native image input and the agent reads images directly.
 
-The route detection mirrors the official `read_image` gate (`ctx.llm.resolveModelInfo` + `inputModalities`).
+Route detection mirrors the official `read_image` gate (`ctx.llm.resolveModelInfo` + `inputModalities`), plus a live check for a registered `read_image` tool.
 
 ## Configuration
 
@@ -88,8 +91,6 @@ The route detection mirrors the official `read_image` gate (`ctx.llm.resolveMode
 | `uploadTtlMs` | 604800000 (7 days) | Unreferenced upload lifetime |
 | `sweepIntervalMs` | 3600000 (1 h) | Sweep period; 0 = disabled |
 | `maxConcurrentUploads` | 4 | Concurrent upload limit |
-| `inlineTextLimit` | 8192 (8 KB) | Text inlined into the composer up to this size |
-| `previewTextLimit` | 2048 (2 KB) | Preview length for larger text files |
 | `maxFileBytes` | 25165824 | Byte cap for one document read |
 | `readLimit` | 2000 | Max lines returned by one `read_document` call |
 | `sheetRowLimit` | 200 | Rows kept per XLSX sheet |

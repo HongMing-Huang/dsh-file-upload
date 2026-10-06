@@ -3,3 +3,13 @@ lib/
 .venv/
 *.log
 .DS_Store
+
+# Runtime artifacts — outputs of a tool run, not sources. `baseline.json` and
+# `guard.json` ARE tracked on purpose: they are the declared contract and the
+# drift reference the gate compares against.
+.structure/last-audit.json
+structure-report.json
+
+# Legacy leftovers from the pre-v0.5 MarkItDown venv bootstrap (commit 7fdc463).
+# Still tracked; run `git rm -r --cached .test-nonwritable` to finish the job.
+.test-nonwritable/

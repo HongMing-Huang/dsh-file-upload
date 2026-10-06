@@ -1,7 +1,15 @@
 # dsh-file-upload bundle patch: one insert registering the dual-face plugin.
-# The row id must match the node half's exported cordis `name`.
+#
+# The row id is deliberately the package name and therefore MUST match the node
+# half's exported cordis `name` (`src/index.ts`: `export const name = 'dsh-file-upload'`).
+# It must NOT be the generic `file-upload`: `@deepseek-ai/dsh-web-app` already
+# declares a row with that exact id for the shipped browser transport
+# (`@deepseek-ai/dsh-client-file-upload`, providing `ctx.fileUpload`), and two
+# rows sharing one id are ambiguous for every id-targeted override —
+# `plugins.row.config`, `plugin_manager`'s enable/disable writer, and a user's
+# own override layer would all address both rows at once.
 - insert:
-    - id: file-upload
+    - id: dsh-file-upload
       name: 'dsh-file-upload'
       config:
         uploadMaxBytes: 26214400
@@ -15,8 +23,6 @@
         maxSheets: 5
         cacheEntries: 16
         cacheMaxBytes: 67108864
-        inlineTextLimit: 8192
-        previewTextLimit: 2048
         markitdownBin: ''
         visionEndpoint: ''
         visionModel: ''

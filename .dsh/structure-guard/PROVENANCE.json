@@ -1,0 +1,16 @@
+{
+  "vendoredBy": "structure-guard",
+  "source": "/Users/c14h14n3/.dsh/skills/structure-guard/scripts",
+  "installedAt": "2026-09-27T14:47:04.906Z",
+  "note": "Re-run `guard.mjs ci install --force` after updating the skill so the vendored engine matches. rules.json is the versioned contract this repo is judged against.",
+  "checksums": {
+    "guard.mjs": "30272be8905fb011",
+    "lib/agents.mjs": "f2efe9f8a2be96fb",
+    "lib/checks.mjs": "b8b78481cb29270f",
+    "lib/digest.mjs": "7c7fe909ab8e0ac8",
+    "lib/functions.mjs": "bbe7993ff8f20ef4",
+    "lib/remote.mjs": "fa101cb50c937e0f",
+    "lib/scan.mjs": "349fa2a49fe199e6",
+    "rules.json": "e080989563754efa"
+  }
+}

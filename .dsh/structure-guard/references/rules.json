@@ -1,0 +1,961 @@
+{
+  "version": 1,
+  "comment": "Default structural rules for the structure-guard skill. Thresholds are calibrated against large, well-run open-source repositories; the `evidence` array names repositories whose layout motivated the rule. A project can disable or override any rule in .structure/guard.json under `rules.disabled` / `rules.overrides`.",
+  "rules": [
+    {
+      "id": "root-file-clutter",
+      "category": "layout",
+      "severity": "warn",
+      "check": "rootFileCount",
+      "params": {
+        "bySize": {
+          "small": 16,
+          "mid": 24,
+          "large": 36
+        }
+      },
+      "description": "The repository root should read as a table of contents.",
+      "evidence": [
+        "microsoft/vscode",
+        "vuejs/core",
+        "vitejs/vite"
+      ]
+    },
+    {
+      "id": "root-config-sprawl",
+      "category": "layout",
+      "severity": "info",
+      "check": "rootConfigCount",
+      "params": {
+        "bySize": {
+          "small": 10,
+          "mid": 16,
+          "large": 26
+        }
+      },
+      "description": "Tool configuration accumulates at the root faster than anywhere else.",
+      "evidence": [
+        "vitest-dev/vitest",
+        "biomejs/biome"
+      ]
+    },
+    {
+      "id": "nesting-depth",
+      "category": "layout",
+      "severity": "warn",
+      "check": "maxDirDepth",
+      "params": {
+        "bySize": {
+          "small": 8,
+          "mid": 12,
+          "large": 18
+        }
+      },
+      "description": "Deep nesting hides module boundaries and makes paths unreadable.",
+      "evidence": [
+        "koishijs/koishi",
+        "vuejs/core"
+      ]
+    },
+    {
+      "id": "top-level-sprawl",
+      "category": "layout",
+      "severity": "warn",
+      "check": "topLevelSprawl",
+      "params": {
+        "bySize": {
+          "small": 6,
+          "mid": 10,
+          "large": 18
+        }
+      },
+      "description": "Top-level directories are the coarsest statement of how a project is organized.",
+      "evidence": [
+        "fastapi/fastapi",
+        "vitejs/vite",
+        "vuejs/core",
+        "golang/go"
+      ]
+    },
+    {
+      "id": "flat-directory",
+      "category": "layout",
+      "severity": "warn",
+      "check": "dirFileCount",
+      "params": {
+        "bySize": {
+          "small": 25,
+          "mid": 40,
+          "large": 60
+        }
+      },
+      "description": "A directory with dozens of loose files has no readable internal boundary.",
+      "evidence": [
+        "microsoft/vscode",
+        "golang/go"
+      ]
+    },
+    {
+      "id": "oversized-file",
+      "category": "decomposition",
+      "severity": "warn",
+      "check": "largestSourceFile",
+      "params": {
+        "bySize": {
+          "small": 600,
+          "mid": 800,
+          "large": 1500
+        },
+        "report": 6
+      },
+      "description": "Absolute size ceiling scales with project class: cordis 591 and koishi 575 are the largest files in those repos, while vite (config.ts) and vue (renderer.ts) are the documented counterexamples.",
+      "evidence": [
+        "vuejs/core",
+        "vitejs/vite",
+        "shigma/cordis"
+      ]
+    },
+    {
+      "id": "systemic-long-files",
+      "category": "decomposition",
+      "severity": "warn",
+      "check": "longFileRatio",
+      "params": {
+        "maxLines": 800,
+        "maxRatio": {
+          "bySize": {
+            "small": 0.02,
+            "mid": 0.05,
+            "large": 0.15
+          }
+        }
+      },
+      "description": "Long files are normal at some scale: measured share of source files over 800 lines is under 2% in small/mid JS-TS repos and 15-22% in long-lived language runtimes. Thresholds scale by size class.",
+      "evidence": [
+        "microsoft/vscode",
+        "kubernetes/kubernetes"
+      ]
+    },
+    {
+      "id": "long-functions",
+      "category": "decomposition",
+      "severity": "warn",
+      "check": "longFunctions",
+      "params": {
+        "maxLines": {
+          "bySize": {
+            "small": 120,
+            "mid": 120,
+            "large": 200
+          }
+        },
+        "report": 6,
+        "allow": []
+      },
+      "description": "Single-function length, measured with a brace/indent scanner over JS, TS, Vue, Svelte, Go, Rust and Python. Closure factories and names in `allow` are exempt; demo and integration trees are not measured.",
+      "evidence": [
+        "nitrojs/nitro",
+        "nestjs/nest",
+        "cordiverse/cordis",
+        "vitejs/vite",
+        "vuejs/core"
+      ]
+    },
+    {
+      "id": "god-module",
+      "category": "decomposition",
+      "severity": "warn",
+      "check": "godModule",
+      "params": {
+        "maxLoc": {
+          "bySize": {
+            "small": 6000,
+            "mid": 12000,
+            "large": 25000
+          }
+        },
+        "maxFiles": {
+          "bySize": {
+            "small": 80,
+            "mid": 250,
+            "large": 600
+          }
+        },
+        "maxPackageLoc": {
+          "bySize": {
+            "small": 20000,
+            "mid": 60000,
+            "large": 120000
+          }
+        },
+        "maxPackageFiles": {
+          "bySize": {
+            "small": 150,
+            "mid": 500,
+            "large": 1200
+          }
+        }
+      },
+      "description": "A module without a size ceiling has an interface nobody can hold in mind.",
+      "evidence": [
+        "vuejs/core",
+        "vercel/next.js"
+      ]
+    },
+    {
+      "id": "no-tests",
+      "category": "verification",
+      "severity": "error",
+      "check": "testPresence",
+      "params": {
+        "minFiles": 1
+      },
+      "description": "Untested structure cannot be refactored safely, which is when drift starts.",
+      "evidence": [
+        "vuejs/core",
+        "vitest-dev/vitest",
+        "golang/go"
+      ]
+    },
+    {
+      "id": "thin-tests",
+      "category": "verification",
+      "severity": "warn",
+      "check": "testRatio",
+      "params": {
+        "min": 0.25
+      },
+      "description": "Measured test-code/source-code ratio across the corpus spans 0.35-6.9 (median 1.16); no reference repository falls below 0.35.",
+      "evidence": [
+        "shigma/cordis",
+        "vitest-dev/vitest",
+        "vuejs/core"
+      ]
+    },
+    {
+      "id": "mixed-test-placement",
+      "category": "verification",
+      "severity": "info",
+      "check": "mixedTestStyles",
+      "params": {},
+      "description": "Beside-source only, one top-level test/ tree, or both with the top-level tree split by kind. All three occur in the corpus; mixing without subdivision does not.",
+      "evidence": [
+        "vuejs/core",
+        "microsoft/vscode"
+      ]
+    },
+    {
+      "id": "flat-test-tree",
+      "category": "verification",
+      "severity": "info",
+      "check": "testTreeOrganization",
+      "params": {
+        "minFiles": 40
+      },
+      "description": "A large test tree is subdivided by kind or mirrors the module layout.",
+      "evidence": [
+        "vitest-dev/vitest",
+        "python/cpython",
+        "denoland/deno",
+        "golang/go",
+        "kubernetes/kubernetes"
+      ]
+    },
+    {
+      "id": "import-cycles",
+      "category": "boundaries",
+      "severity": "error",
+      "check": "cycles",
+      "params": {
+        "max": 0
+      },
+      "description": "A cycle that crosses a module boundary means two modules cannot be reasoned about independently.",
+      "evidence": [
+        "vuejs/core",
+        "vitejs/vite"
+      ]
+    },
+    {
+      "id": "intra-module-cycles",
+      "category": "boundaries",
+      "severity": "info",
+      "check": "intraModuleCycles",
+      "params": {
+        "max": 8
+      },
+      "description": "Cohesive packages tolerate a few internal cycles; a growing count means a missing internal seam.",
+      "evidence": [
+        "vuejs/core",
+        "vitejs/vite"
+      ]
+    },
+    {
+      "id": "module-cycles",
+      "category": "boundaries",
+      "severity": "warn",
+      "check": "moduleCycles",
+      "params": {
+        "max": 0
+      },
+      "description": "Module-level cycles mean the decomposition is wrong, not the imports.",
+      "evidence": [
+        "vercel/next.js",
+        "nestjs/nest"
+      ]
+    },
+    {
+      "id": "declared-boundary-violation",
+      "category": "boundaries",
+      "severity": "error",
+      "check": "boundaryViolation",
+      "params": {},
+      "description": "Violates a boundary this project declared in .structure/guard.json.",
+      "evidence": [
+        "microsoft/vscode",
+        "kubernetes/kubernetes"
+      ]
+    },
+    {
+      "id": "layer-violation",
+      "category": "boundaries",
+      "severity": "error",
+      "check": "layerViolation",
+      "params": {},
+      "description": "Lower layers must not import higher layers.",
+      "evidence": [
+        "golang/go",
+        "kubernetes/kubernetes",
+        "rust-lang/rust"
+      ]
+    },
+    {
+      "id": "internal-privacy",
+      "category": "boundaries",
+      "severity": "error",
+      "check": "internalPrivacy",
+      "params": {
+        "max": 0
+      },
+      "description": "An internal/ (or _private) subtree belongs to the module that contains it; nothing outside may deep-import it.",
+      "evidence": [
+        "microsoft/vscode",
+        "vitejs/vite",
+        "Effect-TS/effect",
+        "nestjs/nest",
+        "kubernetes/kubernetes",
+        "golang/go"
+      ]
+    },
+    {
+      "id": "library-isolation",
+      "category": "boundaries",
+      "severity": "error",
+      "check": "libraryIsolation",
+      "params": {
+        "max": 0
+      },
+      "description": "Libraries never import applications, examples, benchmarks or tests.",
+      "evidence": [
+        "vercel/next.js",
+        "vitejs/vite",
+        "vitest-dev/vitest",
+        "nestjs/nest",
+        "rolldown/rolldown",
+        "microsoft/vscode",
+        "denoland/deno",
+        "biomejs/biome"
+      ]
+    },
+    {
+      "id": "orphan-modules",
+      "category": "boundaries",
+      "severity": "info",
+      "check": "orphanModules",
+      "params": {
+        "max": 0,
+        "allow": []
+      },
+      "description": "A module nothing imports is either dead or wired in a way nobody documented.",
+      "evidence": [
+        "vuejs/core",
+        "unjs/nitro"
+      ]
+    },
+    {
+      "id": "unresolved-imports",
+      "category": "boundaries",
+      "severity": "warn",
+      "check": "unresolvedImports",
+      "params": {
+        "max": 0
+      },
+      "description": "Every unresolved edge is a blind spot in the module graph.",
+      "evidence": [
+        "vitejs/vite"
+      ]
+    },
+    {
+      "id": "naming-drift",
+      "category": "conventions",
+      "severity": "warn",
+      "check": "namingConsistency",
+      "params": {
+        "min": 0.75
+      },
+      "description": "Measured over multi-word file names only; single-word names carry no casing signal.",
+      "evidence": [
+        "vuejs/core",
+        "shigma/cordis",
+        "koishijs/koishi"
+      ]
+    },
+    {
+      "id": "declared-naming-convention",
+      "category": "conventions",
+      "severity": "warn",
+      "check": "namingConvention",
+      "params": {
+        "maxViolations": 5
+      },
+      "description": "When the project declares per-glob casing in .structure/guard.json (`naming`), every violation is drift. Inactive until declared.",
+      "evidence": [
+        "rolldown/rolldown",
+        "biomejs/biome",
+        "koishijs/koishi",
+        "vuejs/core",
+        "vercel/next.js"
+      ]
+    },
+    {
+      "id": "duplicated-file-names",
+      "category": "conventions",
+      "severity": "info",
+      "check": "duplicatedBasenames",
+      "params": {
+        "maxCount": 3
+      },
+      "description": "The same source file name in many directories usually means the same responsibility in many places. Sample, example, integration and test trees are excluded: repeated boilerplate there is the point.",
+      "evidence": [
+        "microsoft/vscode"
+      ]
+    },
+    {
+      "id": "missing-root-docs",
+      "category": "documentation",
+      "severity": "warn",
+      "check": "docsPresence",
+      "params": {
+        "required": [
+          "readme",
+          "license"
+        ]
+      },
+      "description": "README and LICENSE are the minimum entry points for any shared repository.",
+      "evidence": [
+        "vuejs/core",
+        "golang/go",
+        "kubernetes/kubernetes"
+      ]
+    },
+    {
+      "id": "missing-architecture-doc",
+      "category": "documentation",
+      "severity": "info",
+      "check": "architectureDoc",
+      "params": {
+        "minSourceFiles": 50
+      },
+      "description": "Only 8 of 18 reference repos carry a named architecture document, but every one over 5000 files has either that or a docs/ tree that maps the layout.",
+      "evidence": [
+        "microsoft/vscode",
+        "rust-lang/rust",
+        "kubernetes/kubernetes"
+      ]
+    },
+    {
+      "id": "thin-documentation",
+      "category": "documentation",
+      "severity": "info",
+      "check": "docsRatio",
+      "params": {
+        "min": 0.05
+      },
+      "description": "Document module intent; volume of prose is a weak but real signal.",
+      "evidence": [
+        "python/cpython",
+        "rust-lang/rust"
+      ]
+    },
+    {
+      "id": "no-ci",
+      "category": "automation",
+      "severity": "warn",
+      "check": "ciPresence",
+      "params": {},
+      "description": "Without CI, structural rules are advisory only.",
+      "evidence": [
+        "vuejs/core",
+        "vitejs/vite",
+        "vercel/next.js"
+      ]
+    },
+    {
+      "id": "no-linter",
+      "category": "automation",
+      "severity": "warn",
+      "check": "linterPresence",
+      "params": {},
+      "description": "Every repository in the reference set commits a linter configuration; 94% also commit a formatter.",
+      "evidence": [
+        "vuejs/core",
+        "biomejs/biome"
+      ]
+    },
+    {
+      "id": "no-machine-enforcement",
+      "category": "automation",
+      "severity": "info",
+      "check": "machineEnforcement",
+      "params": {
+        "minSourceFiles": 50
+      },
+      "description": "The most disciplined repos encode layout rules as executable checks, not prose.",
+      "evidence": [
+        "microsoft/vscode",
+        "kubernetes/kubernetes",
+        "golang/go",
+        "rolldown/rolldown",
+        "vitejs/vite"
+      ]
+    },
+    {
+      "id": "no-agent-instructions",
+      "category": "governance",
+      "severity": "info",
+      "check": "agentInstructions",
+      "params": {
+        "minSourceFiles": 20
+      },
+      "description": "Agent instructions (AGENTS.md / CLAUDE.md / .agents/) are how a repository states its layout rules to the coding agents working in it.",
+      "evidence": [
+        "nitrojs/nitro",
+        "vuejs/core",
+        "vitejs/vite",
+        "vercel/next.js",
+        "cordiverse/cordis"
+      ]
+    },
+    {
+      "id": "no-type-config",
+      "category": "automation",
+      "severity": "warn",
+      "check": "typeConfigPresence",
+      "params": {},
+      "description": "Module resolution and strictness must be declared, not guessed by consumers.",
+      "evidence": [
+        "vuejs/core",
+        "microsoft/vscode"
+      ]
+    },
+    {
+      "id": "no-lockfile",
+      "category": "automation",
+      "severity": "warn",
+      "check": "lockfilePresence",
+      "params": {},
+      "description": "Reproducible installs are a structural guarantee.",
+      "evidence": [
+        "vercel/next.js",
+        "vitejs/vite"
+      ]
+    },
+    {
+      "id": "no-gitignore",
+      "category": "automation",
+      "severity": "warn",
+      "check": "gitignorePresence",
+      "params": {},
+      "description": "Without .gitignore, build output drifts into the module graph.",
+      "evidence": [
+        "vuejs/core"
+      ]
+    },
+    {
+      "id": "stale-entry-points",
+      "category": "packaging",
+      "severity": "error",
+      "check": "exportsTargetsExist",
+      "params": {},
+      "description": "A package whose declared entries do not exist is broken for every consumer.",
+      "evidence": [
+        "vitejs/vite",
+        "unjs/nitro"
+      ]
+    },
+    {
+      "id": "no-build-script",
+      "category": "packaging",
+      "severity": "info",
+      "check": "buildScriptPresence",
+      "params": {},
+      "description": "Make the source-to-output relationship explicit.",
+      "evidence": [
+        "vuejs/core",
+        "vitejs/vite"
+      ]
+    },
+    {
+      "id": "no-test-script",
+      "category": "packaging",
+      "severity": "warn",
+      "check": "testScriptPresence",
+      "params": {},
+      "description": "CI, hooks and other agents need a declared way to run the tests.",
+      "evidence": [
+        "vuejs/core",
+        "vitest-dev/vitest"
+      ]
+    },
+    {
+      "id": "no-typecheck-script",
+      "category": "packaging",
+      "severity": "info",
+      "check": "typecheckScriptPresence",
+      "params": {},
+      "description": "A fast, side-effect-free correctness gate belongs in the manifest.",
+      "evidence": [
+        "vuejs/core",
+        "vercel/next.js"
+      ]
+    },
+    {
+      "id": "dependency-bloat",
+      "category": "packaging",
+      "severity": "info",
+      "check": "dependencyCount",
+      "params": {
+        "max": 60
+      },
+      "description": "Every runtime dependency is an unversioned structural commitment.",
+      "evidence": [
+        "shigma/cordis",
+        "vuejs/core"
+      ]
+    },
+    {
+      "id": "core-dependency-ceiling",
+      "category": "packaging",
+      "severity": "info",
+      "check": "coreDependencyCeiling",
+      "params": {
+        "max": 5
+      },
+      "description": "Core/kernel packages stay dependency-light and push framework packages into peerDependencies.",
+      "evidence": [
+        "cordiverse/cordis",
+        "Effect-TS/effect",
+        "nestjs/nest",
+        "vuejs/core"
+      ]
+    },
+    {
+      "id": "monorepo-inconsistency",
+      "category": "packaging",
+      "severity": "warn",
+      "check": "monorepoConsistency",
+      "params": {
+        "maxRoots": 2
+      },
+      "description": "Workspace members belong under one or two declared roots.",
+      "evidence": [
+        "vercel/next.js",
+        "vuejs/core",
+        "vitejs/vite"
+      ]
+    },
+    {
+      "id": "package-shape-drift",
+      "category": "monorepo",
+      "severity": "info",
+      "check": "packageShape",
+      "params": {
+        "minPackages": 4,
+        "minFiles": 6,
+        "minShare": 0.75,
+        "maxOutliers": 6
+      },
+      "description": "Workspace members share one shape (manifest + src layout + tests + readme); deviations are reported individually, never as a global complaint.",
+      "evidence": [
+        "vuejs/core",
+        "nestjs/nest",
+        "cordiverse/cordis",
+        "biomejs/biome"
+      ]
+    },
+    {
+      "id": "committed-vendor",
+      "category": "hygiene",
+      "severity": "warn",
+      "check": "vendoredCode",
+      "params": {
+        "maxFiles": 0
+      },
+      "description": "Vendored code hides the real dependency structure.",
+      "evidence": [
+        "golang/go",
+        "kubernetes/kubernetes"
+      ]
+    },
+    {
+      "id": "committed-generated",
+      "category": "hygiene",
+      "severity": "warn",
+      "check": "generatedCommitted",
+      "params": {
+        "maxFiles": 0
+      },
+      "description": "Generated output in the tree makes source and build indistinguishable.",
+      "evidence": [
+        "vuejs/core",
+        "vitejs/vite"
+      ]
+    },
+    {
+      "id": "committed-build-output",
+      "category": "hygiene",
+      "severity": "warn",
+      "check": "committedBuildOutput",
+      "params": {
+        "maxFiles": 0
+      },
+      "description": "Build output directories are ignored in all 18 reference repos and rebuilt from a declared script.",
+      "evidence": [
+        "golang/go",
+        "kubernetes/kubernetes",
+        "vercel/next.js",
+        "vuejs/core",
+        "rolldown/rolldown"
+      ]
+    },
+    {
+      "id": "committed-runtime-artifacts",
+      "category": "hygiene",
+      "severity": "warn",
+      "check": "committedRuntimeArtifacts",
+      "params": {},
+      "description": "Runtime markers (probes, install receipts, pid/cache files, OS droppings) are regenerated on every machine and must not be tracked.",
+      "evidence": [
+        "golang/go",
+        "kubernetes/kubernetes",
+        "vuejs/core",
+        "vitejs/vite"
+      ]
+    },
+    {
+      "id": "tracked-env-file",
+      "category": "hygiene",
+      "severity": "error",
+      "check": "secretsInRepo",
+      "params": {},
+      "description": "Track .env.example, never .env.",
+      "evidence": [
+        "vercel/next.js"
+      ]
+    },
+    {
+      "id": "churn-hotspots",
+      "category": "risk",
+      "severity": "info",
+      "check": "churnHotspots",
+      "params": {
+        "minCommits": 12,
+        "minFanIn": 3
+      },
+      "description": "Frequently changed, widely imported files are the drift engines of a project.",
+      "evidence": [
+        "microsoft/vscode",
+        "kubernetes/kubernetes"
+      ]
+    },
+    {
+      "id": "stale-baseline",
+      "category": "drift",
+      "severity": "info",
+      "check": "structureBaseline",
+      "params": {
+        "maxAgeDays": 30
+      },
+      "description": "An unread baseline stops being a guard.",
+      "evidence": []
+    }
+  ],
+  "calibration": {
+    "source": "GitHub REST API file trees (git/trees?recursive=1, truncated:false) of 18 large open-source repositories fetched 2026-09-27 through the gh CLI; no repository was cloned. Full corpus: references/industry-standards.md.",
+    "repos": [
+      "microsoft/vscode",
+      "vercel/next.js",
+      "golang/go",
+      "kubernetes/kubernetes",
+      "denoland/deno",
+      "fastapi/fastapi",
+      "oven-sh/bun",
+      "vitejs/vite",
+      "python/cpython",
+      "nestjs/nest",
+      "vuejs/core",
+      "biomejs/biome",
+      "vitest-dev/vitest",
+      "Effect-TS/effect",
+      "rolldown/rolldown",
+      "nitrojs/nitro",
+      "cordiverse/cordis",
+      "koishijs/koishi"
+    ],
+    "sizeClasses": {
+      "small": "<500 tracked files",
+      "mid": "500-4999",
+      "large": ">=5000"
+    },
+    "observed": {
+      "rootLooseFiles": {
+        "small": {
+          "p50": 17,
+          "max": 21
+        },
+        "mid": {
+          "p50": 21,
+          "p90": 25
+        },
+        "large": {
+          "p50": 28,
+          "p90": 44
+        }
+      },
+      "maxDepth": {
+        "small": {
+          "p50": 6
+        },
+        "mid": {
+          "p50": 8,
+          "p90": 12
+        },
+        "large": {
+          "p50": 13,
+          "p90": 18
+        }
+      },
+      "topLevelDirs": {
+        "small": {
+          "p50": 3
+        },
+        "mid": {
+          "p50": 8
+        },
+        "large": {
+          "p50": 14,
+          "max": 28
+        }
+      },
+      "testFilesPerSourceFile": {
+        "p50": 0.8,
+        "min": 0.35,
+        "max": 6.9
+      },
+      "presence": {
+        "LICENSE": 1.0,
+        "gitignore": 1.0,
+        "linter": 1.0,
+        "README": 0.94,
+        "ci": 0.94,
+        "formatter": 0.94,
+        "gitattributes": 0.83,
+        "workspaceManifest": 0.83,
+        "releaseAutomation": 0.72,
+        "CONTRIBUTING": 0.67,
+        "architectureDoc": 0.44,
+        "CHANGELOG": 0.39,
+        "SECURITY": 0.33,
+        "enforcedBoundaries": 0.28
+      },
+      "rootConfigFiles": {
+        "median": 16,
+        "min": 4,
+        "max": 35,
+        "tightest": [
+          "golang/go 4",
+          "fastapi/fastapi 5",
+          "vitejs/vite 12",
+          "cordiverse/cordis 13"
+        ]
+      },
+      "largestSourceFile": {
+        "cordis": 591,
+        "koishi": 575,
+        "nitro": 1064,
+        "nest": 1359,
+        "vitest": 1397,
+        "counterexamples": [
+          "vite src/node/config.ts resolveConfig 861 lines in one function",
+          "vue renderer.ts baseCreateRenderer 2169 lines in one function"
+        ]
+      },
+      "machineEnforcement": {
+        "microsoft/vscode": ".eslint-plugin-local/ 49 rules (39 code-* + 10 vscode-dts-*) incl. code-layering.ts over the 6-entry layer allow-map declared in eslint.config.js",
+        "kubernetes/kubernetes": "71 .import-restrictions files via cmd/import-boss, 596 OWNERS, 92 internal/ dirs",
+        "golang/go": "api/go1*.txt frozen public API surface, api/next, api/except.txt",
+        "rolldown/rolldown": ".ls-lint.json per-root casing",
+        "vitejs/vite": "\"./types/internal/*\": null seals internal types at resolution time"
+      },
+      "machineEnforcementCount": "5 of 18 repos mechanically enforce boundaries, including the 4 largest codebases",
+      "longestFunction": {
+        "nitro": 19,
+        "nestjs/nest": 78,
+        "cordiverse/cordis": 80,
+        "counterexamples": [
+          "vite resolveConfig 861 lines",
+          "vue baseCreateRenderer 2169 lines"
+        ],
+        "recommendation": "warn above 120"
+      },
+      "packageShapeUniformity": {
+        "vuejs/core": "12/12",
+        "nestjs/nest": "9/9",
+        "cordiverse/cordis": "9/9",
+        "biomejs/biome": "102/102 crates"
+      },
+      "presenceCoverage": {
+        "LICENSE": 18,
+        "gitignore": 18,
+        "formatter": 18,
+        "tests": 18,
+        "linter": 17,
+        "ci": 17,
+        "README": 17,
+        "CONTRIBUTING": 13,
+        "changelogMechanism": 11,
+        "editorconfig": 11,
+        "agentDocs": 10,
+        "architectureDoc": 8,
+        "CODEOWNERS": 8,
+        "machineEnforcedBoundary": 5,
+        "n": 18
+      }
+    },
+    "validatedAgainst": {
+      "vuejs/core": "score 85-90, 0 errors",
+      "shigma/cordis": "score 98, 0 errors, 0 warnings",
+      "synthetic drifting project": "score ~50, 3 errors (boundary, layer, cycle)"
+    },
+    "references": {
+      "industryStandards": "references/industry-standards.md",
+      "observedLayouts": "references/observed-layouts.json",
+      "method": "references/RESEARCH-LOG.md"
+    },
+    "note": "Thresholds are calibrated to the measured distribution of these repositories, not to taste. Severity policy: `error` is reserved for a broken contract or a hard invariant (cross-module cycle, declared boundary/layer violation, internal/ privacy leak, library importing examples, broken entry point, tracked .env, committed build output, new cycle versus baseline). Everything else is warn or info. A well-run reference repository must score 85+ with zero errors: cordiverse/cordis 98, vuejs/core 86, nestjs/nest 78.",
+    "canonicalNames": {
+      "shigma/cordis": "cordiverse/cordis",
+      "unjs/nitro": "nitrojs/nitro",
+      "effect-ts/effect": "Effect-TS/effect"
+    }
+  }
+}

@@ -5,14 +5,23 @@
  *   2. local Ollama auto-detected (http://localhost:11434) — picks the first
  *      vision-capable model (e.g. a locally deployed DeepSeek-VL2 or
  *      qwen2.5-vl) — zero config, images never leave the machine;
- *   3. standard OpenAI endpoint with a key resolved from the dsh credentials
+ *   3. DeepSeek official vision API (`deepseek-v4-flash-vision-exp`) using
+ *      the `DEEPSEEK_API_KEY` resolved from the dsh credentials seam — the
+ *      key the user already configured for DeepSeek chat works as-is;
+ *   4. standard OpenAI endpoint with a key resolved from the dsh credentials
  *      seam (inherited env → $DSH_HOME/.credentials.yaml → project .env).
  *
  * The description travels with the message, so a text-only model (like the
- * DeepSeek API) can reason about the image content.
+ * DeepSeek chat API) can reason about the image content.
  */
 
 import { readFileSync, statSync } from 'node:fs'
+
+/** OpenAI-compatible endpoint for the DeepSeek official vision model. */
+const DEEPSEEK_VISION_ENDPOINT = 'https://api.deepseek.com/v1/chat/completions'
+/** DeepSeek official multimodal model id (per https://api-docs.deepseek.com/guides/vision/). */
+const DEEPSEEK_VISION_MODEL = 'deepseek-v4-flash-vision-exp'
+const DEEPSEEK_KEY_ENV = 'DEEPSEEK_API_KEY'
 
 export interface VisionOptions {
   /** Explicit endpoint override ('' = auto-discovery). */
@@ -23,6 +32,8 @@ export interface VisionOptions {
   apiKeyEnv: string
   /** Resolver for the API key (dsh credentials seam). */
   resolveKey: () => Promise<string>
+  /** Resolver for an arbitrary env-named key via the same credentials seam. */
+  resolveEnvKey?: (env: string) => Promise<string>
   /** Request timeout in ms. */
   timeoutMs?: number
   /** Max image bytes accepted (default 10 MB). */
@@ -64,6 +75,21 @@ async function resolveTarget(options: VisionOptions): Promise<VisionTarget> {
   }
   const ollama = await detectLocalOllama()
   if (ollama !== null) return ollama
+  // DeepSeek official vision: the user's DeepSeek chat key works as-is.
+  if (options.resolveEnvKey !== undefined) {
+    try {
+      const deepseekKey = await options.resolveEnvKey(DEEPSEEK_KEY_ENV)
+      if (deepseekKey !== '') {
+        return {
+          endpoint: DEEPSEEK_VISION_ENDPOINT,
+          model: options.model !== '' && /^deepseek/i.test(options.model) ? options.model : DEEPSEEK_VISION_MODEL,
+          apiKey: deepseekKey
+        }
+      }
+    } catch {
+      // fall through to the OpenAI standard branch
+    }
+  }
   const key = await options.resolveKey()
   if (key !== '') {
     return {
@@ -72,7 +98,7 @@ async function resolveTarget(options: VisionOptions): Promise<VisionTarget> {
       apiKey: key
     }
   }
-  throw new Error('vision: no endpoint available (configure visionEndpoint or start local Ollama with a VL model, or set a vision API key)')
+  throw new Error('vision: no endpoint available (configure visionEndpoint, start local Ollama with a VL model, or set a DeepSeek/OpenAI vision API key)')
 }
 
 function imageDataUrl(filePath: string): string {

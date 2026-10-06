@@ -7,6 +7,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **DeepSeek official vision in the discovery chain**: the image-description
+  chain now auto-detects the official `deepseek-v4-flash-vision-exp`
+  multimodal API (https://api-docs.deepseek.com/guides/vision/) using the
+  `DEEPSEEK_API_KEY` already present in the dsh credentials — zero extra
+  setup for DeepSeek users, and verified against a live screenshot (quality
+  far above OCR). Chain order: explicit `visionEndpoint` → local Ollama →
+  DeepSeek official vision → OpenAI standard.
+
+### Fixed
+
+- **Codex-style references everywhere**: every upload — images included — now
+  inserts a clean `@relative/path` reference (relative to the session
+  workspace). Absolute host paths no longer leak into the composer or the
+  message; the removal card still deletes via the absolute path internally.
+- **No more fallback text**: the old "图片以文件形式上传(<绝对路径>);未生成讲解…"
+  text block is gone. An image with no available vision endpoint uploads as a
+  plain `@reference` only (the agent can still OCR via `read_document`).
+- **Image content support**: text-only routes insert
+  `[图片: name] 图片讲解: <description>` before the reference **only when** a
+  vision description was actually generated; multimodal routes and any
+  registered `read_image` tool (official or a vision bridge) are detected at
+  upload time and keep the pure-reference path.
+- **`read_image` tool detection added** to the image-mode gate: a registered
+  `read_image` tool (e.g. from a vision bridge) now counts as native image
+  support, not just the routed model's `inputModalities`.
+- Docs (README/README.zh) updated to describe the reference-first behavior
+  and the official DeepSeek vision model.
+- **Installation blocked by a stale peer range**: the DSH peers were pinned at
+  `^0.1.0-rc.6` while the shipped runtime is `0.2.0-rc.2`, so
+  `dsh plugin … add dsh-file-upload` refused with
+  `installation rejected: Plugin dsh-file-upload@0.5.3 is incompatible with
+  dsh 0.2.0-rc.2` before pnpm ever ran and nothing was downloaded. Ranges are
+  now `>=0.1.0-rc.6 <0.3.0` for `@deepseek-ai/dsh-fs`, `-tools` and
+  `-credentials`, and `>=3.18.1` for `@deepseek-ai/schemastery`. The APIs this
+  plugin calls (`fs.resolve` / `fs.stat` / `fs.readBytes`, `FsTarget`,
+  `FsVersion`, the `FsInfo` shape) are unchanged across that window, checked
+  against the `0.2.0-rc.2` runtime; installation was then exercised end to end
+  and the composed row read back with `--dump-config`.
+- **Row id collided with a shipped row**: the bundle inserted its row as
+  `id: file-upload`, the id `@deepseek-ai/dsh-web-app` already uses for the
+  shipped browser upload transport
+  (`@deepseek-ai/dsh-client-file-upload`, providing `ctx.fileUpload`). Two rows
+  under one id make every id-targeted override ambiguous — the
+  `plugins.row.config` key, `plugin_manager`'s enable/disable writer, and a
+  user's own override layer would each address both rows at once. The id is now
+  `dsh-file-upload`, which also makes `cordis.patch.yml` honour its own stated
+  rule that the row id match the node half's exported cordis `name`. README,
+  README.zh and `examples/local-override.yml` were updated to match; the
+  example also dropped the `inlineTextLimit` / `previewTextLimit` keys removed
+  back in 0.5.3 and gained the vision keys it had been missing.
+- **`INSTALL.md` added**: the verified install paths (registry and local
+  `link:`), what the manager writes to the profile manifest, a no-boot
+  verification recipe using `--dump-config`, and troubleshooting for an
+  incompatible-peer refusal or an unreachable registry.
+
+## [0.5.3] - 2026-08-21
+
+### Removed
+
+- **Dead config** `inlineTextLimit` / `previewTextLimit`: the 0.5.0 redesign
+  (Codex-style path references only, no text inlining) left these options
+  wired through schema, validation, and handler options but never used.
+  Removed from config surface, upload handler, tests, and docs.
+- **Stale artifact** `lib/asr.js`: leftover from the 0.4.x voice/ASR pipeline,
+  no longer built from source and referenced nowhere; dropped from the package.
+
+### Fixed
+
+- **README/README.zh usage steps contradicted the 0.5 behavior** — "small text
+  files land directly in the composer" was a 0.4.x leftover; now documents the
+  actual behavior (attachment card + `@relative/path` reference, raw content
+  never dumped into the chat).
+- **Client stylesheet now lives in the plugin fiber**: injected via
+  `ctx.effect` and removed when the client half stops or updates, instead of a
+  one-way `<style>` tag.
+
 ## [0.5.2] - 2026-08-19
 
 ### Added

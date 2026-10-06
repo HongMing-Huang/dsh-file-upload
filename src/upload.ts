@@ -12,7 +12,7 @@
 
 import { createHash } from 'node:crypto'
 import { mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises'
-import { join, relative, sep } from 'node:path'
+import { join, relative, resolve, sep } from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { sniff } from './detect.ts'
 import type { SniffResult } from './detect.ts'
@@ -29,10 +29,6 @@ export interface UploadOptions {
   sweepIntervalMs: number
   /** Concurrent upload bodies admitted at once. */
   maxConcurrent: number
-  /** Byte cap for one inline text payload returned to the client. */
-  inlineTextLimit: number
-  /** Byte cap for the preview returned to the client. */
-  previewTextLimit: number
   /**
    * Resolve a session id to its workspace cwd. When the resolver exists but
    * returns undefined the request is rejected (unauthenticated session);
@@ -96,8 +92,6 @@ export function createUploadHandler(options: UploadOptions) {
     maxConcurrent,
     sessionCwd,
     defaultDir,
-    inlineTextLimit,
-    previewTextLimit,
     now = () => Date.now()
   } = options
 
@@ -132,7 +126,11 @@ export function createUploadHandler(options: UploadOptions) {
       res.end(JSON.stringify({ error: 'payload too large' }))
       return
     }
+    // The slot covers only the body read + disk write below. The image
+    // explanation call (`imageMode` + `vision`, up to 60s) runs after the slot
+    // is released, so a few slow images cannot starve document uploads.
     inflight += 1
+    let persisted: { meta: UploadedMeta; relativePath: string } | null = null
     try {
       const chunks: Buffer[] = []
       let total = 0
@@ -195,40 +193,7 @@ export function createUploadHandler(options: UploadOptions) {
       }
 
       const relativePath = relPath !== '' ? relPath : relative(storage.cwd, dest).split(sep).join('/')
-
-      // Images: report how the agent should read them — natively via the
-      // official read_image tool (multimodal route or a vision bridge like
-      // dsh-vision-proxy, which our route gate detects automatically) or,
-      // for text-only routes, generate an automatic image description
-      // ("讲解图片") through the vision discovery chain so the text-only
-      // model can reason about the image.
-      if (sniffResult.type === 'image' && options.imageMode !== undefined) {
-        try {
-          meta.imageMode = await options.imageMode(storage.sessionId)
-          if (meta.imageMode === 'ocr' && options.vision !== undefined) {
-            meta.imageDescription = await options.vision(dest, meta.name)
-          }
-        } catch (err) {
-          meta.imageMode = 'ocr'
-          console.warn(`[dsh-file-upload] image description failed for ${name}:`, err instanceof Error ? err.message : String(err))
-        }
-      }
-
-      res.writeHead(200, { 'content-type': 'application/json' })
-      res.end(
-        JSON.stringify({
-          path: meta.path,
-          relativePath,
-          name: meta.name,
-          bytes: meta.bytes,
-          sessionId: meta.sessionId,
-          sniffedType: meta.sniff.type,
-          label: meta.sniff.label,
-          ...(meta.imageMode !== undefined ? { imageMode: meta.imageMode } : {}),
-          ...(meta.imageDescription !== undefined ? { imageDescription: meta.imageDescription } : {}),
-          ...(meta.deduplicated ? { deduplicated: true } : {})
-        })
-      )
+      persisted = { meta, relativePath }
     } catch (err) {
       console.error('[dsh-file-upload] upload persist failed:', err)
       res.writeHead(500, { 'content-type': 'application/json' })
@@ -236,6 +201,43 @@ export function createUploadHandler(options: UploadOptions) {
     } finally {
       inflight -= 1
     }
+    if (persisted === null) return
+    const { meta, relativePath } = persisted
+
+    // Images: report how the agent should read them — natively via the
+    // official read_image tool (multimodal route or a vision bridge like
+    // dsh-vision-proxy, which our route gate detects automatically) or,
+    // for text-only routes, generate an automatic image description
+    // ("讲解图片") through the vision discovery chain so the text-only
+    // model can reason about the image. Runs outside the concurrency gate:
+    // the slot above is already released when this slow call starts.
+    if (meta.sniff.type === 'image' && options.imageMode !== undefined) {
+      try {
+        meta.imageMode = await options.imageMode(meta.sessionId)
+        if (meta.imageMode === 'ocr' && options.vision !== undefined) {
+          meta.imageDescription = await options.vision(meta.path, meta.name)
+        }
+      } catch (err) {
+        meta.imageMode = 'ocr'
+        console.warn(`[dsh-file-upload] image description failed for ${meta.name}:`, err instanceof Error ? err.message : String(err))
+      }
+    }
+
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(
+      JSON.stringify({
+        path: meta.path,
+        relativePath,
+        name: meta.name,
+        bytes: meta.bytes,
+        sessionId: meta.sessionId,
+        sniffedType: meta.sniff.type,
+        label: meta.sniff.label,
+        ...(meta.imageMode !== undefined ? { imageMode: meta.imageMode } : {}),
+        ...(meta.imageDescription !== undefined ? { imageDescription: meta.imageDescription } : {}),
+        ...(meta.deduplicated ? { deduplicated: true } : {})
+      })
+    )
   }
 
   async function handleDelete(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -247,13 +249,19 @@ export function createUploadHandler(options: UploadOptions) {
     }
     const raw = req.headers['x-file-path']
     const filePath = typeof raw === 'string' ? raw : ''
-    if (filePath === '' || !filePath.startsWith(storage.dir)) {
+    // Normalize both sides before comparing: `..`, duplicate separators and a
+    // trailing slash must not slip past the guard. The target has to be the
+    // session directory itself or live below it with a real path separator —
+    // a bare string prefix would also match siblings like `<session>-evil`.
+    const dir = resolve(storage.dir)
+    const target = filePath === '' ? '' : resolve(filePath)
+    if (target === '' || (target !== dir && !target.startsWith(dir + sep))) {
       res.writeHead(400, { 'content-type': 'application/json' })
       res.end(JSON.stringify({ error: 'invalid path' }))
       return
     }
     try {
-      await rm(filePath, { force: true })
+      await rm(target, { force: true })
       res.writeHead(200, { 'content-type': 'application/json' })
       res.end(JSON.stringify({ ok: true }))
     } catch (err) {
@@ -282,9 +290,11 @@ export function createUploadHandler(options: UploadOptions) {
  * roots: the fallback `defaultDir` plus every session workspace's
  * `.dsh-uploads` directory (resolved live each sweep), so files stored under
  * session cwds are swept too — not just the no-session fallback root.
+ * A root entry may be a path or a resolver returning one path, several paths
+ * (e.g. every active session cwd) or nothing at all.
  */
 export function createSweeper(
-  roots: Array<string | (() => string | undefined)>,
+  roots: Array<string | (() => string | readonly (string | undefined)[] | undefined)>,
   ttlMs: number,
   intervalMs: number,
   now: () => number = Date.now
@@ -295,17 +305,20 @@ export function createSweeper(
       try {
         const seen = new Set<string>()
         for (const rootEntry of roots) {
-          const root = typeof rootEntry === 'function' ? rootEntry() : rootEntry
-          if (root === undefined || seen.has(root)) continue
-          seen.add(root)
-          const uploadRoot = join(root, '.dsh-uploads')
-          const sessionDirs = await readdir(uploadRoot).catch(() => [])
-          for (const sessionDir of sessionDirs) {
-            const dir = join(uploadRoot, sessionDir)
-            const info = await stat(dir).catch(() => null)
-            if (info === null) continue
-            if (now() - info.mtimeMs > ttlMs) {
-              await rm(dir, { recursive: true, force: true })
+          const raw = typeof rootEntry === 'function' ? rootEntry() : rootEntry
+          const candidates = typeof raw === 'string' ? [raw] : raw ?? []
+          for (const root of candidates) {
+            if (root === undefined || root === '' || seen.has(root)) continue
+            seen.add(root)
+            const uploadRoot = join(root, '.dsh-uploads')
+            const sessionDirs = await readdir(uploadRoot).catch(() => [])
+            for (const sessionDir of sessionDirs) {
+              const dir = join(uploadRoot, sessionDir)
+              const info = await stat(dir).catch(() => null)
+              if (info === null) continue
+              if (now() - info.mtimeMs > ttlMs) {
+                await rm(dir, { recursive: true, force: true })
+              }
             }
           }
         }

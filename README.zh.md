@@ -18,7 +18,7 @@
 - **Codex 风格文件引用**:上传的文件在消息中呈现为 `@相对路径` 引用(与 OpenAI Codex 一致),**不会把全文塞进输入框**;agent 用 `read_document` 读取(按需转 Markdown)。
 - **Codex 风格 `@` 引用**:上传后在输入框输入 `@` 即可按相对路径选择已上传文件,以 mention 形式插入。
 - **文档转 Markdown(全部内置打包)**:MarkItDown 引擎随插件发布(微软 MarkItDown 的 TypeScript 移植 `markitdown-node`):PDF / DOCX / PPTX / XLSX / HTML / CSV / JSON / XML / RSS / Atom / ZIP / Jupyter / 图片 OCR / 音频转写。**无需 Python、无需下载、无需配置。**
-- **图片自动讲解(文本模型也能看懂)**:上传图片后自动通过**视觉发现链**生成图片描述("讲解图片"),纯文本的 DeepSeek API 也能基于图片内容推理:显式 `visionEndpoint` → 本地 Ollama(如 DeepSeek-VL2,零配置)→ OpenAI 兼容端点(DSH 凭据 key)。多模态模型/视觉桥接则走官方 `read_image`。
+- **图片自动讲解(文本模型也能看懂)**:上传图片后自动通过**视觉发现链**生成图片描述("讲解图片"),纯文本的 DeepSeek API 也能基于图片内容推理:显式 `visionEndpoint` → 本地 Ollama(如 DeepSeek-VL2,零配置)→ **DeepSeek 官方视觉 API(`deepseek-v4-flash-vision-exp`,复用你的 DeepSeek key)** → OpenAI 兼容端点(DSH 凭据 key)。多模态模型/视觉桥接则直接读图。
 - **`read_document` 工具(供 agent 使用)**:行号分页(`offset`/`limit`)、字节预算 LRU 缓存(文件改动自动失效)、大小预检、走 `ctx.fs`(继承沙箱与 fs 观察策略)。
 - **安全**:loopback-only 上传、文件名消毒、会话隔离存储(`.dsh-uploads/<sessionId>`)、sha256 内容去重、并发限流、TTL 清扫。
 
@@ -32,7 +32,7 @@ dsh plugin --profile web add dsh-file-upload
 ## 使用
 
 1. 点 composer 工具栏的回形针按钮,或把文件拖到窗口任意位置;
-2. 小文本文件内容直接进入输入框;文档显示为附件卡,路径随消息发出;
+2. 文件显示为附件卡,并只向输入框插入 `@相对路径` 引用——原始内容绝不直接灌入聊天框;agent 需要内容时用 `read_document` 读取;
 3. agent 用 `read_document <路径>` 读取文档——按需转 Markdown,支持 `offset`/`limit` 翻页。
 
 ### MarkItDown(全部内置打包,零下载零安装)
@@ -46,7 +46,7 @@ dsh plugin --profile web add dsh-file-upload
 > 可选增强:如果机器上本来就装有官方 MarkItDown CLI(或通过 `markitdownBin` 指定),插件会自动优先使用它(额外支持 EPUB 等);没有也完全不影响——内置引擎始终可用。
 
 ```yaml
-- id: file-upload
+- id: dsh-file-upload
   config:
     markitdownBin: /path/to/your/markitdown   # 可选;留空 = 纯内置引擎
 ```
@@ -57,21 +57,21 @@ dsh plugin --profile web add dsh-file-upload
 [dsh-file-upload] Document → Markdown ready: bundled MarkItDown engine (20+ formats, image OCR) — fully packaged, no downloads, no Python.
 ```
 
-### 图片怎么处理(自动讲解)
+### 图片怎么处理(Codex 风格引用 + 自动讲解)
 
-插件在**上传时自动检测当前会话模型的图像能力**:
+**所有上传文件(含图片)都以干净的 Codex 风格 `@相对路径` 引用进入输入框**——原始内容和绝对路径绝不出现。图片在此基础上按会话模型的图像能力**自动补充内容支持**(上传时检测):
 
 | 检测到的路由 | 行为 |
 |---|---|
-| **多模态模型**(声明 `image` 输入,如 GPT-4o / Qwen-VL / Claude / Gemini) | `imageMode: native`——agent 用官方 `read_image` 工具,图片直接进入模型上下文 |
-| **已装视觉桥接**(如 [dsh-vision-proxy](https://github.com/Flyvhidbwo/dsh-vision-proxy)) | 自动识别——同样走 native 路径 |
-| **纯文本模型**(DeepSeek API 即纯文本) | **自动生成图片描述**,随消息发出——模型立即基于图片内容推理 |
+| **多模态模型**(声明 `image` 输入,如 GPT-4o / Qwen-VL / Claude / Gemini) | 只插入 `@引用`;agent 调用 `read_image` 工具,图片直接进入模型上下文 |
+| **已注册 `read_image` 工具**(官方工具或视觉桥,如 dsh-vision-toolkit) | 自动识别——同样走 native 路径(模型自己取图片内容) |
+| **纯文本模型**(DeepSeek API 即纯文本) | 若能生成描述,消息中在 `@引用` 前带上 `[图片: 名称] 图片讲解: <描述>`,纯文本模型立即基于图片内容推理;若未配置任何视觉端点,只插入干净的 `@引用`(agent 仍可经 `read_document` OCR) |
 
-**视觉发现链(零配置)**:① 显式 `visionEndpoint`/`visionModel` → ② **本地 Ollama**(`http://localhost:11434`,自动选择 VL 模型如 DeepSeek-VL2,图片不出本机)→ ③ OpenAI 标准端点(DSH 凭据 key)。
+**视觉发现链(零配置,按序)**:① 显式 `visionEndpoint`/`visionModel` → ② **本地 Ollama**(`http://localhost:11434`,自动选择 VL 模型如 DeepSeek-VL2,图片不出本机)→ ③ **DeepSeek 官方视觉 API**(`deepseek-v4-flash-vision-exp`,直接复用你在 DSH 里已配置的 `DEEPSEEK_API_KEY`,零额外配置)→ ④ OpenAI 标准端点(DSH 凭据 key)。全部不可用时,图片仅以引用形式上传(不插入任何兜底文本)。
 
-> 说明:DeepSeek 官方 API 目前**不提供视觉输入**(多模态线 DeepSeek-VL2/Janus 为开源可自托管);通过 Ollama 本地部署 DeepSeek-VL2,即可获得完全本地的"官方 DeepSeek 视觉"体验。
+> **DeepSeek 官方现已提供多模态模型**:[`deepseek-v4-flash-vision-exp`](https://api-docs.deepseek.com/zh-cn/guides/vision/) 支持 JPEG/PNG/GIF/WebP,标准 OpenAI 兼容格式。插件的视觉链会通过你已有的 DeepSeek key 自动发现它——上传图片立即为纯文本模型生成高质量的 `[图片: 名称] 图片讲解: …`。也可以让 DSH 原生走图片路由:在 deepseek-official provider 的自定义模型里添加 `deepseek-v4-flash-vision-exp` 并声明 `inputModalities: ["text", "image"]`(设置 → 模型,或 `llm-deepseek.models` 配置段),再把会话切到该模型——插件检测到原生图像输入,agent 直接读图。
 
-路由检测与官方 `read_image` 门控一致(`ctx.llm.resolveModelInfo` + `inputModalities`)。
+路由检测与官方 `read_image` 门控一致(`ctx.llm.resolveModelInfo` + `inputModalities`),并叠加对已注册 `read_image` 工具的实时检测。
 
 ## 配置
 
@@ -84,8 +84,6 @@ dsh plugin --profile web add dsh-file-upload
 | `uploadTtlMs` | 604800000 (7天) | 未引用上传文件保留时长 |
 | `sweepIntervalMs` | 3600000 (1h) | 清扫周期;0 = 关闭 |
 | `maxConcurrentUploads` | 4 | 并发上传上限 |
-| `inlineTextLimit` | 8192 (8KB) | 直插输入框的文本大小上限 |
-| `previewTextLimit` | 2048 (2KB) | 大文本预览长度 |
 | `maxFileBytes` | 25165824 | 单次文档读取字节上限 |
 | `readLimit` | 2000 | `read_document` 单次返回行数上限 |
 | `sheetRowLimit` | 200 | 每个 XLSX sheet 保留行数 |

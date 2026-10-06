@@ -1,0 +1,678 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-06T07:03:13.048Z",
+  "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
+  "fileSource": "git",
+  "truncated": false,
+  "project": {
+    "name": "dsh-file-upload",
+    "version": "0.5.3",
+    "primaryLanguage": "typescript",
+    "languages": [
+      {
+        "lang": "typescript",
+        "loc": 1970
+      },
+      {
+        "lang": "typescriptreact",
+        "loc": 580
+      },
+      {
+        "lang": "javascript",
+        "loc": 27
+      }
+    ],
+    "archetype": "single-package-src",
+    "packageManager": "pnpm",
+    "moduleSystem": "esm",
+    "workspaces": [],
+    "nestedPackages": [],
+    "packageShapes": [],
+    "packages": [],
+    "scripts": [
+      "build",
+      "typecheck",
+      "test",
+      "prepublishOnly"
+    ],
+    "scriptCommands": {
+      "build": "tsc -p tsconfig.build.json && node build.mjs",
+      "typecheck": "tsc -p tsconfig.json --noEmit",
+      "test": "node --test test/*.test.ts",
+      "prepublishOnly": "npm run build && npm test"
+    },
+    "dependencies": 4,
+    "devDependencies": 5,
+    "peerDependencies": 6,
+    "engines": {
+      "node": ">=22.6.0"
+    },
+    "exportsMap": true,
+    "publishedFiles": [
+      "lib",
+      "cordis.patch.yml",
+      "LICENSE",
+      "CHANGELOG.md",
+      "README.md",
+      "README.zh.md"
+    ],
+    "license": "MIT",
+    "repositoryDeclared": true
+  },
+  "metrics": {
+    "files": 32,
+    "bytes": 345606,
+    "sourceFiles": 8,
+    "testFiles": 4,
+    "docFiles": 8,
+    "configFiles": 10,
+    "assetFiles": 1,
+    "lockfiles": 1,
+    "generatedFiles": 0,
+    "committedBuildOutput": 0,
+    "longFunctionCount": 3,
+    "maxFunctionLines": 200,
+    "maxFunctionName": "createUploadHandler",
+    "maxFunctionAt": "src/upload.ts:87",
+    "vendoredFiles": 0,
+    "sourceLoc": 2063,
+    "testLoc": 514,
+    "docLoc": 1063,
+    "maxDepth": 2,
+    "topLevelDirCount": 3,
+    "topLevelEntryCount": 5,
+    "topLevelFileCount": 16,
+    "testToSourceRatio": 0.5,
+    "testLocRatio": 0.25,
+    "avgSourceLines": 258
+  },
+  "conventions": {
+    "fileNaming": {
+      "kebab": 0,
+      "snake": 0,
+      "camel": 0,
+      "pascal": 0,
+      "flat": 8,
+      "screaming": 0,
+      "other": 0
+    },
+    "fileNamingByExt": {
+      ".mjs": {
+        "flat": 1
+      },
+      ".ts": {
+        "flat": 6
+      },
+      ".tsx": {
+        "flat": 1
+      }
+    },
+    "dominantFileNaming": "flat",
+    "namingConsistency": 1,
+    "namingSampleSize": 0,
+    "testStyle": "top-level",
+    "primaryLanguage": "typescript",
+    "packageManager": "pnpm",
+    "moduleSystem": "esm",
+    "sourceRoots": [
+      "src"
+    ],
+    "hasBarrelFiles": true
+  },
+  "presence": {
+    "readme": true,
+    "readmeZh": true,
+    "license": true,
+    "changelog": true,
+    "contributing": true,
+    "architectureDoc": true,
+    "enforcementArtifacts": [],
+    "security": true,
+    "codeOfConduct": false,
+    "docsDir": false,
+    "agentDocs": true,
+    "adrDir": false,
+    "ci": true,
+    "editorconfig": false,
+    "gitignore": true,
+    "gitattributes": false,
+    "issueTemplates": false,
+    "prTemplate": false,
+    "lockfile": true,
+    "dockerfile": false,
+    "dockerCompose": false,
+    "linterConfig": false,
+    "formatterConfig": false,
+    "typeConfig": true,
+    "testConfig": false,
+    "hooksConfig": false,
+    "releaseAutomation": false,
+    "workspaceManifest": false,
+    "benchmarks": false,
+    "examplesDir": true,
+    "i18n": false
+  },
+  "topLevel": [
+    {
+      "path": ".github",
+      "type": "dir",
+      "files": 2,
+      "loc": 74,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 0
+    },
+    {
+      "path": ".gitignore",
+      "type": "file",
+      "files": 1,
+      "loc": 5,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": ".test-nonwritable",
+      "type": "dir",
+      "files": 2,
+      "loc": 2,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 0
+    },
+    {
+      "path": "AGENTS.md",
+      "type": "file",
+      "files": 1,
+      "loc": 59,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "type": "file",
+      "files": 1,
+      "loc": 216,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "CHANGELOG.md",
+      "type": "file",
+      "files": 1,
+      "loc": 292,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "type": "file",
+      "files": 1,
+      "loc": 46,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "INSTALL.md",
+      "type": "file",
+      "files": 1,
+      "loc": 151,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "LICENSE",
+      "type": "file",
+      "files": 1,
+      "loc": 0,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "README.md",
+      "type": "file",
+      "files": 1,
+      "loc": 141,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "README.zh.md",
+      "type": "file",
+      "files": 1,
+      "loc": 134,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "SECURITY.md",
+      "type": "file",
+      "files": 1,
+      "loc": 24,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "build.mjs",
+      "type": "file",
+      "files": 1,
+      "loc": 27,
+      "sourceFiles": 1,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "cordis.patch.yml",
+      "type": "file",
+      "files": 1,
+      "loc": 30,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "examples",
+      "type": "dir",
+      "files": 1,
+      "loc": 33,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "package.json",
+      "type": "file",
+      "files": 1,
+      "loc": 88,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "type": "file",
+      "files": 1,
+      "loc": 0,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "src",
+      "type": "dir",
+      "files": 7,
+      "loc": 2036,
+      "sourceFiles": 7,
+      "testFiles": 0,
+      "directFiles": 6
+    },
+    {
+      "path": "test",
+      "type": "dir",
+      "files": 4,
+      "loc": 514,
+      "sourceFiles": 0,
+      "testFiles": 4,
+      "directFiles": 4
+    },
+    {
+      "path": "tsconfig.build.json",
+      "type": "file",
+      "files": 1,
+      "loc": 15,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "tsconfig.json",
+      "type": "file",
+      "files": 1,
+      "loc": 17,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    }
+  ],
+  "committedBuildOutput": [],
+  "longestFunctions": [
+    {
+      "path": "src/upload.ts",
+      "name": "createUploadHandler",
+      "lines": 200,
+      "startLine": 87
+    },
+    {
+      "path": "src/index.ts",
+      "name": "apply",
+      "lines": 182,
+      "startLine": 121
+    },
+    {
+      "path": "src/upload.ts",
+      "name": "handlePost",
+      "lines": 131,
+      "startLine": 111
+    }
+  ],
+  "largestFiles": [
+    {
+      "path": "src/client/index.tsx",
+      "lines": 580,
+      "bytes": 22735
+    },
+    {
+      "path": "src/upload.ts",
+      "lines": 332,
+      "bytes": 13779
+    },
+    {
+      "path": "src/index.ts",
+      "lines": 302,
+      "bytes": 13124
+    },
+    {
+      "path": "src/convert.ts",
+      "lines": 282,
+      "bytes": 11184
+    },
+    {
+      "path": "src/tool.ts",
+      "lines": 227,
+      "bytes": 8585
+    },
+    {
+      "path": "src/vision.ts",
+      "lines": 162,
+      "bytes": 6543
+    },
+    {
+      "path": "src/detect.ts",
+      "lines": 151,
+      "bytes": 6228
+    },
+    {
+      "path": "build.mjs",
+      "lines": 27,
+      "bytes": 1007
+    }
+  ],
+  "mostImported": [
+    {
+      "path": "src/convert.ts",
+      "importedBy": 5
+    },
+    {
+      "path": "src/detect.ts",
+      "importedBy": 5
+    },
+    {
+      "path": "src/upload.ts",
+      "importedBy": 3
+    },
+    {
+      "path": "src/tool.ts",
+      "importedBy": 1
+    },
+    {
+      "path": "src/vision.ts",
+      "importedBy": 1
+    }
+  ],
+  "duplicatedBasenames": [],
+  "modules": [
+    {
+      "name": "(root)",
+      "root": ".",
+      "fileCount": 16,
+      "loc": 1245,
+      "sourceFiles": 1,
+      "testFiles": 0,
+      "imports": [],
+      "importedBy": [],
+      "docs": [
+        "AGENTS.md",
+        "ARCHITECTURE.md",
+        "CHANGELOG.md",
+        "CONTRIBUTING.md",
+        "INSTALL.md",
+        "README.md",
+        "README.zh.md",
+        "SECURITY.md"
+      ],
+      "entry": "build.mjs",
+      "depth": 0,
+      "directRootFiles": 16,
+      "longestFile": {
+        "path": "CHANGELOG.md",
+        "lines": 292
+      }
+    },
+    {
+      "name": ".github",
+      "root": ".github",
+      "fileCount": 2,
+      "loc": 74,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "imports": [],
+      "importedBy": [],
+      "docs": [],
+      "depth": 2,
+      "directRootFiles": 0,
+      "longestFile": {
+        "path": ".github/workflows/ci.yml",
+        "lines": 42
+      }
+    },
+    {
+      "name": ".test-nonwritable",
+      "root": ".test-nonwritable",
+      "fileCount": 2,
+      "loc": 2,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "imports": [],
+      "importedBy": [],
+      "docs": [],
+      "depth": 2,
+      "directRootFiles": 0,
+      "longestFile": {
+        "path": ".test-nonwritable/markitdown/.markitdown-installed.json",
+        "lines": 1
+      }
+    },
+    {
+      "name": "examples",
+      "root": "examples",
+      "fileCount": 1,
+      "loc": 33,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "imports": [],
+      "importedBy": [],
+      "docs": [],
+      "depth": 1,
+      "directRootFiles": 1,
+      "longestFile": {
+        "path": "examples/local-override.yml",
+        "lines": 33
+      }
+    },
+    {
+      "name": "src/(root)",
+      "root": "src",
+      "fileCount": 6,
+      "loc": 1456,
+      "sourceFiles": 6,
+      "testFiles": 0,
+      "imports": [],
+      "importedBy": [
+        "test"
+      ],
+      "docs": [],
+      "entry": "src/index.ts",
+      "depth": 1,
+      "directRootFiles": 6,
+      "longestFile": {
+        "path": "src/upload.ts",
+        "lines": 332
+      }
+    },
+    {
+      "name": "src/client",
+      "root": "src/client",
+      "fileCount": 1,
+      "loc": 580,
+      "sourceFiles": 1,
+      "testFiles": 0,
+      "imports": [],
+      "importedBy": [],
+      "docs": [],
+      "entry": "src/client/index.tsx",
+      "depth": 2,
+      "directRootFiles": 1,
+      "longestFile": {
+        "path": "src/client/index.tsx",
+        "lines": 580
+      }
+    },
+    {
+      "name": "test",
+      "root": "test",
+      "fileCount": 4,
+      "loc": 514,
+      "sourceFiles": 0,
+      "testFiles": 4,
+      "imports": [
+        "src/(root)"
+      ],
+      "importedBy": [],
+      "docs": [],
+      "depth": 1,
+      "directRootFiles": 4,
+      "longestFile": {
+        "path": "test/upload-handler.test.ts",
+        "lines": 283
+      }
+    }
+  ],
+  "graph": {
+    "nodes": 8,
+    "edges": 15,
+    "unresolvedRelative": 0,
+    "unresolvedSource": 0,
+    "unresolvedTest": 0,
+    "external": 43,
+    "buildOutputRefs": 0,
+    "cycles": [],
+    "crossDirEdges": 6,
+    "unresolvedSamples": [],
+    "internalViolations": [],
+    "internalViolationCount": 0,
+    "isolationViolations": [],
+    "isolationViolationCount": 0,
+    "crossModuleCycles": [],
+    "crossModuleCycleCount": 0,
+    "intraModuleCycleCount": 0
+  },
+  "git": {
+    "isRepo": true,
+    "lastCommitAt": "2026-08-19T23:41:34+08:00",
+    "commits": 20,
+    "churn90d": [
+      {
+        "path": "README.md",
+        "commits": 13
+      },
+      {
+        "path": "README.zh.md",
+        "commits": 13
+      },
+      {
+        "path": "src/index.ts",
+        "commits": 13
+      },
+      {
+        "path": "CHANGELOG.md",
+        "commits": 12
+      },
+      {
+        "path": "package.json",
+        "commits": 12
+      },
+      {
+        "path": "src/upload.ts",
+        "commits": 11
+      },
+      {
+        "path": "src/client/index.tsx",
+        "commits": 9
+      },
+      {
+        "path": "cordis.patch.yml",
+        "commits": 5
+      },
+      {
+        "path": "pnpm-lock.yaml",
+        "commits": 3
+      },
+      {
+        "path": "src/asr.ts",
+        "commits": 3
+      },
+      {
+        "path": "src/detect.ts",
+        "commits": 3
+      },
+      {
+        "path": "src/vision.ts",
+        "commits": 3
+      },
+      {
+        "path": "test/detect.test.ts",
+        "commits": 3
+      },
+      {
+        "path": "scripts/setup-markitdown.mjs",
+        "commits": 2
+      },
+      {
+        "path": "src/convert.ts",
+        "commits": 2
+      },
+      {
+        "path": "src/tool.ts",
+        "commits": 2
+      },
+      {
+        "path": "test/asr.test.ts",
+        "commits": 2
+      },
+      {
+        "path": "test/convert.test.ts",
+        "commits": 2
+      },
+      {
+        "path": "test/integration.test.ts",
+        "commits": 2
+      },
+      {
+        "path": "test/setup.test.ts",
+        "commits": 2
+      }
+    ],
+    "churnFiles90d": 32,
+    "dirtyFiles": 16
+  },
+  "scanMs": 66
+}

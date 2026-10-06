@@ -22,6 +22,8 @@ interface UploadMeta {
   status: 'uploading' | 'ready' | 'error'
   error?: string
   previewUrl?: string
+  /** Absolute host path — used for DELETE only, never shown to the model. */
+  absolutePath?: string
   relativePath?: string
 }
 
@@ -77,9 +79,10 @@ function formatBytes(n: number): string {
   return `${(n / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function injectCss(): void {
-  if (typeof document === 'undefined') return
-  if (document.querySelector(`style[data-plugin-css=${JSON.stringify(STYLE_TAG)}]`) !== null) return
+/** Inject the plugin stylesheet once; returns a disposer removing it on stop/update. */
+function injectCss(): () => void {
+  if (typeof document === 'undefined') return () => undefined
+  if (document.querySelector(`style[data-plugin-css=${JSON.stringify(STYLE_TAG)}]`) !== null) return () => undefined
   const tag = document.createElement('style')
   tag.dataset.plugin = 'dsh-file-upload'
   tag.dataset.pluginCss = STYLE_TAG
@@ -103,6 +106,7 @@ function injectCss(): void {
 .dsh-upload-overlay-hint{font-size:12px;color:var(--dsw-alias-label-tertiary,inherit)}
 `
   document.head.appendChild(tag)
+  return () => tag.remove()
 }
 
 interface InputSnapshot {
@@ -176,48 +180,41 @@ async function uploadFile(actx: ActionContext, file: File, sessionId: string): P
   if (typeof payload.path !== 'string') throw new Error('missing path in response')
   const name = payload.name ?? file.name
   const bytes = payload.bytes ?? file.size
-  metaFor(sessionId).set(payload.path, {
+  // Codex-style reference: the relative path (relative to the session
+  // workspace) is what the model sees — never the absolute host path.
+  const ref = payload.relativePath !== undefined && payload.relativePath !== '' ? payload.relativePath : payload.path
+  metaFor(sessionId).set(ref, {
     name,
     bytes,
     label: payload.label ?? name.slice(name.lastIndexOf('.') + 1).toUpperCase(),
     status: 'ready',
+    absolutePath: payload.path,
     ...(payload.relativePath !== undefined ? { relativePath: payload.relativePath } : {}),
     ...(file.type.startsWith('image/') ? { previewUrl: URL.createObjectURL(file) } : {})
   })
   clearUploadError()
 
-  const state = input.state.getSnapshot()
-
-  if (payload.sniffedType === 'image') {
-    // Images: multimodal routes (incl. vision bridges like dsh-vision-proxy)
-    // → agent uses the official read_image tool; text-only routes → an
-    // automatic description ("讲解图片") was generated, insert it so the
-    // text-only model can reason about the image immediately.
-    const description =
-      payload.imageMode === 'native'
-        ? `当前模型支持图像输入,请用 read_image 工具查看 ${payload.path}`
-        : payload.imageDescription !== undefined
-          ? `图片讲解(自动生成):\n${payload.imageDescription}\n原始文件: ${payload.path}`
-          : `图片以文件形式上传(${payload.path});未生成讲解,请用 read_document 工具读取`
-    const text = `[图片: ${name}] ${description}`
+  // Images on text-only routes: when a vision description was generated,
+  // insert it as a short text block (that IS the image content entering the
+  // message) followed by the Codex-style reference. Everything else — native
+  // image routes, plain files, documents — inserts a clean `@relative/path`
+  // reference only; no absolute paths, no guidance text, no raw content.
+  if (payload.sniffedType === 'image' && payload.imageDescription !== undefined) {
+    const text = `[图片: ${name}] 图片讲解:\n${payload.imageDescription}`
+    const before = input.state.getSnapshot()
     actx.emit('slash/input-insert-text', {
       text,
-      span: { start: state.draft.length, end: state.draft.length, draftRev: state.draftRev }
+      span: { start: before.draft.length, end: before.draft.length, draftRev: before.draftRev }
     })
-    return payload.path
   }
 
-  // Larger text or documents: insert a path reference (Codex-style
-  // `@relative/path`); the agent reads it with read_document (converted to
-  // Markdown on demand).
-  const refText = payload.relativePath !== undefined ? `@${payload.relativePath}` : payload.path
-  const label = payload.preview !== undefined ? `[file: ${name}] (preview) ${payload.preview}` : ''
+  const state = input.state.getSnapshot()
   actx.emit('slash/input-insert-reference', {
     reference: {
       source: SOURCE_NAME,
-      ref: payload.path,
-      label,
-      clipboardText: refText
+      ref,
+      label: name,
+      clipboardText: `@${ref}`
     },
     span: {
       start: state.draft.length,
@@ -225,7 +222,7 @@ async function uploadFile(actx: ActionContext, file: File, sessionId: string): P
       draftRev: state.draftRev
     }
   })
-  return payload.path
+  return ref
 }
 
 /** Recursively collect files from dropped dataTransfer items (folder support). */
@@ -419,13 +416,16 @@ function UploadDock({ attach, sessionId }: DockProps) {
   }, [])
 
   const removeCard = (ref: string): void => {
+    // The dock key is the relative reference; the server needs the absolute
+    // path stored at upload time to delete the file.
+    const meta = metaFor(sessionId).get(ref)
     metaFor(sessionId).delete(ref)
     setMetaVersion((v) => v + 1)
     void fetch('/api/upload', {
       method: 'DELETE',
       headers: {
         'x-session-id': sessionId,
-        'x-file-path': ref
+        'x-file-path': meta?.absolutePath ?? ref
       }
     }).catch(() => undefined)
   }
@@ -502,7 +502,8 @@ export function apply(ctx: {
     scope(sessionId: string): ActionContext
   }
 }): void {
-  injectCss()
+  // Stylesheet lives in the plugin's fiber: removed when the client half stops.
+  ctx.effect(() => injectCss())
   ctx.effect(() =>
     ctx.inputTriggers.registerSource({
       trigger: '@',
@@ -511,8 +512,8 @@ export function apply(ctx: {
       candidates: async (projection: { sessionId: string }) => {
         const metas = uploadMetaBySession.get(projection.sessionId)
         if (metas === undefined) return []
-        return Array.from(metas.entries()).map(([path, meta]) => ({
-          name: meta.relativePath ?? path,
+        return Array.from(metas.entries()).map(([ref, meta]) => ({
+          name: ref,
           description: `${meta.label} · ${formatBytes(meta.bytes)}`,
           icon: '📎'
         }))
@@ -522,20 +523,16 @@ export function apply(ctx: {
         session: { sessionId: string }
       }): { insert: { source: string; ref: string; label: string; clipboardText: string } } | undefined => {
         const metas = uploadMetaBySession.get(pick.session.sessionId)
-        if (metas === undefined) return undefined
-        for (const [path, meta] of metas.entries()) {
-          if ((meta.relativePath ?? path) === pick.candidate.name) {
-            return {
-              insert: {
-                source: SOURCE_NAME,
-                ref: path,
-                label: meta.name,
-                clipboardText: `@${meta.relativePath ?? path}`
-              }
-            }
+        const meta = metas?.get(pick.candidate.name)
+        if (metas === undefined || meta === undefined) return undefined
+        return {
+          insert: {
+            source: SOURCE_NAME,
+            ref: pick.candidate.name,
+            label: meta.name,
+            clipboardText: `@${pick.candidate.name}`
           }
         }
-        return undefined
       },
       codec: {
         clipboardText: (ref: string) => ref,

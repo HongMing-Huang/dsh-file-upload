@@ -1,9 +1,19 @@
-# Local override example: enable the MarkItDown CLI (venv path).
-# Per the official layering rule, an override row is a top-level entry keyed
-# by id (no `insert` wrapper — that would create a duplicate) and must
-# restate EVERY config key the bundle row declares, since a patch replaces
-# the whole config value.
-- id: file-upload
+# Local override example: point the plugin at this repo's MarkItDown CLI venv
+# and raise the read limit.
+#
+# Per the official layering rule, an override row is a top-level entry keyed by
+# id (no `insert` wrapper — that would append a second row and create a
+# duplicate) and must restate EVERY config key the bundle row declares, since a
+# patch replaces the whole `config` value rather than deep-merging it.
+#
+# The id is `dsh-file-upload` (the package/bundle name), NOT the generic
+# `file-upload`: that id already belongs to the shipped browser transport row
+# `@deepseek-ai/dsh-client-file-upload` in the `@deepseek-ai/dsh-web-app`
+# bundle. Targeting `file-upload` here would also hit that shipped row.
+#
+# Keep this list in sync with `cordis.patch.yml` whenever a config key is
+# added or removed; a missing key silently falls back to its schema default.
+- id: dsh-file-upload
   config:
     uploadMaxBytes: 26214400
     allowedExtensions: []
@@ -16,6 +26,8 @@
     maxSheets: 5
     cacheEntries: 16
     cacheMaxBytes: 67108864
-    inlineTextLimit: 8192
-    previewTextLimit: 2048
     markitdownBin: '/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload/.venv/bin/markitdown'
+    visionEndpoint: ''
+    visionModel: ''
+    visionApiKeyEnv: OPENAI_API_KEY
+    visionMaxBytes: 10485760
