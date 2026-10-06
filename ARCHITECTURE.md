@@ -12,7 +12,7 @@
 | Version | 0.5.4 |
 | Layout archetype | single-package-src |
 | Primary language | typescript |
-| Languages by volume | typescript (2415 LOC), typescriptreact (755 LOC), javascript (390 LOC) |
+| Languages by volume | typescript (2535 LOC), typescriptreact (755 LOC), javascript (390 LOC) |
 | Module system | esm |
 | Package manager | pnpm |
 | Engines | {"node":">=22.6.0"} |
@@ -22,7 +22,7 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 30 commits, last 2026-10-06T16:14:12+08:00, 5 dirty files |
+| Git | 31 commits, last 2026-10-06T16:45:29+08:00, 4 dirty files |
 
 ## 2. Layout at a glance
 
@@ -32,8 +32,8 @@
 | `.gitignore` | file | 1 | 15 | 0 | 0 |  |
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
 | `AGENTS.md` | file | 1 | 60 | 0 | 0 |  |
-| `ARCHITECTURE.md` | file | 1 | 308 | 0 | 0 |  |
-| `CHANGELOG.md` | file | 1 | 391 | 0 | 0 |  |
+| `ARCHITECTURE.md` | file | 1 | 331 | 0 | 0 |  |
+| `CHANGELOG.md` | file | 1 | 405 | 0 | 0 |  |
 | `CONTRIBUTING.md` | file | 1 | 142 | 0 | 0 |  |
 | `INSTALL.md` | file | 1 | 189 | 0 | 0 |  |
 | `LICENSE` | file | 1 | 0 | 0 | 0 |  |
@@ -47,8 +47,8 @@
 | `package.json` | file | 1 | 102 | 0 | 0 |  |
 | `pnpm-lock.yaml` | file | 1 | 0 | 0 | 0 |  |
 | `scripts/` | directory | 1 | 363 | 1 | 0 | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
-| `src/` | directory | 7 | 2352 | 7 | 0 |  |
-| `test/` | directory | 5 | 818 | 0 | 5 |  |
+| `src/` | directory | 7 | 2372 | 7 | 0 |  |
+| `test/` | directory | 6 | 918 | 0 | 6 |  |
 | `tsconfig.build.json` | file | 1 | 15 | 0 | 0 |  |
 | `tsconfig.json` | file | 1 | 28 | 0 | 0 |  |
 
@@ -62,13 +62,13 @@ Root holds 17 loose file(s): `.gitignore`, `AGENTS.md`, `ARCHITECTURE.md`, `CHAN
 | `upload` | 2 | 1 | 444 | 1 | 0 | `src/upload.ts` | `detect`, `convert` | `detect` | 上传处理与清理：接收浏览器分片、落盘、哈希去重、定期回收临时文件。唯一允许写磁盘的模块。 |
 | `detect` | 0 | 1 | 139 | 1 | 0 | `src/detect.ts` | _nothing_ | — | 文件类型嗅探（魔数 + 扩展名）。叶子模块，不 import 项目内任何东西。 |
 | `vision` | 0 | 1 | 162 | 1 | 0 | `src/vision.ts` | _nothing_ | — | 图片描述能力封装。叶子模块，供 entry 在需要视觉理解时调用。 |
-| `entry` | 3 | 1 | 304 | 1 | 0 | `src/index.ts` | `tool`, `upload`, `convert`, `detect`, `vision` | `convert`, `tool`, `upload`, `vision` | 宿主插件入口：注册上传服务与 read_document 工具，只做装配，不写业务逻辑。 |
+| `entry` | 3 | 1 | 324 | 1 | 0 | `src/index.ts` | `tool`, `upload`, `convert`, `detect`, `vision` | `convert`, `tool`, `upload`, `vision` | 宿主插件入口：注册上传服务与 read_document 工具，只做装配，不写业务逻辑。 |
 | `tool` | 2 | 1 | 266 | 1 | 0 | `src/tool.ts` | `detect`, `convert` | `convert`, `detect` | 面向模型的 read_document 工具定义、参数 schema 与解析缓存 ParseCache。 |
 | `client` | 0 | 1 | 755 | 1 | 0 | `src/client/index.tsx` | _nothing_ | — | 浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。 |
 | `build` | — | 1 | 27 | 1 | 0 | `build.mjs` | _undeclared_ | — | 构建脚本：tsc 产物之后的 client bundle 收尾。 |
 | `examples` | — | 1 | 33 | 0 | 0 | — | `*` | — | cordis.patch.yml 的本地覆盖示例，文档性质。 |
 | `scripts` | — | 1 | 363 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
-| `tests` | — | 5 | 818 | 0 | 5 | — | `*` | `convert`, `detect`, `tool`, `upload` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
+| `tests` | — | 6 | 918 | 0 | 6 | — | `*` | `convert`, `detect`, `entry`, `tool`, `upload` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
 
 _18 tracked file(s) belong to no declared module: `.github/workflows/ci.yml`, `.github/workflows/structure-guard.yml`, `.gitignore`, `.test-nonwritable/markitdown/.markitdown-installed.json`, `.test-nonwritable/markitdown/.probe`, `AGENTS.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, …. Either declare them or move them where the contract covers them._
 
@@ -97,6 +97,7 @@ graph LR
   tool --> detect
   tests --> convert
   tests --> detect
+  tests --> entry
   tests --> tool
   tests --> upload
 ```
@@ -108,7 +109,7 @@ graph LR
 | File naming | flat: 8, kebab: 1 |
 | Naming consistency | 100% (dominant: flat) |
 | Test placement | top-level |
-| Test volume | 5 files / 818 LOC (ratio 0.56) |
+| Test volume | 6 files / 918 LOC (ratio 0.67) |
 | Source roots | `src/` |
 | Barrel files (index.*) | present |
 | Scripts | `build`, `typecheck`, `lint`, `format`, `test`, `check:manifest`, `prepublishOnly` |
@@ -117,21 +118,21 @@ graph LR
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 35 (406 KB) |
-| Source | 9 files / 2742 LOC |
-| Tests | 5 files / 818 LOC |
-| Docs | 8 files / 1389 LOC |
+| Files tracked | 36 (414 KB) |
+| Source | 9 files / 2762 LOC |
+| Tests | 6 files / 918 LOC |
+| Docs | 8 files / 1426 LOC |
 | Config files | 11 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
 | Max nesting depth | 2 |
-| Average source file | 305 lines |
+| Average source file | 307 lines |
 | Largest source file | `src/client/index.tsx` (755 lines) |
-| Import graph | 9 nodes / 15 internal edges (7 cross-directory) |
+| Import graph | 10 nodes / 17 internal edges (9 cross-directory) |
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
-| Most depended-on files | `src/detect.ts` (5), `src/convert.ts` (4), `src/upload.ts` (3) |
-| Churn hotspots (90d) | `CHANGELOG.md` (17), `package.json` (17), `src/index.ts` (15) |
+| Most depended-on files | `src/detect.ts` (5), `src/convert.ts` (4), `src/upload.ts` (4) |
+| Churn hotspots (90d) | `CHANGELOG.md` (18), `package.json` (17), `src/index.ts` (16) |
 
 ## 6. Standards checklist
 
@@ -226,6 +227,28 @@ graph LR
 - **对标业界**：`guard.mjs remote <owner/repo>` 不克隆即可查看任意 GitHub 项目的布局，`--compare .` 直接对照。当前与 cordis 的差距：根目录散落文件 19 vs 15、顶层入口 5 vs 2、缺 linter/formatter/.editorconfig/.gitattributes。
 
 ### 已知例外与待办
+
+- **插件形式已实测（2026-10-06）**：不再只靠"人工核对"，而是真的把装配跑了一遍。
+  `apply()` 用一个桩 Cordis ctx（六个注入服务各就位、可选服务返回 undefined）真实执行，结果：
+  注册工具 `read_document`（`parameters` 三段齐全、`output.render` 是函数）、注册路由 `prefix /api/upload`、
+  注册提示词段 `tool:read-document`、挂载 dispose 钩子、并打印引擎就绪日志。
+  构建产物 `lib/index.js` 可被 Node 直接 import，四个导出（`name` / `inject` / `apply` / `Config`）齐全，
+  `new Config({})` 生成全部 18 个默认键（说明 schemastery schema 有效）；
+  客户端 `lib/client.js` 是合法的 `window.__ModuleLoader__.load({id:"dsh-file-upload", factory})`，
+  并在内部 `module.exports = { apply, inject: ['slots','inputTriggers','sessions'] }`。
+  这套检查固化在 `test/lifecycle.test.ts`（8 例）。
+
+- **`sweepIntervalMs: 0` 曾让插件启动即崩（2026-10-06 修）**：schema 注释写明 0 = 禁用定期回收，
+  `createSweeper` 也确实支持（返回空 disposer），但 `apply()` 的启动校验把**所有**间隔字段都按正整数校验，
+  于是这个被文档承诺的配置会抛 `sweepIntervalMs must be a positive integer`——**什么都没注册就退出**。
+  现在单独用 `assertNonNegativeInteger()` 校验它，其余字段仍要求正整数。
+  这个 bug **只有在真的调用 `apply()` 时才会暴露**，静态阅读看不出来；
+  回归测试对修复前的代码会失败并打印该错误信息（已验证）。
+
+- **`inject` 过声明已清理（2026-10-06）**：原先声明了 `fs`，但插件从不直接访问 `ctx.fs`
+  ——`read_document` 是通过传给 `defineReadDocumentTool` 的接口拿文件系统的。
+  `inject` 的作用是**强制加载顺序**，声明一个用不到的服务等于加了一条虚假约束。已移除，理由写在声明旁。
+
 
 - **`read_document` 的行数与导航语义（2026-10-06 修）**：两处相关联的改动，来自第三轮「专门找缺陷」的验证。
   **(a) 行数**：原先用 `markdown.split('\n')` 计数，而几乎所有文件都以换行结尾，`split` 会留下一个幻影空元素，

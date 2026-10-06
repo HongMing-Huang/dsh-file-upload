@@ -23,6 +23,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   inserts a clean `@relative/path` reference (relative to the session
   workspace). Absolute host paths no longer leak into the composer or the
   message; the removal card still deletes via the absolute path internally.
+- **`sweepIntervalMs: 0` crashed the plugin at startup**: the schema documents 0
+  as "disable the periodic sweep" and `createSweeper` honours it by returning an
+  inert disposer, but the startup validation loop asserted every interval was
+  strictly positive — so the one setting the comment advertises threw
+  `sweepIntervalMs must be a positive integer` before anything was registered.
+  It is now validated as non-negative, separately from the fields that genuinely
+  require a positive value. This surfaced only by actually calling `apply()`
+  against a stub context, which `test/lifecycle.test.ts` now does (the test fails
+  on the pre-fix code with that exact message).
+- **`inject` over-declared a dependency**: `fs` was listed although the plugin
+  never touches `ctx.fs` — `read_document` reaches the filesystem through the
+  interface handed to `defineReadDocumentTool`. `inject` is what forces load
+  ordering, so listing a service the plugin does not use is a false constraint.
+  Removed, with the reasoning recorded next to the declaration.
 - **`read_document` made a fully-read document look truncated**: the line count
   came from `markdown.split('\n')`, which leaves a phantom empty element for the
   trailing newline almost every file ends with. A five-line file was reported as

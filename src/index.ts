@@ -29,8 +29,15 @@ const execFileAsyncSafe = execFileAsync as (file: string, args: string[], opts: 
 /** Cordis plugin name — must match the row id in cordis.patch.yml. */
 export const name = 'dsh-file-upload'
 
-/** Services required by this plugin. */
-export const inject = ['tools', 'fs', 'systemPrompt', 'webServer', 'sessions', 'credentials']
+/**
+ * Services required by this plugin.
+ *
+ * `fs` is deliberately absent: `read_document` reaches the filesystem through
+ * the `fs` interface handed to `defineReadDocumentTool`, so the plugin needs the
+ * service to exist (the `tools` service itself depends on it) but never touches
+ * `ctx.fs` directly, and `inject` is what forces load ordering.
+ */
+export const inject = ['tools', 'systemPrompt', 'webServer', 'sessions', 'credentials']
 
 const MEBIBYTE = 1024 * 1024
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -102,6 +109,17 @@ function assertPositiveInteger(value: number, label: string): void {
 }
 
 /**
+ * `sweepIntervalMs` is the one interval that legitimately takes 0, because the
+ * schema documents 0 as "disable the periodic sweep" and `createSweeper` honours
+ * it by returning an inert disposer. Validating it as strictly positive made
+ * that documented setting throw at startup instead — the configuration the
+ * comment advertises was unreachable.
+ */
+function assertNonNegativeInteger(value: number, label: string): void {
+  if (!Number.isInteger(value) || value < 0) throw new Error(`dsh-file-upload: ${label} must be a non-negative integer`)
+}
+
+/**
  * Resolve an optional official MarkItDown CLI, in order:
  *   1. explicitly configured `markitdownBin`;
  *   2. a `markitdown` already on PATH.
@@ -119,10 +137,12 @@ async function resolveMarkitdownBin(configured: string): Promise<string> {
 }
 
 export function apply(ctx: any, config: FileUploadConfig): void {
+  // `sweepIntervalMs` is validated separately: 0 is its documented "disabled"
+  // value, so it is the only entry here that may be zero.
+  assertNonNegativeInteger(config.sweepIntervalMs, 'sweepIntervalMs')
   for (const [label, value] of [
     ['uploadMaxBytes', config.uploadMaxBytes],
     ['uploadTtlMs', config.uploadTtlMs],
-    ['sweepIntervalMs', config.sweepIntervalMs],
     ['maxConcurrentUploads', config.maxConcurrentUploads],
     ['maxFileBytes', config.maxFileBytes],
     ['readLimit', config.readLimit],

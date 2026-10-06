@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-06T08:45:09.769Z",
+  "generatedAt": "2026-10-06T08:54:59.753Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -11,7 +11,7 @@
     "languages": [
       {
         "lang": "typescript",
-        "loc": 2415
+        "loc": 2535
       },
       {
         "lang": "typescriptreact",
@@ -67,10 +67,10 @@
     "repositoryDeclared": true
   },
   "metrics": {
-    "files": 35,
-    "bytes": 415959,
+    "files": 36,
+    "bytes": 424287,
     "sourceFiles": 9,
-    "testFiles": 5,
+    "testFiles": 6,
     "docFiles": 8,
     "configFiles": 11,
     "assetFiles": 1,
@@ -78,20 +78,20 @@
     "generatedFiles": 0,
     "committedBuildOutput": 0,
     "longFunctionCount": 1,
-    "maxFunctionLines": 184,
+    "maxFunctionLines": 186,
     "maxFunctionName": "apply",
-    "maxFunctionAt": "src/index.ts:121",
+    "maxFunctionAt": "src/index.ts:139",
     "vendoredFiles": 0,
-    "sourceLoc": 2742,
-    "testLoc": 818,
-    "docLoc": 1388,
+    "sourceLoc": 2762,
+    "testLoc": 918,
+    "docLoc": 1425,
     "maxDepth": 2,
     "topLevelDirCount": 4,
     "topLevelEntryCount": 6,
     "topLevelFileCount": 17,
-    "testToSourceRatio": 0.56,
-    "testLocRatio": 0.3,
-    "avgSourceLines": 305
+    "testToSourceRatio": 0.67,
+    "testLocRatio": 0.33,
+    "avgSourceLines": 307
   },
   "conventions": {
     "fileNaming": {
@@ -201,7 +201,7 @@
       "path": "ARCHITECTURE.md",
       "type": "file",
       "files": 1,
-      "loc": 307,
+      "loc": 330,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -210,7 +210,7 @@
       "path": "CHANGELOG.md",
       "type": "file",
       "files": 1,
-      "loc": 391,
+      "loc": 405,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -336,7 +336,7 @@
       "path": "src",
       "type": "dir",
       "files": 7,
-      "loc": 2352,
+      "loc": 2372,
       "sourceFiles": 7,
       "testFiles": 0,
       "directFiles": 6
@@ -344,11 +344,11 @@
     {
       "path": "test",
       "type": "dir",
-      "files": 5,
-      "loc": 818,
+      "files": 6,
+      "loc": 918,
       "sourceFiles": 0,
-      "testFiles": 5,
-      "directFiles": 5
+      "testFiles": 6,
+      "directFiles": 6
     },
     {
       "path": "tsconfig.build.json",
@@ -374,8 +374,8 @@
     {
       "path": "src/index.ts",
       "name": "apply",
-      "lines": 184,
-      "startLine": 121
+      "lines": 186,
+      "startLine": 139
     }
   ],
   "largestFiles": [
@@ -396,8 +396,8 @@
     },
     {
       "path": "src/index.ts",
-      "lines": 304,
-      "bytes": 13629
+      "lines": 324,
+      "bytes": 14657
     },
     {
       "path": "src/convert.ts",
@@ -436,11 +436,15 @@
     },
     {
       "path": "src/upload.ts",
-      "importedBy": 3
+      "importedBy": 4
     },
     {
       "path": "src/tool.ts",
       "importedBy": 2
+    },
+    {
+      "path": "src/index.ts",
+      "importedBy": 1
     },
     {
       "path": "src/vision.ts",
@@ -453,7 +457,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 17,
-      "loc": 1654,
+      "loc": 1691,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -473,7 +477,7 @@
       "directRootFiles": 17,
       "longestFile": {
         "path": "CHANGELOG.md",
-        "lines": 391
+        "lines": 405
       }
     },
     {
@@ -549,7 +553,7 @@
       "name": "src/(root)",
       "root": "src",
       "fileCount": 6,
-      "loc": 1597,
+      "loc": 1617,
       "sourceFiles": 6,
       "testFiles": 0,
       "imports": [],
@@ -586,17 +590,17 @@
     {
       "name": "test",
       "root": "test",
-      "fileCount": 5,
-      "loc": 818,
+      "fileCount": 6,
+      "loc": 918,
       "sourceFiles": 0,
-      "testFiles": 5,
+      "testFiles": 6,
       "imports": [
         "src/(root)"
       ],
       "importedBy": [],
       "docs": [],
       "depth": 1,
-      "directRootFiles": 5,
+      "directRootFiles": 6,
       "longestFile": {
         "path": "test/upload-handler.test.ts",
         "lines": 512
@@ -604,15 +608,15 @@
     }
   ],
   "graph": {
-    "nodes": 9,
-    "edges": 15,
+    "nodes": 10,
+    "edges": 17,
     "unresolvedRelative": 0,
     "unresolvedSource": 0,
     "unresolvedTest": 0,
-    "external": 45,
+    "external": 47,
     "buildOutputRefs": 0,
     "cycles": [],
-    "crossDirEdges": 7,
+    "crossDirEdges": 9,
     "unresolvedSamples": [],
     "internalViolations": [],
     "internalViolationCount": 0,
@@ -624,12 +628,12 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-06T16:14:12+08:00",
-    "commits": 30,
+    "lastCommitAt": "2026-10-06T16:45:29+08:00",
+    "commits": 31,
     "churn90d": [
       {
         "path": "CHANGELOG.md",
-        "commits": 17
+        "commits": 18
       },
       {
         "path": "package.json",
@@ -637,7 +641,7 @@
       },
       {
         "path": "src/index.ts",
-        "commits": 15
+        "commits": 16
       },
       {
         "path": "README.md",
@@ -657,23 +661,23 @@
       },
       {
         "path": ".structure/baseline.json",
-        "commits": 8
+        "commits": 9
       },
       {
         "path": "ARCHITECTURE.md",
-        "commits": 8
+        "commits": 9
       },
       {
         "path": "cordis.patch.yml",
         "commits": 6
       },
       {
-        "path": "test/upload-handler.test.ts",
+        "path": "AGENTS.md",
         "commits": 5
       },
       {
-        "path": "AGENTS.md",
-        "commits": 4
+        "path": "test/upload-handler.test.ts",
+        "commits": 5
       },
       {
         "path": "pnpm-lock.yaml",
@@ -700,16 +704,16 @@
         "commits": 3
       },
       {
-        "path": "test/detect.test.ts",
+        "path": "src/tool.ts",
         "commits": 3
       },
       {
-        "path": "test/integration.test.ts",
+        "path": "test/detect.test.ts",
         "commits": 3
       }
     ],
-    "churnFiles90d": 44,
-    "dirtyFiles": 5
+    "churnFiles90d": 45,
+    "dirtyFiles": 4
   },
-  "scanMs": 93
+  "scanMs": 123
 }
