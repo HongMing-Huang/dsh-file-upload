@@ -12,7 +12,7 @@
 //
 // Exit code 0 = every invariant holds. Non-zero = at least one FAIL.
 
-import { readFileSync, existsSync, readdirSync } from 'node:fs'
+import { readFileSync, existsSync, readdirSync, openSync, readSync, closeSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -29,6 +29,47 @@ const HOST_INJECT_FALLBACK = ['tools', 'fs', 'systemPrompt', 'webServer', 'sessi
 
 function readJson(path) {
   return JSON.parse(readFileSync(path, 'utf8'))
+}
+
+/**
+ * Names of the packages a local DSH installation ships, or undefined when no
+ * installation is reachable.
+ *
+ * The payload is an Electron asar: a pickle of four uint32 lengths, then that
+ * many bytes of JSON describing the tree. Only the header is parsed, never the
+ * 100+ MB body.
+ *
+ * @returns the set of package names under `@deepseek-ai`, or undefined.
+ */
+function runtimePackageNames() {
+  const asars = [
+    '/Applications/DeepSeek Harness.app/Contents/Resources/app.asar',
+    join(process.env.HOME ?? '', '.dsh/app.asar')
+  ].filter((p) => p !== '' && existsSync(p))
+  for (const asar of asars) {
+    try {
+      const fd = openSync(asar, 'r')
+      try {
+        const head = Buffer.alloc(16)
+        readSync(fd, head, 0, 16, 0)
+        const jsonSize = head.readUInt32LE(12)
+        if (jsonSize <= 0 || jsonSize > 64 * 1024 * 1024) continue
+        const json = Buffer.alloc(jsonSize)
+        readSync(fd, json, 0, jsonSize, 16)
+        const header = JSON.parse(json.toString('utf8'))
+        const names = new Set()
+        const packages = header?.files?.dsh?.files?.node_modules?.files?.['@deepseek-ai']?.files
+        if (packages === undefined) continue
+        for (const name of Object.keys(packages)) names.add(`@deepseek-ai/${name}`)
+        if (names.size > 0) return names
+      } finally {
+        closeSync(fd)
+      }
+    } catch {
+      // A malformed or unreadable payload is "no runtime", not a failure.
+    }
+  }
+  return undefined
 }
 
 if (!existsSync(join(root, 'package.json'))) {
@@ -160,16 +201,26 @@ const dsh = pkg.dsh ?? {}
   } else {
     const seen = new Set()
     const unknown = []
+    const runtime = runtimePackageNames()
     for (const field of ['inject', 'external']) {
       for (const name of client[field] ?? []) {
         if (seen.has(name)) continue
         seen.add(name)
         const inNodeModules = existsSync(join(root, 'node_modules', ...name.split('/')))
-        if (!inNodeModules) unknown.push(`${field}:${name}`)
+        // A shipped-runtime package is authority: it exists even when this
+        // checkout has not installed it.
+        const inRuntime = runtime?.has(name) ?? false
+        if (!inNodeModules && !inRuntime) unknown.push(`${field}:${name}`)
       }
     }
-    if (unknown.length === 0) pass('client-declaration', `platform=${client.platform}, ${seen.size} named package(s) resolvable locally`)
-    else warn('client-declaration', `not installed locally, cannot prove they exist in the runtime: ${unknown.join(', ')}`)
+    if (unknown.length === 0) {
+      const via = runtime === undefined ? 'resolvable locally' : `checked against ${runtime.size} shipped packages`
+      pass('client-declaration', `platform=${client.platform}, ${seen.size} named package(s) ${via}`)
+    } else if (runtime === undefined) {
+      warn('client-declaration', `no DSH install to consult and not installed locally, cannot prove these exist: ${unknown.join(', ')}`)
+    } else {
+      fail('client-declaration', `named package(s) absent from the shipped runtime: ${unknown.join(', ')}`)
+    }
     // The client bundle must exist for a web client half.
     const clientExport = pkg.exports?.['./client']
     const target = typeof clientExport === 'string' ? clientExport : clientExport?.default
