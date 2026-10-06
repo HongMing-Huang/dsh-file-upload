@@ -5,12 +5,19 @@
 //   - small text files are inlined straight into the composer via the
 //     official `slash/input-insert-text` event; larger text and documents
 //     insert a path reference the agent reads with read_document.
+//   - uploads stream through XMLHttpRequest so each card can show live
+//     progress, and an in-flight card can be cancelled (the XHR is aborted).
 // Uploads carry the session id so the host stores files inside that session's
 // workspace (.dsh-uploads/<sessionId>), where the agent's fs backend can
 // always resolve them.
 
 import { useEffect, useRef, useState } from 'react'
-import { Tooltip, IconPaperclipOutline16, IconCloseOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+// The primitives export size-graded glyph families (`…Regular` / `…Medium`),
+// not the `…16` names this file used originally; those do not exist in the
+// shipped runtime, so both icons resolved to `undefined` and the paperclip and
+// the two remove buttons rendered nothing. `Regular` is the 16-18px grade the
+// official client plugins use in toolbars.
+import { Tooltip, IconPaperclipOutlineRegular, IconCloseOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 
 const SOURCE_NAME = 'dsh-file-upload'
 const STYLE_TAG = 'dsh-file-upload/style.css'
@@ -21,6 +28,10 @@ interface UploadMeta {
   label: string
   status: 'uploading' | 'ready' | 'error'
   error?: string
+  /** Upload fraction 0..1 while `status` is 'uploading'; only set when the total is known. */
+  progress?: number
+  /** Aborts the in-flight request; present only while `status` is 'uploading'. */
+  abort?: () => void
   previewUrl?: string
   /** Absolute host path — used for DELETE only, never shown to the model. */
   absolutePath?: string
@@ -30,6 +41,9 @@ interface UploadMeta {
 /** Per-session attachment metadata: Map<sessionId, Map<path, meta>>. */
 const uploadMetaBySession = new Map<string, Map<string, UploadMeta>>()
 
+/** Card ids for uploads that have not reported their final path yet. */
+let uploadSeq = 0
+
 function metaFor(sessionId: string): Map<string, UploadMeta> {
   let m = uploadMetaBySession.get(sessionId)
   if (m === undefined) {
@@ -38,11 +52,31 @@ function metaFor(sessionId: string): Map<string, UploadMeta> {
   }
   return m
 }
-let uploadError: { seq: number; text: string } | null = null
-let errorSeq = 0
-const errorListeners = new Set<() => void>()
 
-function subscribeErrors(listener: () => void): () => void {
+const metaListeners = new Set<() => void>()
+
+function subscribeMeta(listener: () => void): () => void {
+  metaListeners.add(listener)
+  return () => {
+    metaListeners.delete(listener)
+  }
+}
+
+/** Re-render every mounted dock after a card appeared, progressed or vanished. */
+function notifyMeta(): void {
+  for (const listener of metaListeners) listener()
+}
+
+interface UploadError {
+  seq: number
+  text: string
+}
+
+let uploadError: UploadError | null = null
+let errorSeq = 0
+const errorListeners = new Set<(err: UploadError | null) => void>()
+
+function subscribeErrors(listener: (err: UploadError | null) => void): () => void {
   errorListeners.add(listener)
   return () => {
     errorListeners.delete(listener)
@@ -51,12 +85,12 @@ function subscribeErrors(listener: () => void): () => void {
 
 function setUploadError(text: string): void {
   uploadError = { seq: ++errorSeq, text }
-  for (const listener of errorListeners) listener()
+  for (const listener of errorListeners) listener(uploadError)
 }
 
 function clearUploadError(): void {
   uploadError = null
-  for (const listener of errorListeners) listener()
+  for (const listener of errorListeners) listener(uploadError)
 }
 
 function badgeStyle(name: string): { bg: string; ext: string } {
@@ -79,6 +113,13 @@ function formatBytes(n: number): string {
   return `${(n / (1024 * 1024)).toFixed(1)} MB`
 }
 
+/** Card subtitle: live percentage while uploading, size once stored, failure text. */
+function cardCaption(meta: UploadMeta): string {
+  if (meta.status === 'uploading') return meta.progress === undefined ? '上传中…' : `${Math.round(meta.progress * 100)}%`
+  if (meta.status === 'error') return '上传失败'
+  return formatBytes(meta.bytes)
+}
+
 /** Inject the plugin stylesheet once; returns a disposer removing it on stop/update. */
 function injectCss(): () => void {
   if (typeof document === 'undefined') return () => undefined
@@ -95,6 +136,9 @@ function injectCss(): () => void {
 .dsh-upload-badge{width:44px;height:56px;border-radius:6px;color:#fff;font-size:12px;font-weight:700;font-family:var(--ds-font-family-code,monospace);display:inline-flex;align-items:center;justify-content:center;letter-spacing:.5px;flex:none;box-shadow:inset 0 -10px 14px rgba(0,0,0,.14),inset 0 10px 12px rgba(255,255,255,.16)}
 .dsh-upload-name{width:100%;font-size:12px;line-height:16px;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-all}
 .dsh-upload-size{color:var(--dsw-alias-label-tertiary,inherit);font-size:10.5px;flex:none}
+.dsh-upload-progress{width:100%;height:3px;border-radius:2px;overflow:hidden;background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.18))}
+.dsh-upload-progress-fill{height:100%;border-radius:2px;background:var(--dsw-alias-border-accent,rgba(99,132,255,.55));transition:width .12s ease}
+.dsh-upload-card-error .dsh-upload-size{color:var(--dsw-alias-state-error-primary,#d86161)}
 .dsh-upload-remove{border:none;background:transparent;color:var(--dsw-alias-label-tertiary,inherit);cursor:pointer;padding:2px;border-radius:4px;display:inline-flex;line-height:0;flex:none}
 .dsh-upload-remove:hover{color:var(--dsw-alias-label-primary,inherit);background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.12))}
 .dsh-upload-card>.dsh-upload-remove{position:absolute;top:4px;right:4px}
@@ -150,6 +194,78 @@ function httpErrorText(status: number): string {
   return `HTTP ${status}`
 }
 
+/** Thrown when the user cancels an upload: a cancel is not a failure. */
+class UploadCancelled extends Error {
+  constructor() {
+    super('upload cancelled')
+    this.name = 'UploadCancelled'
+  }
+}
+
+/**
+ * POST one file through XMLHttpRequest. `fetch` cannot report upload progress
+ * in the browser, `xhr.upload.onprogress` can. Headers, body, response parsing
+ * and error messages are identical to the previous fetch-based transport.
+ */
+function postUpload(
+  file: File,
+  sessionId: string,
+  relPath: string | undefined,
+  controller: AbortController,
+  onProgress: (loaded: number, total: number) => void
+): Promise<UploadResponse & { path: string }> {
+  return new Promise<UploadResponse & { path: string }>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    const onAbort = (): void => xhr.abort()
+    controller.signal.addEventListener('abort', onAbort)
+    const settle = (): void => controller.signal.removeEventListener('abort', onAbort)
+
+    xhr.open('POST', '/api/upload')
+    xhr.setRequestHeader('x-file-name', encodeURIComponent(file.name))
+    if (relPath !== undefined) xhr.setRequestHeader('x-file-relpath', encodeURIComponent(relPath))
+    xhr.setRequestHeader('x-session-id', sessionId)
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && event.total > 0) onProgress(event.loaded, event.total)
+    }
+    xhr.onabort = () => {
+      settle()
+      reject(new UploadCancelled())
+    }
+    xhr.onerror = () => {
+      settle()
+      reject(new Error(`${file.name}: 网络错误，上传失败`))
+    }
+    xhr.onload = () => {
+      settle()
+      if (xhr.status < 200 || xhr.status >= 300) {
+        let detail = httpErrorText(xhr.status)
+        try {
+          const payload = JSON.parse(xhr.responseText) as { error?: string }
+          if (typeof payload.error === 'string') detail = payload.error
+        } catch {
+          // keep the status-based message
+        }
+        reject(new Error(`${file.name}: ${detail}`))
+        return
+      }
+      let payload: UploadResponse
+      try {
+        payload = JSON.parse(xhr.responseText) as UploadResponse
+      } catch (err) {
+        reject(err instanceof Error ? err : new Error(String(err)))
+        return
+      }
+      if (typeof payload.path !== 'string') {
+        reject(new Error('missing path in response'))
+        return
+      }
+      resolve({ ...payload, path: payload.path })
+    }
+    if (controller.signal.aborted) onAbort()
+    else xhr.send(file)
+  })
+}
+
 async function uploadFile(actx: ActionContext, file: File, sessionId: string): Promise<string | null> {
   const conversation = actx.get('conversation')
   if (conversation === undefined) throw new Error('conversation service unavailable')
@@ -157,41 +273,61 @@ async function uploadFile(actx: ActionContext, file: File, sessionId: string): P
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const relPath = (file as any).relPath as string | undefined
-  const res = await fetch('/api/upload', {
-    method: 'POST',
-    headers: {
-      'x-file-name': encodeURIComponent(file.name),
-      ...(relPath !== undefined ? { 'x-file-relpath': encodeURIComponent(relPath) } : {}),
-      'x-session-id': sessionId
-    },
-    body: file
-  })
-  if (!res.ok) {
-    let detail = httpErrorText(res.status)
-    try {
-      const payload = (await res.json()) as { error?: string }
-      if (typeof payload.error === 'string') detail = payload.error
-    } catch {
-      // keep the status-based message
-    }
-    throw new Error(`${file.name}: ${detail}`)
+  // The card goes up before the request so the user sees it immediately. It is
+  // keyed by a provisional id until the server reports the final relative path;
+  // `@` candidates only expose `ready` cards, and only a 2xx response inserts a
+  // reference into the composer.
+  const cardKey = `__upload__:${++uploadSeq}`
+  const cards = metaFor(sessionId)
+  const controller = new AbortController()
+  const card: UploadMeta = {
+    name: file.name,
+    bytes: file.size,
+    label: file.name.slice(file.name.lastIndexOf('.') + 1).toUpperCase(),
+    status: 'uploading',
+    progress: 0,
+    abort: () => controller.abort()
   }
-  const payload = (await res.json()) as UploadResponse
-  if (typeof payload.path !== 'string') throw new Error('missing path in response')
+  cards.set(cardKey, card)
+  notifyMeta()
+
+  let payload: UploadResponse & { path: string }
+  try {
+    payload = await postUpload(file, sessionId, relPath, controller, (loaded, total) => {
+      card.progress = Math.min(1, loaded / total)
+      notifyMeta()
+    })
+  } catch (err) {
+    if (err instanceof UploadCancelled) {
+      // The user cancelled: drop the card silently, no error banner.
+      cards.delete(cardKey)
+    } else {
+      card.status = 'error'
+      card.error = err instanceof Error ? err.message : String(err)
+      card.progress = undefined
+      card.abort = undefined
+    }
+    notifyMeta()
+    throw err
+  }
+
   const name = payload.name ?? file.name
-  const bytes = payload.bytes ?? file.size
   // Codex-style reference: the relative path (relative to the session
   // workspace) is what the model sees — never the absolute host path.
   const ref = payload.relativePath !== undefined && payload.relativePath !== '' ? payload.relativePath : payload.path
-  metaFor(sessionId).set(ref, {
-    name,
-    bytes,
-    label: payload.label ?? name.slice(name.lastIndexOf('.') + 1).toUpperCase(),
-    status: 'ready',
-    absolutePath: payload.path,
-    ...(payload.relativePath !== undefined ? { relativePath: payload.relativePath } : {}),
-    ...(file.type.startsWith('image/') ? { previewUrl: URL.createObjectURL(file) } : {})
-  })
+  card.status = 'ready'
+  card.progress = undefined
+  card.abort = undefined
+  card.name = name
+  card.bytes = payload.bytes ?? file.size
+  card.label = payload.label ?? name.slice(name.lastIndexOf('.') + 1).toUpperCase()
+  card.absolutePath = payload.path
+  if (payload.relativePath !== undefined) card.relativePath = payload.relativePath
+  if (file.type.startsWith('image/')) card.previewUrl = URL.createObjectURL(file)
+  // Re-key the card: the reference is what the dock and the `@` picker use.
+  cards.delete(cardKey)
+  cards.set(ref, card)
+  notifyMeta()
   clearUploadError()
 
   // Images on text-only routes: when a vision description was generated,
@@ -288,6 +424,9 @@ async function attachFiles(actx: ActionContext, files: File[], sessionId: string
     try {
       await uploadFile(actx, file, sessionId)
     } catch (err) {
+      // A user cancel is not a failure: the card is already gone and there is
+      // nothing to report.
+      if (err instanceof UploadCancelled) continue
       setUploadError(err instanceof Error ? err.message : String(err))
     }
   }
@@ -318,9 +457,9 @@ function UploadButton({ attach }: UploadButtonProps) {
     input.click()
   }
   return (
-    <Tooltip label={busy ? '上传中…' : '上传文件'} side="top">
+    <Tooltip label={busy ? '上传中…' : '上传文件'}>
       <button type="button" className="dsh-upload-btn" aria-label="上传文件" disabled={busy} onClick={pick}>
-        <IconPaperclipOutline16 size={14} />
+        <IconPaperclipOutlineRegular size={14} />
       </button>
     </Tooltip>
   )
@@ -401,31 +540,52 @@ interface DockProps {
 
 function UploadDock({ attach, sessionId }: DockProps) {
   const [metaVersion, setMetaVersion] = useState(0)
-  const [error, setError] = useState<{ seq: number; text: string } | null>(null)
+  const [error, setError] = useState<UploadError | null>(null)
 
   useEffect(() => {
     const offs = [
       subscribeErrors((next) => {
         setError(next)
         setMetaVersion((v) => v + 1)
-      })
+      }),
+      subscribeMeta(() => setMetaVersion((v) => v + 1))
     ]
     return () => {
       for (const off of offs) off()
     }
   }, [])
 
+  useEffect(() => {
+    const cards = metaFor(sessionId)
+    return () => {
+      // Leaving the session must not leave requests (or cards) hanging.
+      for (const [key, meta] of Array.from(cards.entries())) {
+        if (meta.status !== 'uploading') continue
+        meta.abort?.()
+        cards.delete(key)
+      }
+    }
+  }, [sessionId])
+
   const removeCard = (ref: string): void => {
     // The dock key is the relative reference; the server needs the absolute
     // path stored at upload time to delete the file.
     const meta = metaFor(sessionId).get(ref)
     metaFor(sessionId).delete(ref)
-    setMetaVersion((v) => v + 1)
+    notifyMeta()
+    if (meta === undefined) return
+    // Still in flight: abort it. No reference was inserted and a user cancel
+    // must not surface as an error.
+    if (meta.status === 'uploading') {
+      meta.abort?.()
+      return
+    }
+    if (meta.status !== 'ready' || meta.absolutePath === undefined) return
     void fetch('/api/upload', {
       method: 'DELETE',
       headers: {
         'x-session-id': sessionId,
-        'x-file-path': meta?.absolutePath ?? ref
+        'x-file-path': meta.absolutePath
       }
     }).catch(() => undefined)
   }
@@ -439,7 +599,7 @@ function UploadDock({ attach, sessionId }: DockProps) {
           {entries.map(([ref, meta]) => {
             const badge = badgeStyle(meta.name)
             return (
-              <div key={ref} className="dsh-upload-card">
+              <div key={ref} className={`dsh-upload-card${meta.status === 'error' ? ' dsh-upload-card-error' : ''}`}>
                 {meta.previewUrl !== undefined ? (
                   <img
                     src={meta.previewUrl}
@@ -452,18 +612,26 @@ function UploadDock({ attach, sessionId }: DockProps) {
                     {badge.ext}
                   </div>
                 )}
-                <div className="dsh-upload-name" title={meta.name}>
+                <div className="dsh-upload-name" title={meta.error ?? meta.name}>
                   {meta.name}
                 </div>
-                <div className="dsh-upload-size">{formatBytes(meta.bytes)}</div>
-                <Tooltip label="移除" side="top">
+                <div className="dsh-upload-size">{cardCaption(meta)}</div>
+                {meta.status === 'uploading' && (
+                  <div className="dsh-upload-progress">
+                    <div
+                      className="dsh-upload-progress-fill"
+                      style={{ width: `${Math.round((meta.progress ?? 0) * 100)}%` }}
+                    />
+                  </div>
+                )}
+                <Tooltip label={meta.status === 'uploading' ? '取消上传' : '移除'}>
                   <button
                     type="button"
                     className="dsh-upload-remove"
-                    aria-label="移除"
+                    aria-label={meta.status === 'uploading' ? '取消上传' : '移除'}
                     onClick={() => removeCard(ref)}
                   >
-                    <IconCloseOutline16 size={12} />
+                    <IconCloseOutlineRegular size={12} />
                   </button>
                 </Tooltip>
               </div>
@@ -480,7 +648,7 @@ function UploadDock({ attach, sessionId }: DockProps) {
             aria-label="关闭"
             onClick={() => setError(null)}
           >
-            <IconCloseOutline16 size={12} />
+            <IconCloseOutlineRegular size={12} />
           </button>
         </div>
       )}
@@ -512,11 +680,15 @@ export function apply(ctx: {
       candidates: async (projection: { sessionId: string }) => {
         const metas = uploadMetaBySession.get(projection.sessionId)
         if (metas === undefined) return []
-        return Array.from(metas.entries()).map(([ref, meta]) => ({
-          name: ref,
-          description: `${meta.label} · ${formatBytes(meta.bytes)}`,
-          icon: '📎'
-        }))
+        // Only stored files can be referenced; an in-flight upload has no
+        // server-side path yet.
+        return Array.from(metas.entries())
+          .filter(([, meta]) => meta.status === 'ready')
+          .map(([ref, meta]) => ({
+            name: ref,
+            description: `${meta.label} · ${formatBytes(meta.bytes)}`,
+            icon: '📎'
+          }))
       },
       onPick: (pick: {
         candidate: { name: string }

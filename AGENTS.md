@@ -8,7 +8,7 @@
 ## What this is
 
 - Layout archetype: `single-package-src` · primary language: `typescript` · module system: `esm`
-- Size: 33 tracked files, 9 source files, ~2290 source lines, max depth 2
+- Size: 33 tracked files, 9 source files, ~2548 source lines, max depth 2
 - Tests: 4 file(s), placement `top-level`, ratio 0.44
 - Package manager: `pnpm` · version 0.5.4
 

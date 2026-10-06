@@ -1,13 +1,24 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createServer, request } from 'node:http'
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createUploadHandler } from '../src/upload.ts'
 import type { UploadOptions } from '../src/upload.ts'
 
-function startUploadServer(overrides: Partial<UploadOptions> = {}): Promise<{ server: ReturnType<typeof createServer>; url: string; port: number; dir: string }> {
+interface UploadServer {
+  server: ReturnType<typeof createServer>
+  url: string
+  port: number
+  dir: string
+  /** Resolves once at least one request has been handled and none is in flight. */
+  idle: () => Promise<void>
+  /** Resolves when the server starts handling its next request. */
+  nextRequest: () => Promise<void>
+}
+
+function startUploadServer(overrides: Partial<UploadOptions> = {}): Promise<UploadServer> {
   const dir = mkdtempSync(join(tmpdir(), 'dshfu-up-'))
   const handler = createUploadHandler({
     maxBytes: 1024 * 1024,
@@ -19,16 +30,47 @@ function startUploadServer(overrides: Partial<UploadOptions> = {}): Promise<{ se
     sessionCwd: (sessionId: string) => (sessionId === 'good-session' ? join(dir, 'workspace') : undefined),
     ...overrides
   })
+  let started = 0
+  let active = 0
+  const idleWaiters = new Set<() => void>()
+  const requestWaiters = new Set<() => void>()
   const server = createServer((req, res) => {
-    void handler(req, res)
+    started += 1
+    active += 1
+    for (const resume of requestWaiters) resume()
+    requestWaiters.clear()
+    void handler(req, res).finally(() => {
+      active -= 1
+      if (active === 0 && started > 0) {
+        for (const resume of idleWaiters) resume()
+        idleWaiters.clear()
+      }
+    })
   })
+  const idle = (): Promise<void> => {
+    if (active === 0 && started > 0) return Promise.resolve()
+    return new Promise((resolve) => idleWaiters.add(resolve))
+  }
+  const nextRequest = (): Promise<void> =>
+    new Promise((resolve) => {
+      requestWaiters.add(resolve)
+    })
   return new Promise((resolve) => {
     server.listen(0, '127.0.0.1', () => {
       const address = server.address()
       const port = typeof address === 'object' && address !== null ? address.port : 0
-      resolve({ server, url: `http://127.0.0.1:${port}`, port, dir })
+      resolve({ server, url: `http://127.0.0.1:${port}`, port, dir, idle, nextRequest })
     })
   })
+}
+
+/** Files stored for `good-session` (empty when the directory itself is absent). */
+function storedFiles(dir: string): string[] {
+  try {
+    return readdirSync(join(dir, 'workspace', '.dsh-uploads', 'good-session'))
+  } catch {
+    return []
+  }
 }
 
 /** A tiny-but-valid PNG signature, enough for the sniffer to report `image`. */
@@ -36,10 +78,13 @@ const PNG_BYTES = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0
 
 /**
  * Start an upload whose request body stays open until `release()` is called,
- * so the request holds a concurrency slot while it is being read.
+ * so the request holds a concurrency slot while it is being read. `abort()`
+ * simulates the browser cancelling the upload.
  */
-function holdUpload(url: string, name: string): { release: () => void; done: Promise<number> } {
+function holdUpload(url: string, name: string): { release: () => void; abort: () => void; done: Promise<number> } {
   let release: () => void = () => undefined
+  let abort: () => void = () => undefined
+  let aborted = false
   const done = new Promise<number>((resolve, reject) => {
     const req = request(
       `${url}/api/upload`,
@@ -52,9 +97,15 @@ function holdUpload(url: string, name: string): { release: () => void; done: Pro
     req.on('error', reject)
     req.flushHeaders()
     req.write('partial body')
-    release = () => req.end(' tail')
+    release = () => {
+      if (!aborted) req.end(' tail')
+    }
+    abort = () => {
+      aborted = true
+      req.destroy()
+    }
   })
-  return { release, done }
+  return { release, abort, done }
 }
 
 /** Yield to the event loop so every already-queued handler microtask has run. */
@@ -278,6 +329,113 @@ test('upload handler: slow image explanation does not hold a concurrency slot', 
   } finally {
     releaseVision()
     await Promise.allSettled(images)
+    server.close()
+  }
+})
+
+test('upload handler: extension outside the allowlist rejected 415', async () => {
+  const { server, url } = await startUploadServer({ allowedExtensions: ['txt'] })
+  try {
+    const res = await fetch(`${url}/api/upload`, {
+      method: 'POST',
+      headers: { 'x-session-id': 'good-session', 'x-file-name': 'payload.exe' },
+      body: 'MZ'
+    })
+    assert.equal(res.status, 415)
+    const body = (await res.json()) as { error: string }
+    assert.equal(body.error, 'extension ".exe" not allowed')
+  } finally {
+    server.close()
+  }
+})
+
+test('upload handler: disconnect mid-body leaves no partial file', async () => {
+  const { server, url, dir, idle, nextRequest } = await startUploadServer()
+  const seen = nextRequest()
+  try {
+    await new Promise<void>((resolve) => {
+      const req = request(`${url}/api/upload`, {
+        method: 'POST',
+        headers: { 'x-session-id': 'good-session', 'x-file-name': 'partial.txt', 'content-length': String(1024 * 1024) }
+      })
+      req.on('error', () => undefined)
+      req.on('close', () => resolve())
+      req.flushHeaders()
+      req.write('partial body')
+      setTimeout(() => req.destroy(), 20)
+    })
+    await seen // the server really started handling it
+    await idle()
+    assert.deepEqual(storedFiles(dir), [], 'an aborted body read must not leave a file behind')
+  } finally {
+    server.close()
+  }
+})
+
+test('upload handler: disconnect after the body arrives leaves no orphan file', async () => {
+  const { server, url, dir, idle, nextRequest } = await startUploadServer()
+  const seen = nextRequest()
+  try {
+    const body = Buffer.from(`orphan-check-${process.pid}-`.repeat(256))
+    await new Promise<void>((resolve) => {
+      const req = request(`${url}/api/upload`, {
+        method: 'POST',
+        headers: {
+          'x-session-id': 'good-session',
+          'x-file-name': 'orphan.txt',
+          'content-length': String(body.length)
+        }
+      })
+      req.on('error', () => undefined)
+      req.on('response', (res) => res.resume())
+      req.on('close', () => resolve())
+      // Hand the whole body to the socket, then abort: the server received
+      // everything but can no longer deliver the response, so keeping the file
+      // would leak an orphan nobody can reference.
+      req.write(body, () => req.destroy())
+      req.end()
+    })
+    await seen // the server really started handling it
+    await idle()
+    assert.deepEqual(storedFiles(dir), [], 'a cancelled upload must not leave an orphan file')
+  } finally {
+    server.close()
+  }
+})
+
+test('upload handler: an aborted upload releases its concurrency slot', async () => {
+  const { server, url, idle } = await startUploadServer()
+  let seen = 0
+  let signal: () => void = () => undefined
+  const fourSeen = new Promise<void>((resolve) => {
+    signal = resolve
+  })
+  server.on('request', () => {
+    seen += 1
+    if (seen === 4) signal()
+  })
+  const held = ['a.txt', 'b.txt', 'c.txt', 'd.txt'].map((name) => holdUpload(url, name))
+  const settled = Promise.allSettled(held.map((entry) => entry.done))
+  try {
+    await fourSeen
+    await tick() // let the four handlers take their slot
+    const blocked = await fetch(`${url}/api/upload`, {
+      method: 'POST',
+      headers: { 'x-session-id': 'good-session', 'x-file-name': 'blocked.txt' },
+      body: 'blocked'
+    })
+    assert.equal(blocked.status, 429, 'the four held uploads must occupy every slot')
+    for (const entry of held) entry.abort()
+    await idle()
+    const res = await fetch(`${url}/api/upload`, {
+      method: 'POST',
+      headers: { 'x-session-id': 'good-session', 'x-file-name': 'after-abort.txt' },
+      body: 'still accepting uploads'
+    })
+    assert.equal(res.status, 200, 'cancelled uploads must give their slot back')
+  } finally {
+    for (const entry of held) entry.release()
+    await settled
     server.close()
   }
 })

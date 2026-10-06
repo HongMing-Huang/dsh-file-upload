@@ -75,6 +75,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rather than fatal — the browser loader ignores an inject name it cannot find —
   but it produced no ordering edge and no row retention for the packages the
   client actually needs. `dsh.manifestVersion: 1` is now declared too.
+- **Upload progress and cancellation**: the client now posts through
+  `XMLHttpRequest` instead of `fetch` — the only way to observe
+  `upload.onprogress` in a browser — so a card appears the moment an upload
+  starts and fills in live (`progress` 0..1, percentage in the card). The
+  card's × now aborts an in-flight request (leaving the session does too)
+  instead of letting it run to completion, and a cancelled upload is dropped
+  silently: no error banner, and no `@reference` — a reference is still
+  inserted **only** after a 2xx response, never on cancel or failure. A failed
+  upload keeps its card marked `上传失败` with the error in the banner.
+- **Orphan files after a client disconnect**: `handlePost` now notices the
+  browser going away (`close` before the response is finished, or a destroyed
+  response) and skips the disk write entirely — or removes the file it just
+  wrote — instead of leaving an unreferenced file behind until the TTL sweep.
+  This also covers a cancel during the image-explanation call, which runs
+  outside the concurrency gate and can take up to a minute. Response codes
+  (403/413/415/429/400/500) and their messages are unchanged, the concurrency
+  slot is still released on every path, and a deduplicated file that already
+  backs an earlier successful upload is never deleted.
+- **The upload error banner never showed its text**: `subscribeErrors`
+  notified listeners with no argument, so the dock stored `undefined` and the
+  banner then read `.text` off it, throwing during render. Listeners now
+  receive the current error.
+- **The paperclip and both remove buttons rendered nothing**: the client
+  imported `IconPaperclipOutline16` and `IconCloseOutline16`, names the
+  primitives package does not export. The runtime ships size-graded families
+  (`…Regular` ≈16px, `…Medium` ≈20px), so both imports resolved to `undefined`
+  and React rendered empty buttons with no error anywhere. They are now
+  `IconPaperclipOutlineRegular` / `IconCloseOutlineRegular`, matching how the
+  official client plugins use them. The same pass dropped a `side` prop that
+  `Tooltip` does not accept.
+- **`pnpm typecheck` never checked the browser half**: `tsconfig.json` included
+  only `**/*.ts`, while the client is `.tsx`, so `src/client/**` — the largest
+  file in the repository — had never been in the program. All three defects
+  above are what turning that check on surfaced. It now includes `src/**/*.tsx`
+  with `jsx` and the DOM libs. Enabling it first required declaring the one
+  external dependency the browser half has: `src/client/primitives.d.ts`, a
+  deliberately minimal stub, because the primitives ship inside the DSH runtime
+  and publish no `.d.ts` of their own. The single merged config means the host
+  half now also sees DOM libs; that is the accepted trade for not maintaining a
+  second tsconfig, and a host file reaching for a DOM global is a bug the
+  runtime tests already catch.
 
 ## [0.5.3] - 2026-08-21
 

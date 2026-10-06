@@ -130,6 +130,16 @@ export function createUploadHandler(options: UploadOptions) {
     // explanation call (`imageMode` + `vision`, up to 60s) runs after the slot
     // is released, so a few slow images cannot starve document uploads.
     inflight += 1
+    // A browser that goes away mid-upload (user cancelled, tab closed) must not
+    // leave the bytes it managed to send behind as an orphan file. `close` also
+    // fires after a normal response, so only an unfinished response counts as a
+    // disconnect; the abort-mid-body case already surfaces as a read error.
+    let gone = false
+    const onClientClose = (): void => {
+      if (!res.writableFinished) gone = true
+    }
+    res.on('close', onClientClose)
+    const clientGone = (): boolean => gone || (res.destroyed && !res.writableFinished)
     let persisted: { meta: UploadedMeta; relativePath: string } | null = null
     try {
       const chunks: Buffer[] = []
@@ -171,6 +181,9 @@ export function createUploadHandler(options: UploadOptions) {
         return
       }
       const data = Buffer.concat(chunks)
+      // The client is already gone: stop here so a cancelled upload never
+      // reaches the disk at all.
+      if (clientGone()) return
       const sniffResult = sniff(data, name)
       await mkdir(storage.dir, { recursive: true })
       const digest = createHash('sha256').update(data).digest('hex').slice(0, 16)
@@ -181,6 +194,15 @@ export function createUploadHandler(options: UploadOptions) {
       } catch (err) {
         if ((err as NodeJS.ErrnoException)?.code === 'EEXIST') deduplicated = true
         else throw err
+      }
+
+      // The disconnect landed while the bytes were being written, so the
+      // response can no longer be delivered: take the file back instead of
+      // leaving an orphan. A deduplicated file already served an earlier
+      // successful upload and is left in place.
+      if (clientGone()) {
+        if (!deduplicated) await rm(dest, { force: true })
+        return
       }
 
       const meta: UploadedMeta = {
@@ -195,11 +217,16 @@ export function createUploadHandler(options: UploadOptions) {
       const relativePath = relPath !== '' ? relPath : relative(storage.cwd, dest).split(sep).join('/')
       persisted = { meta, relativePath }
     } catch (err) {
-      console.error('[dsh-file-upload] upload persist failed:', err)
-      res.writeHead(500, { 'content-type': 'application/json' })
-      res.end(JSON.stringify({ error: 'write failed' }))
+      // A cancelled upload surfaces here as a read error. Nothing was written
+      // and there is nobody left to answer, so it is not a server failure.
+      if (!clientGone()) {
+        console.error('[dsh-file-upload] upload persist failed:', err)
+        res.writeHead(500, { 'content-type': 'application/json' })
+        res.end(JSON.stringify({ error: 'write failed' }))
+      }
     } finally {
       inflight -= 1
+      res.off('close', onClientClose)
     }
     if (persisted === null) return
     const { meta, relativePath } = persisted
@@ -221,6 +248,14 @@ export function createUploadHandler(options: UploadOptions) {
         meta.imageMode = 'ocr'
         console.warn(`[dsh-file-upload] image description failed for ${meta.name}:`, err instanceof Error ? err.message : String(err))
       }
+    }
+
+    // The explanation above runs outside the concurrency gate and can take up
+    // to a minute, so the browser may well have cancelled by now. Same data
+    // hygiene: a response nobody can read must not leave the file behind.
+    if (clientGone()) {
+      if (meta.deduplicated !== true) await rm(meta.path, { force: true })
+      return
     }
 
     res.writeHead(200, { 'content-type': 'application/json' })

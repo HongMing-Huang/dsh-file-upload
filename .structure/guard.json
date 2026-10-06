@@ -5,7 +5,8 @@
   "ignore": [
     "**/*.min.js",
     "**/*.map",
-    ".dsh/structure-guard/**"
+    ".dsh/structure-guard/**",
+    "**/*.d.ts"
   ],
   "modules": [
     {

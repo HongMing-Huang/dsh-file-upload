@@ -12,7 +12,7 @@
 | Version | 0.5.4 |
 | Layout archetype | single-package-src |
 | Primary language | typescript |
-| Languages by volume | typescript (1970 LOC), typescriptreact (580 LOC), javascript (254 LOC) |
+| Languages by volume | typescript (2163 LOC), typescriptreact (752 LOC), javascript (305 LOC) |
 | Module system | esm |
 | Package manager | pnpm |
 | Engines | {"node":">=22.6.0"} |
@@ -22,7 +22,7 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 24 commits, last 2026-10-06T15:33:38+08:00, 3 dirty files |
+| Git | 27 commits, last 2026-10-06T15:52:05+08:00, 6 dirty files |
 
 ## 2. Layout at a glance
 
@@ -31,11 +31,11 @@
 | `.github/` | directory | 2 | 74 | 0 | 0 |  |
 | `.gitignore` | file | 1 | 15 | 0 | 0 |  |
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
-| `AGENTS.md` | file | 1 | 59 | 0 | 0 |  |
-| `ARCHITECTURE.md` | file | 1 | 249 | 0 | 0 |  |
-| `CHANGELOG.md` | file | 1 | 304 | 0 | 0 |  |
+| `AGENTS.md` | file | 1 | 60 | 0 | 0 |  |
+| `ARCHITECTURE.md` | file | 1 | 280 | 0 | 0 |  |
+| `CHANGELOG.md` | file | 1 | 345 | 0 | 0 |  |
 | `CONTRIBUTING.md` | file | 1 | 142 | 0 | 0 |  |
-| `INSTALL.md` | file | 1 | 151 | 0 | 0 |  |
+| `INSTALL.md` | file | 1 | 189 | 0 | 0 |  |
 | `LICENSE` | file | 1 | 0 | 0 | 0 |  |
 | `README.md` | file | 1 | 141 | 0 | 0 |  |
 | `README.zh.md` | file | 1 | 134 | 0 | 0 |  |
@@ -45,11 +45,11 @@
 | `examples/` | directory | 1 | 33 | 0 | 0 | cordis.patch.yml 的本地覆盖示例，文档性质。 |
 | `package.json` | file | 1 | 99 | 0 | 0 |  |
 | `pnpm-lock.yaml` | file | 1 | 0 | 0 | 0 |  |
-| `scripts/` | directory | 1 | 227 | 1 | 0 | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
-| `src/` | directory | 7 | 2036 | 7 | 0 |  |
-| `test/` | directory | 4 | 514 | 0 | 4 |  |
+| `scripts/` | directory | 1 | 278 | 1 | 0 | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
+| `src/` | directory | 7 | 2243 | 7 | 0 |  |
+| `test/` | directory | 4 | 672 | 0 | 4 |  |
 | `tsconfig.build.json` | file | 1 | 15 | 0 | 0 |  |
-| `tsconfig.json` | file | 1 | 17 | 0 | 0 |  |
+| `tsconfig.json` | file | 1 | 28 | 0 | 0 |  |
 
 Root holds 16 loose file(s): `.gitignore`, `AGENTS.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `INSTALL.md`, `LICENSE`, `README.md`, `README.zh.md`, `SECURITY.md`, `build.mjs`, `cordis.patch.yml`, `package.json`, `pnpm-lock.yaml`, `tsconfig.build.json`, `tsconfig.json`
 
@@ -58,16 +58,16 @@ Root holds 16 loose file(s): `.gitignore`, `AGENTS.md`, `ARCHITECTURE.md`, `CHAN
 | Module | Layer | Files | LOC | Source | Tests | Entry | May import (declared) | Actually imports | Purpose (curated) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `convert` | 1 | 1 | 282 | 1 | 0 | `src/convert.ts` | `detect` | `detect` | 文档转 Markdown 的适配层：唯一允许调用外部转换器（markitdown/mammoth/pdfjs/read-excel-file）的模块。 |
-| `upload` | 2 | 1 | 332 | 1 | 0 | `src/upload.ts` | `detect`, `convert` | `convert`, `detect` | 上传处理与清理：接收浏览器分片、落盘、哈希去重、定期回收临时文件。唯一允许写磁盘的模块。 |
+| `upload` | 2 | 1 | 367 | 1 | 0 | `src/upload.ts` | `detect`, `convert` | `convert`, `detect` | 上传处理与清理：接收浏览器分片、落盘、哈希去重、定期回收临时文件。唯一允许写磁盘的模块。 |
 | `detect` | 0 | 1 | 151 | 1 | 0 | `src/detect.ts` | _nothing_ | — | 文件类型嗅探（魔数 + 扩展名）。叶子模块，不 import 项目内任何东西。 |
 | `vision` | 0 | 1 | 162 | 1 | 0 | `src/vision.ts` | _nothing_ | — | 图片描述能力封装。叶子模块，供 entry 在需要视觉理解时调用。 |
 | `entry` | 3 | 1 | 302 | 1 | 0 | `src/index.ts` | `tool`, `upload`, `convert`, `detect`, `vision` | `convert`, `tool`, `upload`, `vision` | 宿主插件入口：注册上传服务与 read_document 工具，只做装配，不写业务逻辑。 |
 | `tool` | 2 | 1 | 227 | 1 | 0 | `src/tool.ts` | `detect`, `convert` | `convert`, `detect` | 面向模型的 read_document 工具定义、参数 schema 与解析缓存 ParseCache。 |
-| `client` | 0 | 1 | 580 | 1 | 0 | `src/client/index.tsx` | _nothing_ | — | 浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。 |
+| `client` | 0 | 1 | 752 | 1 | 0 | `src/client/index.tsx` | _nothing_ | — | 浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。 |
 | `build` | — | 1 | 27 | 1 | 0 | `build.mjs` | _undeclared_ | — | 构建脚本：tsc 产物之后的 client bundle 收尾。 |
 | `examples` | — | 1 | 33 | 0 | 0 | — | `*` | — | cordis.patch.yml 的本地覆盖示例，文档性质。 |
-| `scripts` | — | 1 | 227 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
-| `tests` | — | 4 | 514 | 0 | 4 | — | `*` | `convert`, `detect`, `upload` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
+| `scripts` | — | 1 | 278 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
+| `tests` | — | 4 | 672 | 0 | 4 | — | `*` | `convert`, `detect`, `upload` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
 
 _17 tracked file(s) belong to no declared module: `.github/workflows/ci.yml`, `.github/workflows/structure-guard.yml`, `.gitignore`, `.test-nonwritable/markitdown/.markitdown-installed.json`, `.test-nonwritable/markitdown/.probe`, `AGENTS.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, …. Either declare them or move them where the contract covers them._
 
@@ -107,7 +107,7 @@ graph LR
 | File naming | flat: 8, kebab: 1 |
 | Naming consistency | 100% (dominant: flat) |
 | Test placement | top-level |
-| Test volume | 4 files / 514 LOC (ratio 0.44) |
+| Test volume | 4 files / 672 LOC (ratio 0.44) |
 | Source roots | `src/` |
 | Barrel files (index.*) | present |
 | Scripts | `build`, `typecheck`, `test`, `check:manifest`, `prepublishOnly` |
@@ -116,21 +116,21 @@ graph LR
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 33 (357 KB) |
-| Source | 9 files / 2290 LOC |
-| Tests | 4 files / 514 LOC |
-| Docs | 8 files / 1204 LOC |
+| Files tracked | 33 (381 KB) |
+| Source | 9 files / 2548 LOC |
+| Tests | 4 files / 672 LOC |
+| Docs | 8 files / 1315 LOC |
 | Config files | 10 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
 | Max nesting depth | 2 |
-| Average source file | 254 lines |
-| Largest source file | `src/client/index.tsx` (580 lines) |
+| Average source file | 283 lines |
+| Largest source file | `src/client/index.tsx` (752 lines) |
 | Import graph | 8 nodes / 15 internal edges (6 cross-directory) |
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
 | Most depended-on files | `src/convert.ts` (5), `src/detect.ts` (5), `src/upload.ts` (3) |
-| Churn hotspots (90d) | `CHANGELOG.md` (15), `package.json` (15), `README.md` (14) |
+| Churn hotspots (90d) | `package.json` (16), `CHANGELOG.md` (15), `README.md` (14) |
 
 ## 6. Standards checklist
 
@@ -163,15 +163,10 @@ graph LR
 
 ## 7. Open findings
 
-### Drift since baseline (2026-10-06)
-
-- **warn** `drift-new-top-level` — 1 new top-level entr(y|ies) since the baseline: scripts.
-- **info** `drift-new-modules` — New module(s): scripts.
-
 ### Rule findings
 
 - **warn** `committed-runtime-artifacts` — 2 runtime artifact(s) are tracked in git.
-- **warn** `long-functions` — 1 function(s) exceed 150 lines; the longest is createUploadHandler at 200.
+- **warn** `long-functions` — 2 function(s) exceed 150 lines; the longest is createUploadHandler at 235.
 - **warn** `no-linter` — No linter or formatter configuration found.
 - **info** `churn-hotspots` — 1 file(s) are both frequently changed and widely imported.
 - **info** `stale-entry-points` — 3 entry point(s) are untracked build output.
@@ -230,7 +225,7 @@ graph LR
 
 ### 已知例外与待办
 
-- **`long-functions`**：`apply()`（`src/index.ts`）已在 `rules.overrides` 中豁免并写明理由——它是 Cordis 插件体，注册逻辑天然在同一个闭包作用域里（cordiverse/cordis 自身插件也是如此）。`createUploadHandler()`（`src/upload.ts`，**200 行**，2026-10-06 由 186 行增长）**未豁免**，是待拆分项：建议抽出「接收分片 / 校验哈希 / 落盘 / 响应」四个具名步骤；本轮把视觉调用移出并发闸时又加长了它，**拆分优先级应上调**。`src/upload.ts` 同时被标记为 **churn hotspot**（90 天 12 次提交、3 个 importer）——先稳定它的接口，测试也优先补在这里。
+- **`long-functions`**：`apply()`（`src/index.ts`）已在 `rules.overrides` 中豁免并写明理由——它是 Cordis 插件体，注册逻辑天然在同一个闭包作用域里（cordiverse/cordis 自身插件也是如此）。`createUploadHandler()`（`src/upload.ts`，**235 行**，2026-10-06 由 186 行经两次增长而来）**未豁免**，是待拆分项：建议抽出「接收分片 / 校验哈希 / 落盘 / 响应」四个具名步骤；本轮把视觉调用移出并发闸时又加长了它，**拆分优先级应上调**。`src/upload.ts` 同时被标记为 **churn hotspot**（90 天 12 次提交、3 个 importer）——先稳定它的接口，测试也优先补在这里。
 - **运行时产物被误提交**：`.test-nonwritable/markitdown/.probe` 与 `.markitdown-installed.json`（commit `7fdc463`）。处理：`git rm -r --cached .test-nonwritable` 并在 `.gitignore` 加 `.test-nonwritable/`。
 - **缺少 linter / formatter 配置**：18 个参照仓库全部具备（vscode 甚至自建 `.eslint-plugin-local/` 49 条规则来机械强制分层）。建议加 `eslint.config.js` 或 biome，然后 `guard.mjs hook install . --strict` 并接入 CI。
 - **`lib/` 是构建产物**：已在 `package.json` 的 `files` 中声明且被 gitignore，报告里以 info 提示，属预期，不需要处理。
@@ -246,6 +241,34 @@ graph LR
   在一次性 `DSH_HOME` 里做一次安装演练 → 发布 → 核对 registry 上的版本与 peer 区间。
   其中「看产物」和「安装演练」两步专门覆盖本项目踩过的两个坑：Host 半边能装载、浏览器半边却缺失或声明错误时
   **安装仍然报成功**；以及 peer 区间漂移会让安装被静默拒绝。
+- **浏览器半边文件增长，以及门禁其实测不到（2026-10-06 补齐上传进度/取消）**：`src/client/index.tsx`
+  580 → **742 行**，超过了 `oversized-file` 在 small 档声明的 600 行上限，但 audit 不会报——`checks.mjs`
+  的 `largestSourceFile()` 直接读 `p.maxLines ?? 800`，没有走 `sizeParam()` 的 `bySize` 解析，所以
+  `rules.json` 里声明的 600 实际不生效（**引擎缺陷**，当前有效上限是硬编码的 800，本文件 742 行尚未触线）。
+  本文件暂不拆分是有意的：进度、取消、状态三态属于同一条传输路径与同一份卡片状态，拆开只会把请求生命周期
+  和 UI 状态割裂；真要缩体量，正确做法是把 `postUpload` 这类纯传输代码下沉成 `src/client/` 内的独立模块
+  （模块边界 `client: src/client/**` 允许，且不引入宿主依赖）。
+- **同一轮里 `upload.ts` 的两处长函数**：`handlePost()` 131 → **166 行**、`createUploadHandler()` 200 →
+  **235 行**，两者都越过 150 行线。原因是给断连清理加的三处检查（读 body 前、落盘后、视觉调用后）与
+  取消语义；拆分建议与 `long-functions` 条目一致——按「读 body / 校验 / 落盘 / 响应」抽具名步骤，
+  并把「客户端是否已断连」做成一个可测的小工具函数。
+- **`pnpm typecheck` 覆盖不到浏览器半边 —— 已修（2026-10-06）**：原先 `tsconfig.json` 的 `include` 只有
+  `src/**/*.ts` 与 `test/**/*.ts`，`.tsx` 不在 program 内（`tsc -p tsconfig.json --listFiles | grep src/client`
+  = 0），所以 `src/client/index.tsx` 从未被类型检查过。现已把 `src/**/*.tsx` 纳入 include 并加上 `jsx` 与
+  DOM libs，**开启后立刻暴露 3 个真实缺陷**：错误横幅读 `undefined.text`（渲染即崩）、两个图标名在运行时不
+  存在（回形针与两个删除按钮渲染为空）、`Tooltip` 收到它不接受的 `side` prop。三个都已修。
+  代价与取舍：单一配置意味着宿主半边也能看到 DOM 全局（理论上可能漏掉一个误用 `document` 的宿主 bug），
+  换来不必维护第二份 tsconfig；宿主误用 DOM 会在运行时测试里暴露。
+  `src/client/client-ui-primitives.d.ts` 是这个检查的前提——primitives 只随 DSH 运行时发布且自身不带 `.d.ts`，
+  所以这份最小声明必须与运行时保持同步（新增 primitive 时同步补上，签名以
+  `node_modules/@deepseek-ai/dsh-client-ui-primitives/lib/index.js` 为准）。
+- **`**/*.d.ts` 从门禁里豁免（2026-10-06，引擎缺陷的针对性绕行）**：`guard.mjs` 的 kebab 解析器不认识
+  **复合扩展名** `.d.ts`，把它判成 `(other)`，于是任何声明文件都会同时触发「目录不 kebab」与「文件不 kebab」
+  两条告警——已用最小仓库独立复现（`declare module 'x' {}` 写成 `compound-name.d.ts` 即可触发），且
+  `!*.d.ts` 取反与 `**/*.ts` 形式都无效，只有顶层 `ignore` 生效。因此 `guard.json` 的 `ignore` 增加
+  `**/*.d.ts`（与既有的 `**/*.map` 同类：都是生成/非源码形态）。
+  **这不是为了让告警消失**：类型检查带来的收益（3 个真实缺陷）远大于这条命名规则对声明文件的价值。
+  若上游修好复合扩展名解析，应把这一条从 `ignore` 里删掉。
 
 ### 监控方式
 
