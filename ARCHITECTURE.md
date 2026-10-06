@@ -22,17 +22,17 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 20 commits, last 2026-08-19T23:41:34+08:00, 16 dirty files |
+| Git | 21 commits, last 2026-10-06T15:06:13+08:00, 2 dirty files |
 
 ## 2. Layout at a glance
 
 | Top level | Kind | Files | LOC | Source | Tests | Purpose (curated) |
 | --- | --- | --- | --- | --- | --- | --- |
 | `.github/` | directory | 2 | 74 | 0 | 0 |  |
-| `.gitignore` | file | 1 | 5 | 0 | 0 |  |
+| `.gitignore` | file | 1 | 15 | 0 | 0 |  |
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
 | `AGENTS.md` | file | 1 | 59 | 0 | 0 |  |
-| `ARCHITECTURE.md` | file | 1 | 216 | 0 | 0 |  |
+| `ARCHITECTURE.md` | file | 1 | 217 | 0 | 0 |  |
 | `CHANGELOG.md` | file | 1 | 292 | 0 | 0 |  |
 | `CONTRIBUTING.md` | file | 1 | 46 | 0 | 0 |  |
 | `INSTALL.md` | file | 1 | 151 | 0 | 0 |  |
@@ -43,7 +43,7 @@
 | `build.mjs` | file | 1 | 27 | 1 | 0 |  |
 | `cordis.patch.yml` | file | 1 | 30 | 0 | 0 |  |
 | `examples/` | directory | 1 | 33 | 0 | 0 | cordis.patch.yml 的本地覆盖示例，文档性质。 |
-| `package.json` | file | 1 | 88 | 0 | 0 |  |
+| `package.json` | file | 1 | 91 | 0 | 0 |  |
 | `pnpm-lock.yaml` | file | 1 | 0 | 0 | 0 |  |
 | `src/` | directory | 7 | 2036 | 7 | 0 |  |
 | `test/` | directory | 4 | 514 | 0 | 4 |  |
@@ -116,7 +116,7 @@ graph LR
 | Files tracked | 32 (338 KB) |
 | Source | 8 files / 2063 LOC |
 | Tests | 4 files / 514 LOC |
-| Docs | 8 files / 1063 LOC |
+| Docs | 8 files / 1064 LOC |
 | Config files | 10 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
@@ -127,7 +127,7 @@ graph LR
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
 | Most depended-on files | `src/convert.ts` (5), `src/detect.ts` (5), `src/upload.ts` (3) |
-| Churn hotspots (90d) | `README.md` (13), `README.zh.md` (13), `src/index.ts` (13) |
+| Churn hotspots (90d) | `README.md` (14), `README.zh.md` (14), `src/index.ts` (14) |
 
 ## 6. Standards checklist
 
@@ -165,6 +165,7 @@ graph LR
 - **warn** `committed-runtime-artifacts` — 2 runtime artifact(s) are tracked in git.
 - **warn** `long-functions` — 1 function(s) exceed 150 lines; the longest is createUploadHandler at 200.
 - **warn** `no-linter` — No linter or formatter configuration found.
+- **info** `churn-hotspots` — 1 file(s) are both frequently changed and widely imported.
 - **info** `stale-entry-points` — 2 entry point(s) are untracked build output.
 
 <!-- BEGIN CURATED -->
@@ -198,7 +199,7 @@ graph LR
 
 ### 已知例外与待办
 
-- **`long-functions`**：`apply()`（`src/index.ts`，161 行）已在 `rules.overrides` 中豁免并写明理由——它是 Cordis 插件体，注册逻辑天然在同一个闭包作用域里（cordiverse/cordis 自身插件也是如此）。`createUploadHandler()`（`src/upload.ts`，186 行）**未豁免**，是待拆分项：建议抽出「接收分片 / 校验哈希 / 落盘 / 响应」四个具名步骤。
+- **`long-functions`**：`apply()`（`src/index.ts`）已在 `rules.overrides` 中豁免并写明理由——它是 Cordis 插件体，注册逻辑天然在同一个闭包作用域里（cordiverse/cordis 自身插件也是如此）。`createUploadHandler()`（`src/upload.ts`，**200 行**，2026-10-06 由 186 行增长）**未豁免**，是待拆分项：建议抽出「接收分片 / 校验哈希 / 落盘 / 响应」四个具名步骤；本轮把视觉调用移出并发闸时又加长了它，**拆分优先级应上调**。`src/upload.ts` 同时被标记为 **churn hotspot**（90 天 12 次提交、3 个 importer）——先稳定它的接口，测试也优先补在这里。
 - **运行时产物被误提交**：`.test-nonwritable/markitdown/.probe` 与 `.markitdown-installed.json`（commit `7fdc463`）。处理：`git rm -r --cached .test-nonwritable` 并在 `.gitignore` 加 `.test-nonwritable/`。
 - **缺少 linter / formatter 配置**：18 个参照仓库全部具备（vscode 甚至自建 `.eslint-plugin-local/` 49 条规则来机械强制分层）。建议加 `eslint.config.js` 或 biome，然后 `guard.mjs hook install . --strict` 并接入 CI。
 - **`lib/` 是构建产物**：已在 `package.json` 的 `files` 中声明且被 gitignore，报告里以 info 提示，属预期，不需要处理。

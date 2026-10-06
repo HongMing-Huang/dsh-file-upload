@@ -63,6 +63,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `link:`), what the manager writes to the profile manifest, a no-boot
   verification recipe using `--dump-config`, and troubleshooting for an
   incompatible-peer refusal or an unreachable registry.
+- **`dsh.client.inject` named a package that does not exist**: the client
+  declaration injected `@deepseek-ai/dsh-client-runtime`, which is absent from
+  the shipped runtime, while the browser half actually imports
+  `@deepseek-ai/dsh-client-ui-primitives` and registers slots on
+  `conversation.input.left` / `conversation.input.dock`, an `@` source through
+  `inputTriggers`, and reads the `conversation` state. The declaration now lists
+  the real packages (`dsh-client-ui-conversation`, `dsh-client-ui-input-trigger`,
+  `dsh-client-ui-primitives`), matching the official pattern where a UI plugin
+  injects the primitives rather than the React runtime. The miss was silent
+  rather than fatal — the browser loader ignores an inject name it cannot find —
+  but it produced no ordering edge and no row retention for the packages the
+  client actually needs. `dsh.manifestVersion: 1` is now declared too.
 
 ## [0.5.3] - 2026-08-21
 

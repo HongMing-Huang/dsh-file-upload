@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-06T07:03:13.048Z",
+  "generatedAt": "2026-10-06T07:13:05.546Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -61,7 +61,7 @@
   },
   "metrics": {
     "files": 32,
-    "bytes": 345606,
+    "bytes": 346501,
     "sourceFiles": 8,
     "testFiles": 4,
     "docFiles": 8,
@@ -77,7 +77,7 @@
     "vendoredFiles": 0,
     "sourceLoc": 2063,
     "testLoc": 514,
-    "docLoc": 1063,
+    "docLoc": 1064,
     "maxDepth": 2,
     "topLevelDirCount": 3,
     "topLevelEntryCount": 5,
@@ -166,7 +166,7 @@
       "path": ".gitignore",
       "type": "file",
       "files": 1,
-      "loc": 5,
+      "loc": 15,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -193,7 +193,7 @@
       "path": "ARCHITECTURE.md",
       "type": "file",
       "files": 1,
-      "loc": 216,
+      "loc": 217,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -292,7 +292,7 @@
       "path": "package.json",
       "type": "file",
       "files": 1,
-      "loc": 88,
+      "loc": 91,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -434,7 +434,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 16,
-      "loc": 1245,
+      "loc": 1259,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -587,40 +587,44 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-08-19T23:41:34+08:00",
-    "commits": 20,
+    "lastCommitAt": "2026-10-06T15:06:13+08:00",
+    "commits": 21,
     "churn90d": [
       {
         "path": "README.md",
-        "commits": 13
+        "commits": 14
       },
       {
         "path": "README.zh.md",
-        "commits": 13
+        "commits": 14
       },
       {
         "path": "src/index.ts",
-        "commits": 13
+        "commits": 14
       },
       {
         "path": "CHANGELOG.md",
-        "commits": 12
+        "commits": 13
       },
       {
         "path": "package.json",
-        "commits": 12
+        "commits": 13
       },
       {
         "path": "src/upload.ts",
-        "commits": 11
+        "commits": 12
       },
       {
         "path": "src/client/index.tsx",
-        "commits": 9
+        "commits": 10
       },
       {
         "path": "cordis.patch.yml",
-        "commits": 5
+        "commits": 6
+      },
+      {
+        "path": "src/vision.ts",
+        "commits": 4
       },
       {
         "path": "pnpm-lock.yaml",
@@ -635,12 +639,20 @@
         "commits": 3
       },
       {
-        "path": "src/vision.ts",
+        "path": "test/detect.test.ts",
         "commits": 3
       },
       {
-        "path": "test/detect.test.ts",
+        "path": "test/upload-handler.test.ts",
         "commits": 3
+      },
+      {
+        "path": ".gitignore",
+        "commits": 2
+      },
+      {
+        "path": "examples/local-override.yml",
+        "commits": 2
       },
       {
         "path": "scripts/setup-markitdown.mjs",
@@ -657,22 +669,10 @@
       {
         "path": "test/asr.test.ts",
         "commits": 2
-      },
-      {
-        "path": "test/convert.test.ts",
-        "commits": 2
-      },
-      {
-        "path": "test/integration.test.ts",
-        "commits": 2
-      },
-      {
-        "path": "test/setup.test.ts",
-        "commits": 2
       }
     ],
-    "churnFiles90d": 32,
-    "dirtyFiles": 16
+    "churnFiles90d": 41,
+    "dirtyFiles": 2
   },
-  "scanMs": 66
+  "scanMs": 65
 }
