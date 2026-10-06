@@ -65,6 +65,14 @@
       "layer": null
     },
     {
+      "name": "scripts",
+      "paths": [
+        "scripts/**"
+      ],
+      "layer": null,
+      "mayImport": []
+    },
+    {
       "name": "tests",
       "paths": [
         "test/**"
@@ -129,6 +137,10 @@
       ]
     },
     {
+      "from": "scripts",
+      "mayImport": []
+    },
+    {
       "from": "examples",
       "mayImport": [
         "*"
@@ -177,6 +189,7 @@
     "vision": "图片描述能力封装。叶子模块，供 entry 在需要视觉理解时调用。",
     "client": "浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。",
     "build": "构建脚本：tsc 产物之后的 client bundle 收尾。",
+    "scripts": "独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。",
     "tests": "node:test 测试，顶层 test/ + *.test.ts 命名。",
     "examples": "cordis.patch.yml 的本地覆盖示例，文档性质。"
   },

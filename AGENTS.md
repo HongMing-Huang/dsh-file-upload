@@ -2,15 +2,15 @@
 # AGENTS.md — dsh-file-upload
 
 > Generated from `.structure/guard.json` and the current tree. Regenerate with
-> `node /Users/c14h14n3/.dsh/skills/structure-guard/scripts/guard.mjs agents .`
+> `node /Users/c14h14n3/Desktop/DSH插件/dsh-file-upload/.dsh/structure-guard/scripts/guard.mjs agents .`
 > Editing the tables by hand is pointless: they are derived. Change `guard.json` instead.
 
 ## What this is
 
 - Layout archetype: `single-package-src` · primary language: `typescript` · module system: `esm`
-- Size: 31 tracked files, 8 source files, ~2023 source lines, max depth 2
-- Tests: 4 file(s), placement `top-level`, ratio 0.5
-- Package manager: `pnpm` · version 0.5.3
+- Size: 33 tracked files, 9 source files, ~2290 source lines, max depth 2
+- Tests: 4 file(s), placement `top-level`, ratio 0.44
+- Package manager: `pnpm` · version 0.5.4
 
 ## Layout contract
 
@@ -27,6 +27,7 @@ These modules are declared, and `guard.mjs audit` fails when an import breaks th
 | `client` | 0 | `src/client/**` | _nothing_ | 浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。 |
 | `build` | — | `build.mjs` | _undeclared_ | 构建脚本：tsc 产物之后的 client bundle 收尾。 |
 | `examples` | — | `examples/**` | `*` | cordis.patch.yml 的本地覆盖示例，文档性质。 |
+| `scripts` | — | `scripts/**` | _nothing_ | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
 | `tests` | — | `test/**` | `*` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
 
 Lower layers are inner: an import may only point from a higher layer to a lower one, and only where the row above allows it.
@@ -38,8 +39,8 @@ Lower layers are inner: an import may only point from a higher layer to a lower 
 ## Working here
 
 ```sh
-node /Users/c14h14n3/.dsh/skills/structure-guard/scripts/guard.mjs audit .    # structure + drift, before you commit
-node /Users/c14h14n3/.dsh/skills/structure-guard/scripts/guard.mjs verify .   # audit + typecheck + tests + build
+node /Users/c14h14n3/Desktop/DSH插件/dsh-file-upload/.dsh/structure-guard/scripts/guard.mjs audit .    # structure + drift, before you commit
+node /Users/c14h14n3/Desktop/DSH插件/dsh-file-upload/.dsh/structure-guard/scripts/guard.mjs verify .   # audit + typecheck + tests + build
 ```
 
 - **Do not re-baseline to silence a finding.** `baseline` is for an intended change: record why in `ARCHITECTURE.md`, update `guard.json` if a boundary moved, then re-baseline.

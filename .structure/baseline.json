@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-06T07:33:34.145Z",
+  "generatedAt": "2026-10-06T07:44:21.782Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -19,7 +19,7 @@
       },
       {
         "lang": "javascript",
-        "loc": 27
+        "loc": 254
       }
     ],
     "archetype": "single-package-src",
@@ -33,13 +33,15 @@
       "build",
       "typecheck",
       "test",
+      "check:manifest",
       "prepublishOnly"
     ],
     "scriptCommands": {
       "build": "tsc -p tsconfig.build.json && node build.mjs",
       "typecheck": "tsc -p tsconfig.json --noEmit",
       "test": "node --test test/*.test.ts",
-      "prepublishOnly": "npm run build && npm test"
+      "check:manifest": "node scripts/check-manifest.mjs",
+      "prepublishOnly": "npm run check:manifest && npm run build && npm test"
     },
     "dependencies": 4,
     "devDependencies": 5,
@@ -61,9 +63,9 @@
     "repositoryDeclared": true
   },
   "metrics": {
-    "files": 32,
-    "bytes": 352595,
-    "sourceFiles": 8,
+    "files": 33,
+    "bytes": 366699,
+    "sourceFiles": 9,
     "testFiles": 4,
     "docFiles": 8,
     "configFiles": 10,
@@ -76,20 +78,20 @@
     "maxFunctionName": "createUploadHandler",
     "maxFunctionAt": "src/upload.ts:87",
     "vendoredFiles": 0,
-    "sourceLoc": 2063,
+    "sourceLoc": 2290,
     "testLoc": 514,
-    "docLoc": 1181,
+    "docLoc": 1212,
     "maxDepth": 2,
-    "topLevelDirCount": 3,
-    "topLevelEntryCount": 5,
+    "topLevelDirCount": 4,
+    "topLevelEntryCount": 6,
     "topLevelFileCount": 16,
-    "testToSourceRatio": 0.5,
-    "testLocRatio": 0.25,
-    "avgSourceLines": 258
+    "testToSourceRatio": 0.44,
+    "testLocRatio": 0.22,
+    "avgSourceLines": 254
   },
   "conventions": {
     "fileNaming": {
-      "kebab": 0,
+      "kebab": 1,
       "snake": 0,
       "camel": 0,
       "pascal": 0,
@@ -99,7 +101,8 @@
     },
     "fileNamingByExt": {
       ".mjs": {
-        "flat": 1
+        "flat": 1,
+        "kebab": 1
       },
       ".ts": {
         "flat": 6
@@ -110,7 +113,7 @@
     },
     "dominantFileNaming": "flat",
     "namingConsistency": 1,
-    "namingSampleSize": 0,
+    "namingSampleSize": 1,
     "testStyle": "top-level",
     "primaryLanguage": "typescript",
     "packageManager": "pnpm",
@@ -194,7 +197,7 @@
       "path": "ARCHITECTURE.md",
       "type": "file",
       "files": 1,
-      "loc": 226,
+      "loc": 257,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -293,7 +296,7 @@
       "path": "package.json",
       "type": "file",
       "files": 1,
-      "loc": 98,
+      "loc": 99,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -304,6 +307,15 @@
       "files": 1,
       "loc": 0,
       "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "scripts",
+      "type": "dir",
+      "files": 1,
+      "loc": 227,
+      "sourceFiles": 1,
       "testFiles": 0,
       "directFiles": 1
     },
@@ -387,6 +399,11 @@
       "bytes": 11184
     },
     {
+      "path": "scripts/check-manifest.mjs",
+      "lines": 227,
+      "bytes": 11450
+    },
+    {
       "path": "src/tool.ts",
       "lines": 227,
       "bytes": 8585
@@ -435,7 +452,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 16,
-      "loc": 1383,
+      "loc": 1415,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -510,6 +527,24 @@
       }
     },
     {
+      "name": "scripts",
+      "root": "scripts",
+      "fileCount": 1,
+      "loc": 227,
+      "sourceFiles": 1,
+      "testFiles": 0,
+      "imports": [],
+      "importedBy": [],
+      "docs": [],
+      "entry": "scripts/check-manifest.mjs",
+      "depth": 1,
+      "directRootFiles": 1,
+      "longestFile": {
+        "path": "scripts/check-manifest.mjs",
+        "lines": 227
+      }
+    },
+    {
       "name": "src/(root)",
       "root": "src",
       "fileCount": 6,
@@ -573,7 +608,7 @@
     "unresolvedRelative": 0,
     "unresolvedSource": 0,
     "unresolvedTest": 0,
-    "external": 43,
+    "external": 46,
     "buildOutputRefs": 0,
     "cycles": [],
     "crossDirEdges": 6,
@@ -588,8 +623,8 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-06T15:31:49+08:00",
-    "commits": 23,
+    "lastCommitAt": "2026-10-06T15:33:38+08:00",
+    "commits": 24,
     "churn90d": [
       {
         "path": "CHANGELOG.md",
@@ -624,16 +659,16 @@
         "commits": 6
       },
       {
-        "path": "src/vision.ts",
+        "path": ".structure/baseline.json",
         "commits": 4
       },
       {
-        "path": ".structure/baseline.json",
-        "commits": 3
+        "path": "ARCHITECTURE.md",
+        "commits": 4
       },
       {
-        "path": "ARCHITECTURE.md",
-        "commits": 3
+        "path": "src/vision.ts",
+        "commits": 4
       },
       {
         "path": "pnpm-lock.yaml",
@@ -660,20 +695,20 @@
         "commits": 2
       },
       {
+        "path": "CONTRIBUTING.md",
+        "commits": 2
+      },
+      {
         "path": "examples/local-override.yml",
         "commits": 2
       },
       {
         "path": "scripts/setup-markitdown.mjs",
         "commits": 2
-      },
-      {
-        "path": "src/convert.ts",
-        "commits": 2
       }
     ],
     "churnFiles90d": 41,
-    "dirtyFiles": 2
+    "dirtyFiles": 3
   },
-  "scanMs": 45
+  "scanMs": 44
 }
