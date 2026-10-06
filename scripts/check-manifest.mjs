@@ -41,7 +41,7 @@ function readJson(path) {
  *
  * @returns the set of package names under `@deepseek-ai`, or undefined.
  */
-function runtimePackageNames() {
+function runtimeAsarFiles() {
   const asars = [
     '/Applications/DeepSeek Harness.app/Contents/Resources/app.asar',
     join(process.env.HOME ?? '', '.dsh/app.asar')
@@ -57,11 +57,9 @@ function runtimePackageNames() {
         const json = Buffer.alloc(jsonSize)
         readSync(fd, json, 0, jsonSize, 16)
         const header = JSON.parse(json.toString('utf8'))
-        const names = new Set()
-        const packages = header?.files?.dsh?.files?.node_modules?.files?.['@deepseek-ai']?.files
-        if (packages === undefined) continue
-        for (const name of Object.keys(packages)) names.add(`@deepseek-ai/${name}`)
-        if (names.size > 0) return names
+        const dir = header?.files?.dsh?.files?.node_modules?.files?.['@deepseek-ai']?.files
+        if (dir === undefined) continue
+        return dir
       } finally {
         closeSync(fd)
       }
@@ -70,6 +68,57 @@ function runtimePackageNames() {
     }
   }
   return undefined
+}
+
+/**
+ * Names of the packages a local DSH installation ships, or undefined when no
+ * installation is reachable.
+ *
+ * @returns the set of package names under `@deepseek-ai`, or undefined.
+ */
+function runtimePackageNames() {
+  const dir = runtimeAsarFiles()
+  if (dir === undefined) return undefined
+  const names = new Set()
+  for (const name of Object.keys(dir)) names.add(`@deepseek-ai/${name}`)
+  return names.size > 0 ? names : undefined
+}
+
+/**
+ * Names one shipped package exports, read from its bundled `lib/index.js`.
+ *
+ * @param pkg - package name under `@deepseek-ai`.
+ * @returns the exported names, or undefined when they cannot be read.
+ */
+function runtimeExportsOf(pkg) {
+  const dir = runtimeAsarFiles()
+  const short = pkg.replace('@deepseek-ai/', '')
+  const entry = dir?.[short]?.files?.lib?.files?.['index.js']
+  if (entry === undefined || typeof entry.offset !== 'string') return undefined
+  const asar = '/Applications/DeepSeek Harness.app/Contents/Resources/app.asar'
+  try {
+    const fd = openSync(asar, 'r')
+    try {
+      const head = Buffer.alloc(16)
+      readSync(fd, head, 0, 16, 0)
+      const base = 16 + head.readUInt32LE(12)
+      const buf = Buffer.alloc(Number(entry.size))
+      readSync(fd, buf, 0, buf.length, base + Number(entry.offset))
+      const text = buf.toString('utf8')
+      const blocks = [...text.matchAll(/export\s*\{([^}]*)\}/g)]
+      if (blocks.length === 0) return undefined
+      const names = new Set()
+      for (const name of blocks.at(-1)[1].split(',')) {
+        const trimmed = name.trim().split(/\s+as\s+/).pop()?.trim()
+        if (trimmed) names.add(trimmed)
+      }
+      return names.size > 0 ? names : undefined
+    } finally {
+      closeSync(fd)
+    }
+  } catch {
+    return undefined
+  }
 }
 
 if (!existsSync(join(root, 'package.json'))) {
@@ -265,6 +314,43 @@ const dsh = pkg.dsh ?? {}
     const missing = needed.filter((n) => !files.includes(n))
     if (missing.length > 0) fail('published-files', `files[] omits: ${missing.join(', ')}`)
     else pass('published-files', files.join(', '))
+  }
+}
+
+// 10. Every primitive the client actually uses must be a name the runtime
+//     exports. The client once imported IconPaperclipOutline16 and
+//     IconCloseOutline16, which the primitives package does not export — both
+//     resolved to undefined and React rendered empty buttons, with nothing in
+//     the build or the tests to say so.
+{
+  const PRIMITIVES = '@deepseek-ai/dsh-client-ui-primitives'
+  const bundle = join(root, 'lib/client.js')
+  const stub = join(root, 'src/client/client-ui-primitives.d.ts')
+  if (!existsSync(bundle)) {
+    warn('runtime-primitives-exist', 'lib/client.js absent (run pnpm build)')
+  } else {
+    const text = readFileSync(bundle, 'utf8')
+    const binding = new RegExp(`var\\s+([A-Za-z0-9_$]+)\\s*=\\s*__require\\("${PRIMITIVES.replace(/[/@]/g, (c) => '\\' + c)}"\\)`).exec(text)
+    const used = new Set()
+    if (binding !== null) {
+      const re = new RegExp(`\\b${binding[1]}\\.([A-Za-z0-9_$]+)`, 'g')
+      for (const m of text.matchAll(re)) used.add(m[1])
+    }
+    const exported = runtimeExportsOf(PRIMITIVES)
+    // What the stub declares must also be what the bundle uses, or the two
+    // drift and the typecheck stops describing the real dependency.
+    const declared = existsSync(stub)
+      ? new Set([...readFileSync(stub, 'utf8').matchAll(/export function ([A-Za-z0-9_$]+)/g)].map((m) => m[1]))
+      : undefined
+    if (used.size === 0) warn('runtime-primitives-exist', 'no primitive usage found in the bundle')
+    else if (exported === undefined) warn('runtime-primitives-exist', `no runtime to check ${[...used].join(', ')} against`)
+    else {
+      const absent = [...used].filter((n) => !exported.has(n))
+      const undeclared = declared === undefined ? [] : [...used].filter((n) => !declared.has(n))
+      if (absent.length > 0) fail('runtime-primitives-exist', `not exported by ${PRIMITIVES}: ${absent.join(', ')}`)
+      else if (undeclared.length > 0) fail('runtime-primitives-exist', `used but missing from src/client/client-ui-primitives.d.ts: ${undeclared.join(', ')}`)
+      else pass('runtime-primitives-exist', `${used.size} primitive(s) used, exported by the runtime and declared in the stub`)
+    }
   }
 }
 

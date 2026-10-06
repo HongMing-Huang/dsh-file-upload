@@ -12,7 +12,7 @@
 | Version | 0.5.4 |
 | Layout archetype | single-package-src |
 | Primary language | typescript |
-| Languages by volume | typescript (2163 LOC), typescriptreact (752 LOC), javascript (305 LOC) |
+| Languages by volume | typescript (2163 LOC), typescriptreact (752 LOC), javascript (391 LOC) |
 | Module system | esm |
 | Package manager | pnpm |
 | Engines | {"node":">=22.6.0"} |
@@ -22,7 +22,7 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 27 commits, last 2026-10-06T15:52:05+08:00, 6 dirty files |
+| Git | 28 commits, last 2026-10-06T15:59:55+08:00, 2 dirty files |
 
 ## 2. Layout at a glance
 
@@ -32,7 +32,7 @@
 | `.gitignore` | file | 1 | 15 | 0 | 0 |  |
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
 | `AGENTS.md` | file | 1 | 60 | 0 | 0 |  |
-| `ARCHITECTURE.md` | file | 1 | 280 | 0 | 0 |  |
+| `ARCHITECTURE.md` | file | 1 | 281 | 0 | 0 |  |
 | `CHANGELOG.md` | file | 1 | 345 | 0 | 0 |  |
 | `CONTRIBUTING.md` | file | 1 | 142 | 0 | 0 |  |
 | `INSTALL.md` | file | 1 | 189 | 0 | 0 |  |
@@ -45,7 +45,7 @@
 | `examples/` | directory | 1 | 33 | 0 | 0 | cordis.patch.yml 的本地覆盖示例，文档性质。 |
 | `package.json` | file | 1 | 99 | 0 | 0 |  |
 | `pnpm-lock.yaml` | file | 1 | 0 | 0 | 0 |  |
-| `scripts/` | directory | 1 | 278 | 1 | 0 | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
+| `scripts/` | directory | 1 | 364 | 1 | 0 | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
 | `src/` | directory | 7 | 2243 | 7 | 0 |  |
 | `test/` | directory | 4 | 672 | 0 | 4 |  |
 | `tsconfig.build.json` | file | 1 | 15 | 0 | 0 |  |
@@ -66,7 +66,7 @@ Root holds 16 loose file(s): `.gitignore`, `AGENTS.md`, `ARCHITECTURE.md`, `CHAN
 | `client` | 0 | 1 | 752 | 1 | 0 | `src/client/index.tsx` | _nothing_ | — | 浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。 |
 | `build` | — | 1 | 27 | 1 | 0 | `build.mjs` | _undeclared_ | — | 构建脚本：tsc 产物之后的 client bundle 收尾。 |
 | `examples` | — | 1 | 33 | 0 | 0 | — | `*` | — | cordis.patch.yml 的本地覆盖示例，文档性质。 |
-| `scripts` | — | 1 | 278 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
+| `scripts` | — | 1 | 364 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
 | `tests` | — | 4 | 672 | 0 | 4 | — | `*` | `convert`, `detect`, `upload` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
 
 _17 tracked file(s) belong to no declared module: `.github/workflows/ci.yml`, `.github/workflows/structure-guard.yml`, `.gitignore`, `.test-nonwritable/markitdown/.markitdown-installed.json`, `.test-nonwritable/markitdown/.probe`, `AGENTS.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, …. Either declare them or move them where the contract covers them._
@@ -116,21 +116,21 @@ graph LR
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 33 (381 KB) |
-| Source | 9 files / 2548 LOC |
+| Files tracked | 33 (385 KB) |
+| Source | 9 files / 2634 LOC |
 | Tests | 4 files / 672 LOC |
-| Docs | 8 files / 1315 LOC |
+| Docs | 8 files / 1316 LOC |
 | Config files | 10 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
 | Max nesting depth | 2 |
-| Average source file | 283 lines |
+| Average source file | 293 lines |
 | Largest source file | `src/client/index.tsx` (752 lines) |
 | Import graph | 8 nodes / 15 internal edges (6 cross-directory) |
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
 | Most depended-on files | `src/convert.ts` (5), `src/detect.ts` (5), `src/upload.ts` (3) |
-| Churn hotspots (90d) | `package.json` (16), `CHANGELOG.md` (15), `README.md` (14) |
+| Churn hotspots (90d) | `CHANGELOG.md` (16), `package.json` (16), `README.md` (14) |
 
 ## 6. Standards checklist
 
@@ -196,7 +196,7 @@ graph LR
 
 ### 打包与安装自检（2026-10-06 补）
 
-`scripts/check-manifest.mjs`（`pnpm check:manifest`，并已成为 `prepublishOnly` 的第一步）机械校验 9 条不变量。
+`scripts/check-manifest.mjs`（`pnpm check:manifest`，并已成为 `prepublishOnly` 的第一步）机械校验 11 条不变量。
 它存在的理由很直接：**本项目踩过的坑里，最伤的都是"静默"的**——装不上不报错、声明错不报错、配置键写错不报错。
 每条规则都对应一次真实事故：
 
@@ -211,6 +211,7 @@ graph LR
 | `client-declaration` | `dsh.client.inject` 写了运行时不存在的包 → 静默失去加载顺序与行保留 |
 | `patch-config-keys` | patch 设了 Config 里没有的键（会被忽略），或漏设键（静默回落默认值） |
 | `published-files` | `files[]` 漏掉 `lib` 或 `cordis.patch.yml` → 发出去的包无法装载 |
+| `runtime-primitives-exist` | client 用了运行时**不导出**的 primitive 名（`IconPaperclipOutline16`）→ 图标解析为 `undefined`、按钮渲染为空，构建与测试都不报错；该规则同时校验 bundle 实际用到的名字与 `client-ui-primitives.d.ts` 的声明是否一致，防两边漂移 |
 
 **已知局限**：`client-declaration` 只能用本地 `node_modules` 与已安装的 profile 来判"包是否存在"。
 在纯源码仓库里它降级为 `warn`——这恰好是本仓库当前的状态，因此它会提示"cannot prove they exist"，

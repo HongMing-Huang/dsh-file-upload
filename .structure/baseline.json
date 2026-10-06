@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-06T07:59:35.177Z",
+  "generatedAt": "2026-10-06T08:01:33.964Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -19,7 +19,7 @@
       },
       {
         "lang": "javascript",
-        "loc": 305
+        "loc": 391
       }
     ],
     "archetype": "single-package-src",
@@ -64,7 +64,7 @@
   },
   "metrics": {
     "files": 33,
-    "bytes": 390758,
+    "bytes": 394685,
     "sourceFiles": 9,
     "testFiles": 4,
     "docFiles": 8,
@@ -78,16 +78,16 @@
     "maxFunctionName": "createUploadHandler",
     "maxFunctionAt": "src/upload.ts:87",
     "vendoredFiles": 0,
-    "sourceLoc": 2548,
+    "sourceLoc": 2634,
     "testLoc": 672,
-    "docLoc": 1317,
+    "docLoc": 1316,
     "maxDepth": 2,
     "topLevelDirCount": 4,
     "topLevelEntryCount": 6,
     "topLevelFileCount": 16,
     "testToSourceRatio": 0.44,
     "testLocRatio": 0.26,
-    "avgSourceLines": 283
+    "avgSourceLines": 293
   },
   "conventions": {
     "fileNaming": {
@@ -197,7 +197,7 @@
       "path": "ARCHITECTURE.md",
       "type": "file",
       "files": 1,
-      "loc": 282,
+      "loc": 281,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -314,7 +314,7 @@
       "path": "scripts",
       "type": "dir",
       "files": 1,
-      "loc": 278,
+      "loc": 364,
       "sourceFiles": 1,
       "testFiles": 0,
       "directFiles": 1
@@ -389,6 +389,11 @@
       "bytes": 15439
     },
     {
+      "path": "scripts/check-manifest.mjs",
+      "lines": 364,
+      "bytes": 17283
+    },
+    {
       "path": "src/index.ts",
       "lines": 302,
       "bytes": 13124
@@ -397,11 +402,6 @@
       "path": "src/convert.ts",
       "lines": 282,
       "bytes": 11184
-    },
-    {
-      "path": "scripts/check-manifest.mjs",
-      "lines": 278,
-      "bytes": 13479
     },
     {
       "path": "src/tool.ts",
@@ -452,7 +452,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 16,
-      "loc": 1531,
+      "loc": 1530,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -530,7 +530,7 @@
       "name": "scripts",
       "root": "scripts",
       "fileCount": 1,
-      "loc": 278,
+      "loc": 364,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -541,7 +541,7 @@
       "directRootFiles": 1,
       "longestFile": {
         "path": "scripts/check-manifest.mjs",
-        "lines": 278
+        "lines": 364
       }
     },
     {
@@ -623,16 +623,16 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-06T15:52:05+08:00",
-    "commits": 27,
+    "lastCommitAt": "2026-10-06T15:59:55+08:00",
+    "commits": 28,
     "churn90d": [
       {
-        "path": "package.json",
+        "path": "CHANGELOG.md",
         "commits": 16
       },
       {
-        "path": "CHANGELOG.md",
-        "commits": 15
+        "path": "package.json",
+        "commits": 16
       },
       {
         "path": "README.md",
@@ -648,27 +648,39 @@
       },
       {
         "path": "src/upload.ts",
-        "commits": 12
+        "commits": 13
       },
       {
         "path": "src/client/index.tsx",
-        "commits": 10
+        "commits": 11
+      },
+      {
+        "path": ".structure/baseline.json",
+        "commits": 6
+      },
+      {
+        "path": "ARCHITECTURE.md",
+        "commits": 6
       },
       {
         "path": "cordis.patch.yml",
         "commits": 6
       },
       {
-        "path": ".structure/baseline.json",
-        "commits": 5
-      },
-      {
-        "path": "ARCHITECTURE.md",
-        "commits": 5
-      },
-      {
         "path": "src/vision.ts",
         "commits": 4
+      },
+      {
+        "path": "test/upload-handler.test.ts",
+        "commits": 4
+      },
+      {
+        "path": ".structure/guard.json",
+        "commits": 3
+      },
+      {
+        "path": "AGENTS.md",
+        "commits": 3
       },
       {
         "path": "pnpm-lock.yaml",
@@ -687,19 +699,7 @@
         "commits": 3
       },
       {
-        "path": "test/upload-handler.test.ts",
-        "commits": 3
-      },
-      {
         "path": ".gitignore",
-        "commits": 2
-      },
-      {
-        "path": ".structure/guard.json",
-        "commits": 2
-      },
-      {
-        "path": "AGENTS.md",
         "commits": 2
       },
       {
@@ -707,8 +707,8 @@
         "commits": 2
       }
     ],
-    "churnFiles90d": 42,
-    "dirtyFiles": 6
+    "churnFiles90d": 43,
+    "dirtyFiles": 2
   },
-  "scanMs": 73
+  "scanMs": 83
 }
