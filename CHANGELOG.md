@@ -23,6 +23,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   inserts a clean `@relative/path` reference (relative to the session
   workspace). Absolute host paths no longer leak into the composer or the
   message; the removal card still deletes via the absolute path internally.
+- **`read_document` made a fully-read document look truncated**: the line count
+  came from `markdown.split('\n')`, which leaves a phantom empty element for the
+  trailing newline almost every file ends with. A five-line file was reported as
+  six, so a caller that had already read every line was told there was another
+  page, paged again, and received an empty line — one wasted tool call and one
+  wasted cache round per read. One trailing empty element is now dropped, which
+  also keeps a file that genuinely ends in a blank line reported correctly.
+- **`read_document` output now answers "is there more?" and labels its source**:
+  the rendered envelope ends with a footer in the shipped `read` tool's idiom —
+  `(End of file - total N lines)` or
+  `(Showing lines X-Y of N lines. Use offset=Z to continue.)` — inside a
+  `<content>` wrapper, instead of a bare `offset N, M/T lines` header that could
+  not distinguish a truncated read from a complete one. The same wrapper states
+  that the block is untrusted file content to be treated as data and never as
+  instructions. An uploaded PDF or DOCX may have been authored by someone other
+  than the user, and this is the only place that tells the model so; the system
+  prompt now says the same thing. (Verification note: HTML comments and hidden
+  elements are already stripped by the conversion engine, so the markup channel
+  was never a live injection path here — this closes the gap where a *visible*
+  instruction in a third-party document arrived with no signal that it was data.)
+- **`ParseCache` was unimportable from a test**: it used TypeScript constructor
+  parameter properties, which Node's `--experimental-strip-types` cannot erase,
+  so `pnpm test` could not load `src/tool.ts` at all — which is why the module
+  that renders everything the model reads had no tests. Rewritten as explicit
+  fields, and `test/tool.test.ts` now covers the line counting and every footer
+  case (10 tests).
 - **Linting, formatting, and the dead code it found**: the project had no
   linter or formatter at all (`no-linter` was one of three standing structure
   warnings). `biome.json` configures both to match the style the code already
