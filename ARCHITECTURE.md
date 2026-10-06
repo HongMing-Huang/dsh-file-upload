@@ -22,7 +22,7 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 31 commits, last 2026-10-06T16:45:29+08:00, 4 dirty files |
+| Git | 32 commits, last 2026-10-06T16:55:17+08:00, 3 dirty files |
 
 ## 2. Layout at a glance
 
@@ -32,8 +32,8 @@
 | `.gitignore` | file | 1 | 15 | 0 | 0 |  |
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
 | `AGENTS.md` | file | 1 | 60 | 0 | 0 |  |
-| `ARCHITECTURE.md` | file | 1 | 331 | 0 | 0 |  |
-| `CHANGELOG.md` | file | 1 | 405 | 0 | 0 |  |
+| `ARCHITECTURE.md` | file | 1 | 340 | 0 | 0 |  |
+| `CHANGELOG.md` | file | 1 | 415 | 0 | 0 |  |
 | `CONTRIBUTING.md` | file | 1 | 142 | 0 | 0 |  |
 | `INSTALL.md` | file | 1 | 189 | 0 | 0 |  |
 | `LICENSE` | file | 1 | 0 | 0 | 0 |  |
@@ -118,10 +118,10 @@ graph LR
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 36 (414 KB) |
+| Files tracked | 36 (416 KB) |
 | Source | 9 files / 2762 LOC |
 | Tests | 6 files / 918 LOC |
-| Docs | 8 files / 1426 LOC |
+| Docs | 8 files / 1445 LOC |
 | Config files | 11 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
@@ -132,7 +132,7 @@ graph LR
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
 | Most depended-on files | `src/detect.ts` (5), `src/convert.ts` (4), `src/upload.ts` (4) |
-| Churn hotspots (90d) | `CHANGELOG.md` (18), `package.json` (17), `src/index.ts` (16) |
+| Churn hotspots (90d) | `CHANGELOG.md` (19), `package.json` (17), `src/index.ts` (17) |
 
 ## 6. Standards checklist
 
@@ -237,6 +237,15 @@ graph LR
   客户端 `lib/client.js` 是合法的 `window.__ModuleLoader__.load({id:"dsh-file-upload", factory})`，
   并在内部 `module.exports = { apply, inject: ['slots','inputTriggers','sessions'] }`。
   这套检查固化在 `test/lifecycle.test.ts`（8 例）。
+
+- **`pnpm build` 的产物一度不完整（2026-10-06 修）**：`tsconfig.build.json` 里 `declaration: false` +
+  `sourceMap: false`，而 `package.json` 声明了 `types: "lib/index.d.ts"` 与 exports 的 `types` 条件。
+  因为 `lib/` 里一直**残留着旧版本构建出的 `.d.ts`**，所以看起来是完整的——一旦
+  `rm -rf lib && pnpm build`（新贡献者的标准动作），产出的就只有 JS，
+  于是"全新 clone 构建再打包"会得到一个**类型入口不存在的包**。
+  现已启用 `declaration` 与 `sourceMap`，让构建产物成为"会发布什么"的唯一真相。
+  **这个缺陷是删除 `lib/` 重建才暴露的**；结果触发了 `scripts/check-manifest.mjs` 的
+  `export-targets-exist` 规则（`types -> lib/index.d.ts` 缺失），说明该自检确实在防真实问题。
 
 - **`sweepIntervalMs: 0` 曾让插件启动即崩（2026-10-06 修）**：schema 注释写明 0 = 禁用定期回收，
   `createSweeper` 也确实支持（返回空 disposer），但 `apply()` 的启动校验把**所有**间隔字段都按正整数校验，

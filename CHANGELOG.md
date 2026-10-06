@@ -23,6 +23,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   inserts a clean `@relative/path` reference (relative to the session
   workspace). Absolute host paths no longer leak into the composer or the
   message; the removal card still deletes via the absolute path internally.
+- **A clean build shipped a package with no type declarations**: `tsconfig.build.json`
+  had `declaration: false` and `sourceMap: false` while `package.json` declares
+  `types: "lib/index.d.ts"` and an exports `types` condition pointing at the same
+  file. `lib/` only ever looked complete because of `.d.ts` files left behind by
+  an older build — deleting `lib/` and running `pnpm build` produced JavaScript
+  only, so a fresh clone would pack a package whose declared type entry does not
+  exist. Both are emitted now, making the build output the whole truth about what
+  is published. Found by deleting `lib/` and rebuilding, which is what a
+  contributor does; the manifest self-check failed on the result with
+  `types -> lib/index.d.ts` missing.
 - **`sweepIntervalMs: 0` crashed the plugin at startup**: the schema documents 0
   as "disable the periodic sweep" and `createSweeper` honours it by returning an
   inert disposer, but the startup validation loop asserted every interval was

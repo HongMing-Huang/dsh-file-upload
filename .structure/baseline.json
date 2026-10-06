@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-06T08:54:59.753Z",
+  "generatedAt": "2026-10-06T08:56:40.757Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -68,7 +68,7 @@
   },
   "metrics": {
     "files": 36,
-    "bytes": 424287,
+    "bytes": 425907,
     "sourceFiles": 9,
     "testFiles": 6,
     "docFiles": 8,
@@ -84,7 +84,7 @@
     "vendoredFiles": 0,
     "sourceLoc": 2762,
     "testLoc": 918,
-    "docLoc": 1425,
+    "docLoc": 1445,
     "maxDepth": 2,
     "topLevelDirCount": 4,
     "topLevelEntryCount": 6,
@@ -201,7 +201,7 @@
       "path": "ARCHITECTURE.md",
       "type": "file",
       "files": 1,
-      "loc": 330,
+      "loc": 340,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -210,7 +210,7 @@
       "path": "CHANGELOG.md",
       "type": "file",
       "files": 1,
-      "loc": 405,
+      "loc": 415,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -457,7 +457,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 17,
-      "loc": 1691,
+      "loc": 1711,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -477,7 +477,7 @@
       "directRootFiles": 17,
       "longestFile": {
         "path": "CHANGELOG.md",
-        "lines": 405
+        "lines": 415
       }
     },
     {
@@ -628,12 +628,12 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-06T16:45:29+08:00",
-    "commits": 31,
+    "lastCommitAt": "2026-10-06T16:55:17+08:00",
+    "commits": 32,
     "churn90d": [
       {
         "path": "CHANGELOG.md",
-        "commits": 18
+        "commits": 19
       },
       {
         "path": "package.json",
@@ -641,7 +641,7 @@
       },
       {
         "path": "src/index.ts",
-        "commits": 16
+        "commits": 17
       },
       {
         "path": "README.md",
@@ -661,19 +661,19 @@
       },
       {
         "path": ".structure/baseline.json",
-        "commits": 9
+        "commits": 10
       },
       {
         "path": "ARCHITECTURE.md",
-        "commits": 9
+        "commits": 10
+      },
+      {
+        "path": "AGENTS.md",
+        "commits": 6
       },
       {
         "path": "cordis.patch.yml",
         "commits": 6
-      },
-      {
-        "path": "AGENTS.md",
-        "commits": 5
       },
       {
         "path": "test/upload-handler.test.ts",
@@ -712,8 +712,8 @@
         "commits": 3
       }
     ],
-    "churnFiles90d": 45,
-    "dirtyFiles": 4
+    "churnFiles90d": 46,
+    "dirtyFiles": 3
   },
-  "scanMs": 123
+  "scanMs": 202
 }

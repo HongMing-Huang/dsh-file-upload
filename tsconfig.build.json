@@ -6,8 +6,8 @@
     "rootDir": "src",
     "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": true,
-    "declaration": false,
-    "sourceMap": false,
+    "declaration": true,
+    "sourceMap": true,
     "types": ["node"]
   },
   "include": ["src"],
