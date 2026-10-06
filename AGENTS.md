@@ -8,7 +8,7 @@
 ## What this is
 
 - Layout archetype: `single-package-src` · primary language: `typescript` · module system: `esm`
-- Size: 33 tracked files, 9 source files, ~2548 source lines, max depth 2
+- Size: 34 tracked files, 9 source files, ~2703 source lines, max depth 2
 - Tests: 4 file(s), placement `top-level`, ratio 0.44
 - Package manager: `pnpm` · version 0.5.4
 
@@ -34,7 +34,7 @@ Lower layers are inner: an import may only point from a higher layer to a lower 
 
 ## Current structural state
 
-- 3 warning(s) to justify or fix: `committed-runtime-artifacts`, `long-functions`, `no-linter`
+- 2 warning(s) to justify or fix: `committed-runtime-artifacts`, `root-file-clutter`
 
 ## Working here
 

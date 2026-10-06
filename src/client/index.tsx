@@ -539,7 +539,10 @@ interface DockProps {
 }
 
 function UploadDock({ attach, sessionId }: DockProps) {
-  const [metaVersion, setMetaVersion] = useState(0)
+  // Only the setter is read: bumping it is what re-renders the dock after a
+  // mutation to the module-level meta map. A bare `useState` call keeps the
+  // subscription in the same place it has always been.
+  const [, setMetaVersion] = useState(0)
   const [error, setError] = useState<UploadError | null>(null)
 
   useEffect(() => {

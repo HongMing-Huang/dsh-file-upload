@@ -403,6 +403,77 @@ test('upload handler: disconnect after the body arrives leaves no orphan file', 
   }
 })
 
+test('upload handler: extension inside the allowlist is accepted', async () => {
+  const { server, url } = await startUploadServer({ allowedExtensions: ['txt'] })
+  try {
+    const res = await fetch(`${url}/api/upload`, {
+      method: 'POST',
+      headers: { 'x-session-id': 'good-session', 'x-file-name': 'notes.txt' },
+      body: 'allowlisted body'
+    })
+    assert.equal(res.status, 200)
+    const body = (await res.json()) as { name: string; sniffedType: string; path: string }
+    assert.equal(body.name, 'notes.txt')
+    assert.equal(body.sniffedType, 'text')
+    assert.match(body.path, /\.dsh-uploads[/\\]good-session/)
+  } finally {
+    server.close()
+  }
+})
+
+test('upload handler: disconnect during the image explanation reclaims the file', async () => {
+  let releaseVision: () => void = () => undefined
+  const visionGate = new Promise<void>((resolve) => {
+    releaseVision = resolve
+  })
+  let signalVision: () => void = () => undefined
+  const visionStarted = new Promise<void>((resolve) => {
+    signalVision = resolve
+  })
+  const { server, url, dir, idle } = await startUploadServer({
+    imageMode: async () => 'ocr',
+    vision: async () => {
+      signalVision()
+      await visionGate
+      return '一张图片'
+    }
+  })
+  // The server-side socket closing is the deterministic proof that the handler
+  // already sees the client as gone when the explanation returns.
+  const serverSawClose = new Promise<void>((resolve) => {
+    server.once('connection', (socket) => socket.once('close', () => resolve()))
+  })
+  try {
+    const body = Buffer.from(PNG_BYTES)
+    let pending: ReturnType<typeof request> | null = null
+    const clientClosed = new Promise<void>((resolve) => {
+      pending = request(`${url}/api/upload`, {
+        method: 'POST',
+        headers: {
+          'x-session-id': 'good-session',
+          'x-file-name': 'during-vision.png',
+          'content-length': String(body.length)
+        }
+      })
+      pending.on('error', () => undefined)
+      pending.on('close', () => resolve())
+      pending.end(body)
+    })
+    await visionStarted // the bytes are on disk and the slow explanation is in flight
+    assert.equal(storedFiles(dir).length, 1, 'the file is persisted before the explanation starts')
+    pending!.destroy()
+    await clientClosed
+    await serverSawClose
+    await tick() // let the server-side `close` reach the response
+    releaseVision()
+    await idle()
+    assert.deepEqual(storedFiles(dir), [], 'a disconnect during the image explanation must not leave an orphan file')
+  } finally {
+    releaseVision()
+    server.close()
+  }
+})
+
 test('upload handler: an aborted upload releases its concurrency slot', async () => {
   const { server, url, idle } = await startUploadServer()
   let seen = 0

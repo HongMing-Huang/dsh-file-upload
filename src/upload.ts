@@ -16,7 +16,6 @@ import { join, relative, resolve, sep } from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { sniff } from './detect.ts'
 import type { SniffResult } from './detect.ts'
-import { decodeText } from './convert.ts'
 
 export interface UploadOptions {
   /** Byte cap for one upload body. */
@@ -84,239 +83,317 @@ export function sanitizeSessionId(id: string): string {
   return cleaned === '' ? 'anonymous' : cleaned
 }
 
+/** Per-session storage location plus the cwd that relative paths are shown from. */
+interface UploadStorage {
+  dir: string
+  sessionId: string
+  cwd: string
+}
+
+/**
+ * What the request handlers need that used to live inside the
+ * `createUploadHandler` closure: the options plus the one piece of mutable
+ * state (`inflight`). Passing it explicitly keeps the steps below as named
+ * module-level functions while they still share a single counter per handler.
+ */
+interface UploadContext {
+  maxBytes: number
+  allowedExtensions: string[]
+  maxConcurrent: number
+  sessionCwd: UploadOptions['sessionCwd']
+  defaultDir: string
+  imageMode: UploadOptions['imageMode']
+  vision: UploadOptions['vision']
+  /** Slots held by the body read + persist phase only, never by the vision call. */
+  inflight: number
+}
+
+/** A persisted upload plus the reference the model is given for it. */
+interface PersistedUpload {
+  meta: UploadedMeta
+  relativePath: string
+}
+
+/** Every exit path in this module answers through here. */
+function respond(res: ServerResponse, status: number, body: Record<string, unknown>): void {
+  res.writeHead(status, { 'content-type': 'application/json' })
+  res.end(JSON.stringify(body))
+}
+
+/** Resolve the session's own upload directory; null means the session is unknown. */
+async function storageDirFor(ctx: UploadContext, req: IncomingMessage): Promise<UploadStorage | null> {
+  const raw = req.headers['x-session-id']
+  const sessionId = typeof raw === 'string' ? sanitizeSessionId(raw) : 'anonymous'
+  if (ctx.sessionCwd !== undefined) {
+    const cwd = await ctx.sessionCwd(sessionId)
+    if (cwd === undefined) return null
+    return { dir: join(cwd, '.dsh-uploads', sessionId), sessionId, cwd }
+  }
+  return { dir: join(ctx.defaultDir, '.dsh-uploads', sessionId), sessionId, cwd: ctx.defaultDir }
+}
+
+/**
+ * Step 1 — receive: drain the body while enforcing the cumulative cap, then
+ * reject an empty upload. Both rejections answer here so the orchestrator only
+ * has to check `ok`. A socket error is deliberately not caught: it must reach
+ * the caller's catch block, where the disconnect semantics live.
+ */
+async function readBody(
+  req: IncomingMessage,
+  res: ServerResponse,
+  maxBytes: number
+): Promise<{ ok: true; data: Buffer } | { ok: false }> {
+  const chunks: Buffer[] = []
+  let total = 0
+  for await (const chunk of req) {
+    const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
+    total += buf.length
+    if (total > maxBytes) {
+      respond(res, 413, { error: 'payload too large' })
+      return { ok: false }
+    }
+    chunks.push(buf)
+  }
+  if (total === 0) {
+    respond(res, 400, { error: 'empty upload' })
+    return { ok: false }
+  }
+  return { ok: true, data: Buffer.concat(chunks) }
+}
+
+/**
+ * Step 2 — validate: decode `x-file-name` / `x-file-relpath`, sanitize both and
+ * apply the extension allowlist. A rejected extension comes back with its `ext`
+ * so the 415 body stays byte-identical to the original.
+ */
+function resolveUploadName(
+  req: IncomingMessage,
+  allowedExtensions: string[]
+): { ok: true; name: string; relPath: string } | { ok: false; ext: string } {
+  let rawName = 'upload.bin'
+  try {
+    const header = String(req.headers['x-file-name'] ?? '')
+    if (header !== '') rawName = decodeURIComponent(header)
+  } catch {
+    // fall through to the default name
+  }
+  let relPath = ''
+  try {
+    const relHeader = String(req.headers['x-file-relpath'] ?? '')
+    if (relHeader !== '') relPath = sanitizeRelativePath(decodeURIComponent(relHeader))
+  } catch {
+    // fall through
+  }
+  const name = sanitizeFileName(rawName)
+  const ext = name.slice(name.lastIndexOf('.') + 1).toLowerCase()
+  if (allowedExtensions.length > 0 && !allowedExtensions.includes(ext)) {
+    return { ok: false, ext }
+  }
+  return { ok: true, name, relPath }
+}
+
+/**
+ * Step 3 — persist: sniff, hash-dedup write with `wx`, then honor a disconnect
+ * that landed while the bytes were being written. Returns null when the file
+ * was (or must be) taken back, so the caller stops without answering.
+ */
+async function persistUpload(
+  storage: UploadStorage,
+  data: Buffer,
+  name: string,
+  relPath: string,
+  clientGone: () => boolean
+): Promise<PersistedUpload | null> {
+  const sniffResult = sniff(data, name)
+  await mkdir(storage.dir, { recursive: true })
+  const digest = createHash('sha256').update(data).digest('hex').slice(0, 16)
+  const dest = join(storage.dir, `${digest}-${name}`)
+  let deduplicated = false
+  try {
+    await writeFile(dest, data, { flag: 'wx' })
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException)?.code === 'EEXIST') deduplicated = true
+    else throw err
+  }
+
+  // The disconnect landed while the bytes were being written, so the
+  // response can no longer be delivered: take the file back instead of
+  // leaving an orphan. A deduplicated file already served an earlier
+  // successful upload and is left in place.
+  if (clientGone()) {
+    if (!deduplicated) await rm(dest, { force: true })
+    return null
+  }
+
+  const meta: UploadedMeta = {
+    path: dest,
+    name,
+    bytes: data.length,
+    sessionId: storage.sessionId,
+    sniff: sniffResult,
+    ...(deduplicated ? { deduplicated: true } : {})
+  }
+  const relativePath = relPath !== '' ? relPath : relative(storage.cwd, dest).split(sep).join('/')
+  return { meta, relativePath }
+}
+
+/**
+ * The optional slow step for images: report how the agent should read them —
+ * natively via the official read_image tool (multimodal route or a vision
+ * bridge like dsh-vision-proxy, which our route gate detects automatically) or,
+ * for text-only routes, generate an automatic image description ("讲解图片")
+ * through the vision discovery chain so the text-only model can reason about
+ * the image. Runs outside the concurrency gate: the slot is already released
+ * when this slow call starts.
+ */
+async function describeImageIfNeeded(meta: UploadedMeta, ctx: UploadContext): Promise<void> {
+  if (meta.sniff.type !== 'image' || ctx.imageMode === undefined) return
+  try {
+    meta.imageMode = await ctx.imageMode(meta.sessionId)
+    if (meta.imageMode === 'ocr' && ctx.vision !== undefined) {
+      meta.imageDescription = await ctx.vision(meta.path, meta.name)
+    }
+  } catch (err) {
+    meta.imageMode = 'ocr'
+    console.warn(`[dsh-file-upload] image description failed for ${meta.name}:`, err instanceof Error ? err.message : String(err))
+  }
+}
+
+/** Step 4 — respond: the 200 JSON shape (optional keys appear only when set). */
+function buildUploadResponse(meta: UploadedMeta, relativePath: string): Record<string, unknown> {
+  return {
+    path: meta.path,
+    relativePath,
+    name: meta.name,
+    bytes: meta.bytes,
+    sessionId: meta.sessionId,
+    sniffedType: meta.sniff.type,
+    label: meta.sniff.label,
+    ...(meta.imageMode !== undefined ? { imageMode: meta.imageMode } : {}),
+    ...(meta.imageDescription !== undefined ? { imageDescription: meta.imageDescription } : {}),
+    ...(meta.deduplicated ? { deduplicated: true } : {})
+  }
+}
+
+/** POST /api/upload — orchestrates receive → validate → persist → respond. */
+async function handlePost(ctx: UploadContext, req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const storage = await storageDirFor(ctx, req)
+  if (storage === null) {
+    respond(res, 403, { error: 'unknown session' })
+    return
+  }
+  if (ctx.inflight >= ctx.maxConcurrent) {
+    respond(res, 429, { error: 'too many concurrent uploads' })
+    return
+  }
+  const declared = Number(req.headers['content-length'])
+  if (Number.isFinite(declared) && declared > ctx.maxBytes) {
+    respond(res, 413, { error: 'payload too large' })
+    return
+  }
+  // The slot covers only the body read + disk write below. The image
+  // explanation call (`imageMode` + `vision`, up to 60s) runs after the slot
+  // is released, so a few slow images cannot starve document uploads.
+  ctx.inflight += 1
+  // A browser that goes away mid-upload (user cancelled, tab closed) must not
+  // leave the bytes it managed to send behind as an orphan file. `close` also
+  // fires after a normal response, so only an unfinished response counts as a
+  // disconnect; the abort-mid-body case already surfaces as a read error.
+  let gone = false
+  const onClientClose = (): void => {
+    if (!res.writableFinished) gone = true
+  }
+  res.on('close', onClientClose)
+  const clientGone = (): boolean => gone || (res.destroyed && !res.writableFinished)
+  let persisted: PersistedUpload | null = null
+  try {
+    const body = await readBody(req, res, ctx.maxBytes)
+    if (!body.ok) return
+    const resolved = resolveUploadName(req, ctx.allowedExtensions)
+    if (!resolved.ok) {
+      respond(res, 415, { error: `extension ".${resolved.ext}" not allowed` })
+      return
+    }
+    // The client is already gone: stop here so a cancelled upload never
+    // reaches the disk at all.
+    if (clientGone()) return
+    persisted = await persistUpload(storage, body.data, resolved.name, resolved.relPath, clientGone)
+  } catch (err) {
+    // A cancelled upload surfaces here as a read error. Nothing was written
+    // and there is nobody left to answer, so it is not a server failure.
+    if (!clientGone()) {
+      console.error('[dsh-file-upload] upload persist failed:', err)
+      respond(res, 500, { error: 'write failed' })
+    }
+  } finally {
+    ctx.inflight -= 1
+    res.off('close', onClientClose)
+  }
+  if (persisted === null) return
+  const { meta, relativePath } = persisted
+
+  await describeImageIfNeeded(meta, ctx)
+
+  // The explanation above runs outside the concurrency gate and can take up
+  // to a minute, so the browser may well have cancelled by now. Same data
+  // hygiene: a response nobody can read must not leave the file behind.
+  if (clientGone()) {
+    if (meta.deduplicated !== true) await rm(meta.path, { force: true })
+    return
+  }
+
+  respond(res, 200, buildUploadResponse(meta, relativePath))
+}
+
+/** DELETE /api/upload — removes one file, but only inside the session directory. */
+async function handleDelete(ctx: UploadContext, req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const storage = await storageDirFor(ctx, req)
+  if (storage === null) {
+    respond(res, 403, { error: 'unknown session' })
+    return
+  }
+  const raw = req.headers['x-file-path']
+  const filePath = typeof raw === 'string' ? raw : ''
+  // Normalize both sides before comparing: `..`, duplicate separators and a
+  // trailing slash must not slip past the guard. The target has to be the
+  // session directory itself or live below it with a real path separator —
+  // a bare string prefix would also match siblings like `<session>-evil`.
+  const dir = resolve(storage.dir)
+  const target = filePath === '' ? '' : resolve(filePath)
+  if (target === '' || (target !== dir && !target.startsWith(dir + sep))) {
+    respond(res, 400, { error: 'invalid path' })
+    return
+  }
+  try {
+    await rm(target, { force: true })
+    respond(res, 200, { ok: true })
+  } catch (err) {
+    console.error('[dsh-file-upload] delete failed:', err)
+    respond(res, 500, { error: 'delete failed' })
+  }
+}
+
 export function createUploadHandler(options: UploadOptions) {
-  const {
-    maxBytes,
-    allowedExtensions,
-    ttlMs,
-    maxConcurrent,
-    sessionCwd,
-    defaultDir,
-    now = () => Date.now()
-  } = options
-
-  let inflight = 0
-
-  async function storageDirFor(req: IncomingMessage): Promise<{ dir: string; sessionId: string; cwd: string } | null> {
-    const raw = req.headers['x-session-id']
-    const sessionId = typeof raw === 'string' ? sanitizeSessionId(raw) : 'anonymous'
-    if (sessionCwd !== undefined) {
-      const cwd = await sessionCwd(sessionId)
-      if (cwd === undefined) return null
-      return { dir: join(cwd, '.dsh-uploads', sessionId), sessionId, cwd }
-    }
-    return { dir: join(defaultDir, '.dsh-uploads', sessionId), sessionId, cwd: defaultDir }
-  }
-
-  async function handlePost(req: IncomingMessage, res: ServerResponse): Promise<void> {
-    const storage = await storageDirFor(req)
-    if (storage === null) {
-      res.writeHead(403, { 'content-type': 'application/json' })
-      res.end(JSON.stringify({ error: 'unknown session' }))
-      return
-    }
-    if (inflight >= maxConcurrent) {
-      res.writeHead(429, { 'content-type': 'application/json' })
-      res.end(JSON.stringify({ error: 'too many concurrent uploads' }))
-      return
-    }
-    const declared = Number(req.headers['content-length'])
-    if (Number.isFinite(declared) && declared > maxBytes) {
-      res.writeHead(413, { 'content-type': 'application/json' })
-      res.end(JSON.stringify({ error: 'payload too large' }))
-      return
-    }
-    // The slot covers only the body read + disk write below. The image
-    // explanation call (`imageMode` + `vision`, up to 60s) runs after the slot
-    // is released, so a few slow images cannot starve document uploads.
-    inflight += 1
-    // A browser that goes away mid-upload (user cancelled, tab closed) must not
-    // leave the bytes it managed to send behind as an orphan file. `close` also
-    // fires after a normal response, so only an unfinished response counts as a
-    // disconnect; the abort-mid-body case already surfaces as a read error.
-    let gone = false
-    const onClientClose = (): void => {
-      if (!res.writableFinished) gone = true
-    }
-    res.on('close', onClientClose)
-    const clientGone = (): boolean => gone || (res.destroyed && !res.writableFinished)
-    let persisted: { meta: UploadedMeta; relativePath: string } | null = null
-    try {
-      const chunks: Buffer[] = []
-      let total = 0
-      for await (const chunk of req) {
-        const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
-        total += buf.length
-        if (total > maxBytes) {
-          res.writeHead(413, { 'content-type': 'application/json' })
-          res.end(JSON.stringify({ error: 'payload too large' }))
-          return
-        }
-        chunks.push(buf)
-      }
-      if (total === 0) {
-        res.writeHead(400, { 'content-type': 'application/json' })
-        res.end(JSON.stringify({ error: 'empty upload' }))
-        return
-      }
-      let rawName = 'upload.bin'
-      try {
-        const header = String(req.headers['x-file-name'] ?? '')
-        if (header !== '') rawName = decodeURIComponent(header)
-      } catch {
-        // fall through to the default name
-      }
-      let relPath = ''
-      try {
-        const relHeader = String(req.headers['x-file-relpath'] ?? '')
-        if (relHeader !== '') relPath = sanitizeRelativePath(decodeURIComponent(relHeader))
-      } catch {
-        // fall through
-      }
-      const name = sanitizeFileName(rawName)
-      const ext = name.slice(name.lastIndexOf('.') + 1).toLowerCase()
-      if (allowedExtensions.length > 0 && !allowedExtensions.includes(ext)) {
-        res.writeHead(415, { 'content-type': 'application/json' })
-        res.end(JSON.stringify({ error: `extension ".${ext}" not allowed` }))
-        return
-      }
-      const data = Buffer.concat(chunks)
-      // The client is already gone: stop here so a cancelled upload never
-      // reaches the disk at all.
-      if (clientGone()) return
-      const sniffResult = sniff(data, name)
-      await mkdir(storage.dir, { recursive: true })
-      const digest = createHash('sha256').update(data).digest('hex').slice(0, 16)
-      const dest = join(storage.dir, `${digest}-${name}`)
-      let deduplicated = false
-      try {
-        await writeFile(dest, data, { flag: 'wx' })
-      } catch (err) {
-        if ((err as NodeJS.ErrnoException)?.code === 'EEXIST') deduplicated = true
-        else throw err
-      }
-
-      // The disconnect landed while the bytes were being written, so the
-      // response can no longer be delivered: take the file back instead of
-      // leaving an orphan. A deduplicated file already served an earlier
-      // successful upload and is left in place.
-      if (clientGone()) {
-        if (!deduplicated) await rm(dest, { force: true })
-        return
-      }
-
-      const meta: UploadedMeta = {
-        path: dest,
-        name,
-        bytes: data.length,
-        sessionId: storage.sessionId,
-        sniff: sniffResult,
-        ...(deduplicated ? { deduplicated: true } : {})
-      }
-
-      const relativePath = relPath !== '' ? relPath : relative(storage.cwd, dest).split(sep).join('/')
-      persisted = { meta, relativePath }
-    } catch (err) {
-      // A cancelled upload surfaces here as a read error. Nothing was written
-      // and there is nobody left to answer, so it is not a server failure.
-      if (!clientGone()) {
-        console.error('[dsh-file-upload] upload persist failed:', err)
-        res.writeHead(500, { 'content-type': 'application/json' })
-        res.end(JSON.stringify({ error: 'write failed' }))
-      }
-    } finally {
-      inflight -= 1
-      res.off('close', onClientClose)
-    }
-    if (persisted === null) return
-    const { meta, relativePath } = persisted
-
-    // Images: report how the agent should read them — natively via the
-    // official read_image tool (multimodal route or a vision bridge like
-    // dsh-vision-proxy, which our route gate detects automatically) or,
-    // for text-only routes, generate an automatic image description
-    // ("讲解图片") through the vision discovery chain so the text-only
-    // model can reason about the image. Runs outside the concurrency gate:
-    // the slot above is already released when this slow call starts.
-    if (meta.sniff.type === 'image' && options.imageMode !== undefined) {
-      try {
-        meta.imageMode = await options.imageMode(meta.sessionId)
-        if (meta.imageMode === 'ocr' && options.vision !== undefined) {
-          meta.imageDescription = await options.vision(meta.path, meta.name)
-        }
-      } catch (err) {
-        meta.imageMode = 'ocr'
-        console.warn(`[dsh-file-upload] image description failed for ${meta.name}:`, err instanceof Error ? err.message : String(err))
-      }
-    }
-
-    // The explanation above runs outside the concurrency gate and can take up
-    // to a minute, so the browser may well have cancelled by now. Same data
-    // hygiene: a response nobody can read must not leave the file behind.
-    if (clientGone()) {
-      if (meta.deduplicated !== true) await rm(meta.path, { force: true })
-      return
-    }
-
-    res.writeHead(200, { 'content-type': 'application/json' })
-    res.end(
-      JSON.stringify({
-        path: meta.path,
-        relativePath,
-        name: meta.name,
-        bytes: meta.bytes,
-        sessionId: meta.sessionId,
-        sniffedType: meta.sniff.type,
-        label: meta.sniff.label,
-        ...(meta.imageMode !== undefined ? { imageMode: meta.imageMode } : {}),
-        ...(meta.imageDescription !== undefined ? { imageDescription: meta.imageDescription } : {}),
-        ...(meta.deduplicated ? { deduplicated: true } : {})
-      })
-    )
-  }
-
-  async function handleDelete(req: IncomingMessage, res: ServerResponse): Promise<void> {
-    const storage = await storageDirFor(req)
-    if (storage === null) {
-      res.writeHead(403, { 'content-type': 'application/json' })
-      res.end(JSON.stringify({ error: 'unknown session' }))
-      return
-    }
-    const raw = req.headers['x-file-path']
-    const filePath = typeof raw === 'string' ? raw : ''
-    // Normalize both sides before comparing: `..`, duplicate separators and a
-    // trailing slash must not slip past the guard. The target has to be the
-    // session directory itself or live below it with a real path separator —
-    // a bare string prefix would also match siblings like `<session>-evil`.
-    const dir = resolve(storage.dir)
-    const target = filePath === '' ? '' : resolve(filePath)
-    if (target === '' || (target !== dir && !target.startsWith(dir + sep))) {
-      res.writeHead(400, { 'content-type': 'application/json' })
-      res.end(JSON.stringify({ error: 'invalid path' }))
-      return
-    }
-    try {
-      await rm(target, { force: true })
-      res.writeHead(200, { 'content-type': 'application/json' })
-      res.end(JSON.stringify({ ok: true }))
-    } catch (err) {
-      console.error('[dsh-file-upload] delete failed:', err)
-      res.writeHead(500, { 'content-type': 'application/json' })
-      res.end(JSON.stringify({ error: 'delete failed' }))
-    }
+  const ctx: UploadContext = {
+    maxBytes: options.maxBytes,
+    allowedExtensions: options.allowedExtensions,
+    maxConcurrent: options.maxConcurrent,
+    sessionCwd: options.sessionCwd,
+    defaultDir: options.defaultDir,
+    imageMode: options.imageMode,
+    vision: options.vision,
+    inflight: 0
   }
 
   return async function handler(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const host = req.headers.host ?? ''
     if (!LOOPBACK_HOST.test(host)) {
-      res.writeHead(403, { 'content-type': 'application/json' })
-      res.end(JSON.stringify({ error: 'loopback only' }))
+      respond(res, 403, { error: 'loopback only' })
       return
     }
-    if (req.method === 'POST') return handlePost(req, res)
-    if (req.method === 'DELETE') return handleDelete(req, res)
-    res.writeHead(405, { 'content-type': 'application/json' })
-    res.end(JSON.stringify({ error: 'method not allowed' }))
+    if (req.method === 'POST') return handlePost(ctx, req, res)
+    if (req.method === 'DELETE') return handleDelete(ctx, req, res)
+    respond(res, 405, { error: 'method not allowed' })
   }
 }
 

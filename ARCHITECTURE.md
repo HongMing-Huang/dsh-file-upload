@@ -12,17 +12,17 @@
 | Version | 0.5.4 |
 | Layout archetype | single-package-src |
 | Primary language | typescript |
-| Languages by volume | typescript (2163 LOC), typescriptreact (752 LOC), javascript (391 LOC) |
+| Languages by volume | typescript (2297 LOC), typescriptreact (755 LOC), javascript (390 LOC) |
 | Module system | esm |
 | Package manager | pnpm |
 | Engines | {"node":">=22.6.0"} |
 | Runtime deps | 4 |
-| Dev deps | 5 |
+| Dev deps | 6 |
 | Peer deps | 6 |
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 28 commits, last 2026-10-06T15:59:55+08:00, 2 dirty files |
+| Git | 29 commits, last 2026-10-06T16:01:44+08:00, 12 dirty files |
 
 ## 2. Layout at a glance
 
@@ -32,44 +32,45 @@
 | `.gitignore` | file | 1 | 15 | 0 | 0 |  |
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
 | `AGENTS.md` | file | 1 | 60 | 0 | 0 |  |
-| `ARCHITECTURE.md` | file | 1 | 281 | 0 | 0 |  |
-| `CHANGELOG.md` | file | 1 | 345 | 0 | 0 |  |
+| `ARCHITECTURE.md` | file | 1 | 293 | 0 | 0 |  |
+| `CHANGELOG.md` | file | 1 | 365 | 0 | 0 |  |
 | `CONTRIBUTING.md` | file | 1 | 142 | 0 | 0 |  |
 | `INSTALL.md` | file | 1 | 189 | 0 | 0 |  |
 | `LICENSE` | file | 1 | 0 | 0 | 0 |  |
 | `README.md` | file | 1 | 141 | 0 | 0 |  |
 | `README.zh.md` | file | 1 | 134 | 0 | 0 |  |
 | `SECURITY.md` | file | 1 | 24 | 0 | 0 |  |
+| `biome.json` | file | 1 | 49 | 0 | 0 |  |
 | `build.mjs` | file | 1 | 27 | 1 | 0 |  |
 | `cordis.patch.yml` | file | 1 | 30 | 0 | 0 |  |
 | `examples/` | directory | 1 | 33 | 0 | 0 | cordis.patch.yml 的本地覆盖示例，文档性质。 |
-| `package.json` | file | 1 | 99 | 0 | 0 |  |
+| `package.json` | file | 1 | 102 | 0 | 0 |  |
 | `pnpm-lock.yaml` | file | 1 | 0 | 0 | 0 |  |
-| `scripts/` | directory | 1 | 364 | 1 | 0 | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
-| `src/` | directory | 7 | 2243 | 7 | 0 |  |
-| `test/` | directory | 4 | 672 | 0 | 4 |  |
+| `scripts/` | directory | 1 | 363 | 1 | 0 | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
+| `src/` | directory | 7 | 2313 | 7 | 0 |  |
+| `test/` | directory | 4 | 739 | 0 | 4 |  |
 | `tsconfig.build.json` | file | 1 | 15 | 0 | 0 |  |
 | `tsconfig.json` | file | 1 | 28 | 0 | 0 |  |
 
-Root holds 16 loose file(s): `.gitignore`, `AGENTS.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `INSTALL.md`, `LICENSE`, `README.md`, `README.zh.md`, `SECURITY.md`, `build.mjs`, `cordis.patch.yml`, `package.json`, `pnpm-lock.yaml`, `tsconfig.build.json`, `tsconfig.json`
+Root holds 17 loose file(s): `.gitignore`, `AGENTS.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `INSTALL.md`, `LICENSE`, `README.md`, `README.zh.md`, `SECURITY.md`, `biome.json`, `build.mjs`, `cordis.patch.yml`, `package.json`, `pnpm-lock.yaml`, `tsconfig.build.json`, `tsconfig.json`
 
 ## 3. Modules
 
 | Module | Layer | Files | LOC | Source | Tests | Entry | May import (declared) | Actually imports | Purpose (curated) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `convert` | 1 | 1 | 282 | 1 | 0 | `src/convert.ts` | `detect` | `detect` | 文档转 Markdown 的适配层：唯一允许调用外部转换器（markitdown/mammoth/pdfjs/read-excel-file）的模块。 |
-| `upload` | 2 | 1 | 367 | 1 | 0 | `src/upload.ts` | `detect`, `convert` | `convert`, `detect` | 上传处理与清理：接收浏览器分片、落盘、哈希去重、定期回收临时文件。唯一允许写磁盘的模块。 |
-| `detect` | 0 | 1 | 151 | 1 | 0 | `src/detect.ts` | _nothing_ | — | 文件类型嗅探（魔数 + 扩展名）。叶子模块，不 import 项目内任何东西。 |
+| `upload` | 2 | 1 | 444 | 1 | 0 | `src/upload.ts` | `detect`, `convert` | `detect` | 上传处理与清理：接收浏览器分片、落盘、哈希去重、定期回收临时文件。唯一允许写磁盘的模块。 |
+| `detect` | 0 | 1 | 139 | 1 | 0 | `src/detect.ts` | _nothing_ | — | 文件类型嗅探（魔数 + 扩展名）。叶子模块，不 import 项目内任何东西。 |
 | `vision` | 0 | 1 | 162 | 1 | 0 | `src/vision.ts` | _nothing_ | — | 图片描述能力封装。叶子模块，供 entry 在需要视觉理解时调用。 |
-| `entry` | 3 | 1 | 302 | 1 | 0 | `src/index.ts` | `tool`, `upload`, `convert`, `detect`, `vision` | `convert`, `tool`, `upload`, `vision` | 宿主插件入口：注册上传服务与 read_document 工具，只做装配，不写业务逻辑。 |
+| `entry` | 3 | 1 | 304 | 1 | 0 | `src/index.ts` | `tool`, `upload`, `convert`, `detect`, `vision` | `convert`, `tool`, `upload`, `vision` | 宿主插件入口：注册上传服务与 read_document 工具，只做装配，不写业务逻辑。 |
 | `tool` | 2 | 1 | 227 | 1 | 0 | `src/tool.ts` | `detect`, `convert` | `convert`, `detect` | 面向模型的 read_document 工具定义、参数 schema 与解析缓存 ParseCache。 |
-| `client` | 0 | 1 | 752 | 1 | 0 | `src/client/index.tsx` | _nothing_ | — | 浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。 |
+| `client` | 0 | 1 | 755 | 1 | 0 | `src/client/index.tsx` | _nothing_ | — | 浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。 |
 | `build` | — | 1 | 27 | 1 | 0 | `build.mjs` | _undeclared_ | — | 构建脚本：tsc 产物之后的 client bundle 收尾。 |
 | `examples` | — | 1 | 33 | 0 | 0 | — | `*` | — | cordis.patch.yml 的本地覆盖示例，文档性质。 |
-| `scripts` | — | 1 | 364 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
-| `tests` | — | 4 | 672 | 0 | 4 | — | `*` | `convert`, `detect`, `upload` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
+| `scripts` | — | 1 | 363 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
+| `tests` | — | 4 | 739 | 0 | 4 | — | `*` | `convert`, `detect`, `upload` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
 
-_17 tracked file(s) belong to no declared module: `.github/workflows/ci.yml`, `.github/workflows/structure-guard.yml`, `.gitignore`, `.test-nonwritable/markitdown/.markitdown-installed.json`, `.test-nonwritable/markitdown/.probe`, `AGENTS.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, …. Either declare them or move them where the contract covers them._
+_18 tracked file(s) belong to no declared module: `.github/workflows/ci.yml`, `.github/workflows/structure-guard.yml`, `.gitignore`, `.test-nonwritable/markitdown/.markitdown-installed.json`, `.test-nonwritable/markitdown/.probe`, `AGENTS.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, …. Either declare them or move them where the contract covers them._
 
 ### Declared module graph
 
@@ -87,7 +88,6 @@ graph LR
   scripts["scripts"]
   tests["tests"]
   convert --> detect
-  upload --> convert
   upload --> detect
   entry --> convert
   entry --> tool
@@ -107,29 +107,29 @@ graph LR
 | File naming | flat: 8, kebab: 1 |
 | Naming consistency | 100% (dominant: flat) |
 | Test placement | top-level |
-| Test volume | 4 files / 672 LOC (ratio 0.44) |
+| Test volume | 4 files / 739 LOC (ratio 0.44) |
 | Source roots | `src/` |
 | Barrel files (index.*) | present |
-| Scripts | `build`, `typecheck`, `test`, `check:manifest`, `prepublishOnly` |
+| Scripts | `build`, `typecheck`, `lint`, `format`, `test`, `check:manifest`, `prepublishOnly` |
 
 ## 5. Structural health
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 33 (385 KB) |
-| Source | 9 files / 2634 LOC |
-| Tests | 4 files / 672 LOC |
-| Docs | 8 files / 1316 LOC |
-| Config files | 10 |
+| Files tracked | 34 (397 KB) |
+| Source | 9 files / 2703 LOC |
+| Tests | 4 files / 739 LOC |
+| Docs | 8 files / 1348 LOC |
+| Config files | 11 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
 | Max nesting depth | 2 |
-| Average source file | 293 lines |
-| Largest source file | `src/client/index.tsx` (752 lines) |
-| Import graph | 8 nodes / 15 internal edges (6 cross-directory) |
+| Average source file | 300 lines |
+| Largest source file | `src/client/index.tsx` (755 lines) |
+| Import graph | 8 nodes / 14 internal edges (6 cross-directory) |
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
-| Most depended-on files | `src/convert.ts` (5), `src/detect.ts` (5), `src/upload.ts` (3) |
+| Most depended-on files | `src/detect.ts` (5), `src/convert.ts` (4), `src/upload.ts` (3) |
 | Churn hotspots (90d) | `CHANGELOG.md` (16), `package.json` (16), `README.md` (14) |
 
 ## 6. Standards checklist
@@ -145,7 +145,7 @@ graph LR
 | docs/ directory | **missing** |
 | ADR / RFC directory | **missing** |
 | CI workflow | present |
-| linter config | **missing** |
+| linter config | present |
 | formatter config | **missing** |
 | .editorconfig | **missing** |
 | type config (tsconfig/mypy) | present |
@@ -166,9 +166,9 @@ graph LR
 ### Rule findings
 
 - **warn** `committed-runtime-artifacts` — 2 runtime artifact(s) are tracked in git.
-- **warn** `long-functions` — 2 function(s) exceed 150 lines; the longest is createUploadHandler at 235.
-- **warn** `no-linter` — No linter or formatter configuration found.
+- **warn** `root-file-clutter` — 17 loose files at the repository root (limit 16).
 - **info** `churn-hotspots` — 1 file(s) are both frequently changed and widely imported.
+- **info** `no-linter` — A linter is configured but no formatter is.
 - **info** `stale-entry-points` — 3 entry point(s) are untracked build output.
 
 <!-- BEGIN CURATED -->
@@ -226,9 +226,17 @@ graph LR
 
 ### 已知例外与待办
 
-- **`long-functions`**：`apply()`（`src/index.ts`）已在 `rules.overrides` 中豁免并写明理由——它是 Cordis 插件体，注册逻辑天然在同一个闭包作用域里（cordiverse/cordis 自身插件也是如此）。`createUploadHandler()`（`src/upload.ts`，**235 行**，2026-10-06 由 186 行经两次增长而来）**未豁免**，是待拆分项：建议抽出「接收分片 / 校验哈希 / 落盘 / 响应」四个具名步骤；本轮把视觉调用移出并发闸时又加长了它，**拆分优先级应上调**。`src/upload.ts` 同时被标记为 **churn hotspot**（90 天 12 次提交、3 个 importer）——先稳定它的接口，测试也优先补在这里。
+- **`long-functions` —— `upload.ts` 两处已拆分（2026-10-06）**：`apply()`（`src/index.ts`）继续在 `rules.overrides` 中豁免并写明理由——它是 Cordis 插件体，注册逻辑天然在同一个闭包作用域里（cordiverse/cordis 自身插件也是如此）。`createUploadHandler()` 由 **235 行拆到 23 行**、`handlePost()` 由 **166 行拆到 68 行**，两条告警都消失，`long-functions` 这条 finding 整个不再出现（`apply` 在 `allow` 里，从不报告）。拆出的具名步骤：`respond()` 收敛 14 处 `writeHead` + `end(JSON.stringify(...))`；`readBody()`（接收分片 + 累计超限 + 空 body）、`resolveUploadName()`（解码净化 + 扩展名白名单）、`persistUpload()`（嗅探 + sha256 + `wx` 写入 + 去重 + 断连回收）、`describeImageIfNeeded()`（`imageMode`/`vision`，含 `ocr` 兜底）、`buildUploadResponse()`（200 的 JSON 形状）四步各司其职；`storageDirFor()` / `handleDelete()` 与 `handlePost()` 同级。为了让这些步骤仍共享同一个并发计数，`createUploadHandler` 退化为只组装一个 `UploadContext`（选项 + `inflight`）并返回 `handler`——**名额仍只覆盖读 body + 落盘、三处断连检查与 DELETE 越界判定逐字未动**，43 条用例在拆分前后同样全绿（另做变异测试：去掉视觉后的回收分支，新用例立刻失败）。`src/upload.ts` 仍是 **churn hotspot**（90 天 13 次提交、3 个 importer）——接口已稳定，后续新增行为优先补测试。
 - **运行时产物被误提交**：`.test-nonwritable/markitdown/.probe` 与 `.markitdown-installed.json`（commit `7fdc463`）。处理：`git rm -r --cached .test-nonwritable` 并在 `.gitignore` 加 `.test-nonwritable/`。
-- **缺少 linter / formatter 配置**：18 个参照仓库全部具备（vscode 甚至自建 `.eslint-plugin-local/` 49 条规则来机械强制分层）。建议加 `eslint.config.js` 或 biome，然后 `guard.mjs hook install . --strict` 并接入 CI。
+- **linter / formatter 已补齐（2026-10-06），以及它换来的一条新告警**：`biome.json` 同时配置 lint 与 format，
+  风格按仓库现状设定（2 空格、单引号、无分号），`pnpm lint` / `pnpm format` 包裹，`@biomejs/biome` 是唯一新增的
+  devDependency（零传递依赖）。两条规则按理由关闭：`noControlCharactersInRegex`——`detect.ts` 的魔数表与
+  `upload.ts` 的文件名净化 regex **本来就该**匹配控制字符；`noExplicitAny`——宿主 ctx 与 primitives 都是外部形态。
+  **代价**：`biome.json` 是根目录第 17 个散落文件，因此 `root-file-clutter`（上限 16）从「勉强不触发」变成告警。
+  这是**有意选择的取舍**：删掉 `biome.json` 能让这条告警消失，但 linter 会退化成「配置了却没有配置」，`no-linter`
+  会退回成实打实的告警。两害相权取其轻——保留 linter，接受装饰性的文件计数告警，并在此登记理由。
+  Biome 首次运行查出的死代码已全部清除（`TEXT_EXTS`、两个与 `ZIP_HEAD` 重复的常量、未使用的 `UTF8_BOM`、
+  `upload.ts` 未使用的 `decodeText` import 等），见 CHANGELOG。
 - **`lib/` 是构建产物**：已在 `package.json` 的 `files` 中声明且被 gitignore，报告里以 info 提示，属预期，不需要处理。
 - **`INSTALL.md`（2026-10-06 新增，有意引入的顶层文档）**：安装与排障手册，属 `single-package-src` 原型下的
   标准根级文档（与 `README` / `CONTRIBUTING` / `SECURITY` 同类），因此按规则在本文档登记后重新 baseline。
@@ -249,10 +257,14 @@ graph LR
   本文件暂不拆分是有意的：进度、取消、状态三态属于同一条传输路径与同一份卡片状态，拆开只会把请求生命周期
   和 UI 状态割裂；真要缩体量，正确做法是把 `postUpload` 这类纯传输代码下沉成 `src/client/` 内的独立模块
   （模块边界 `client: src/client/**` 允许，且不引入宿主依赖）。
-- **同一轮里 `upload.ts` 的两处长函数**：`handlePost()` 131 → **166 行**、`createUploadHandler()` 200 →
-  **235 行**，两者都越过 150 行线。原因是给断连清理加的三处检查（读 body 前、落盘后、视觉调用后）与
-  取消语义；拆分建议与 `long-functions` 条目一致——按「读 body / 校验 / 落盘 / 响应」抽具名步骤，
-  并把「客户端是否已断连」做成一个可测的小工具函数。
+- **`upload.ts` 的两处长函数 —— 已拆（2026-10-06）**：`handlePost()` 131 → 166 → **68 行**、
+  `createUploadHandler()` 200 → 235 → **23 行**。按「接收 / 校验 / 落盘 / 响应」拆成模块级私有步骤
+  （`respond` / `readBody` / `resolveUploadName` / `persistUpload` / `describeImageIfNeeded` /
+  `buildUploadResponse`），`handlePost` 只保留编排；`createUploadHandler` 退化为组装 `UploadContext`
+  （选项 + `inflight`）后返回 `handler`。断连清理的三处检查留在各自原来的位置（读 body 前、落盘后、
+  视觉调用后），`clientGone` 闭包仍是 `handlePost` 内的局部函数，`res.on('close')` 与 `finally` 里的
+  `res.off` 配对不变，DELETE 的 `resolve()` + `dir + sep` 判定一个字未动。新增两条用例锁定不变性：
+  白名单放行 200、视觉调用期间断连不留孤儿。
 - **`pnpm typecheck` 覆盖不到浏览器半边 —— 已修（2026-10-06）**：原先 `tsconfig.json` 的 `include` 只有
   `src/**/*.ts` 与 `test/**/*.ts`，`.tsx` 不在 program 内（`tsc -p tsconfig.json --listFiles | grep src/client`
   = 0），所以 `src/client/index.tsx` 从未被类型检查过。现已把 `src/**/*.tsx` 纳入 include 并加上 `jsx` 与

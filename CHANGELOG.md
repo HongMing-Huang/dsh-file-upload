@@ -23,6 +23,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   inserts a clean `@relative/path` reference (relative to the session
   workspace). Absolute host paths no longer leak into the composer or the
   message; the removal card still deletes via the absolute path internally.
+- **Linting, formatting, and the dead code it found**: the project had no
+  linter or formatter at all (`no-linter` was one of three standing structure
+  warnings). `biome.json` configures both to match the style the code already
+  uses — 2-space indent, single quotes, no semicolons — with
+  `noControlCharactersInRegex` off, because the binary magic-number tables in
+  `detect.ts` and the filename sanitizers legitimately match control
+  characters, and `noExplicitAny` off for the same reason. `pnpm lint` and
+  `pnpm format` wrap it, and `@biomejs/biome` is the only new devDependency
+  (zero transitive dependencies).
+- **Dead code the new linter exposed**: `detect.ts` carried a 55-entry
+  `TEXT_EXTS` set that nothing read (so file extensions never influenced text
+  detection, as documented), two `ZIP_HEAD` duplicates declared but unused, and
+  an unused `UTF8_BOM` — the BOM check uses `fatal` UTF-8 decoding instead.
+  `upload.ts` imported `decodeText` without calling it. `index.ts` typed an
+  unused callback parameter, and two test files carried unused imports and an
+  unused local. All removed; none changed behaviour (43 tests still pass).
+
+
+  workspace). Absolute host paths no longer leak into the composer or the
+  message; the removal card still deletes via the absolute path internally.
 - **No more fallback text**: the old "图片以文件形式上传(<绝对路径>);未生成讲解…"
   text block is gone. An image with no available vision endpoint uploads as a
   plain `@reference` only (the agent can still OCR via `read_document`).

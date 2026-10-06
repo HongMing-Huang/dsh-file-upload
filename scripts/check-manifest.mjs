@@ -12,7 +12,7 @@
 //
 // Exit code 0 = every invariant holds. Non-zero = at least one FAIL.
 
-import { readFileSync, existsSync, readdirSync, openSync, readSync, closeSync } from 'node:fs'
+import { readFileSync, existsSync, openSync, readSync, closeSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -23,9 +23,6 @@ const results = []
 const pass = (rule, detail = '') => results.push({ level: 'pass', rule, detail })
 const fail = (rule, detail) => results.push({ level: 'fail', rule, detail })
 const warn = (rule, detail) => results.push({ level: 'warn', rule, detail })
-
-/** The services this plugin injects, sourced from the host half. */
-const HOST_INJECT_FALLBACK = ['tools', 'fs', 'systemPrompt', 'webServer', 'sessions', 'credentials']
 
 function readJson(path) {
   return JSON.parse(readFileSync(path, 'utf8'))
@@ -300,7 +297,7 @@ const dsh = pkg.dsh ?? {}
       const unknownKeys = [...patchedKeys].filter((k) => !schemaKeys.has(k))
       const omitted = [...schemaKeys].filter((k) => !patchedKeys.has(k))
       if (unknownKeys.length > 0) fail('patch-config-keys', `patch sets key(s) absent from Config: ${unknownKeys.join(', ')}`)
-      else pass('patch-config-keys', `${patchedKeys.size}/${schemaKeys.size} schema keys set by the patch` + (omitted.length > 0 ? `; ${omitted.length} left to defaults: ${omitted.join(', ')}` : ''))
+      else pass('patch-config-keys', `${patchedKeys.size}/${schemaKeys.size} schema keys set by the patch${omitted.length > 0 ? `; ${omitted.length} left to defaults: ${omitted.join(', ')}` : ''}`)
     }
   }
 }
@@ -330,7 +327,9 @@ const dsh = pkg.dsh ?? {}
     warn('runtime-primitives-exist', 'lib/client.js absent (run pnpm build)')
   } else {
     const text = readFileSync(bundle, 'utf8')
-    const binding = new RegExp(`var\\s+([A-Za-z0-9_$]+)\\s*=\\s*__require\\("${PRIMITIVES.replace(/[/@]/g, (c) => '\\' + c)}"\\)`).exec(text)
+    // Alternation rather than a character class so the literal needs no
+    // escaping callback inside the template string.
+    const binding = new RegExp(`var\\s+([A-Za-z0-9_$]+)\\s*=\\s*__require\\("${PRIMITIVES.replaceAll('/', '\\/').replaceAll('@', '\\@')}"\\)`).exec(text)
     const used = new Set()
     if (binding !== null) {
       const re = new RegExp(`\\b${binding[1]}\\.([A-Za-z0-9_$]+)`, 'g')

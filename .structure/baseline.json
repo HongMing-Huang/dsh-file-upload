@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-06T08:01:33.964Z",
+  "generatedAt": "2026-10-06T08:13:52.664Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -11,15 +11,15 @@
     "languages": [
       {
         "lang": "typescript",
-        "loc": 2163
+        "loc": 2297
       },
       {
         "lang": "typescriptreact",
-        "loc": 752
+        "loc": 755
       },
       {
         "lang": "javascript",
-        "loc": 391
+        "loc": 390
       }
     ],
     "archetype": "single-package-src",
@@ -32,6 +32,8 @@
     "scripts": [
       "build",
       "typecheck",
+      "lint",
+      "format",
       "test",
       "check:manifest",
       "prepublishOnly"
@@ -39,12 +41,14 @@
     "scriptCommands": {
       "build": "tsc -p tsconfig.build.json && node build.mjs",
       "typecheck": "tsc -p tsconfig.json --noEmit",
+      "lint": "biome lint .",
+      "format": "biome format --write .",
       "test": "node --test test/*.test.ts",
       "check:manifest": "node scripts/check-manifest.mjs",
       "prepublishOnly": "npm run check:manifest && npm run build && npm test"
     },
     "dependencies": 4,
-    "devDependencies": 5,
+    "devDependencies": 6,
     "peerDependencies": 6,
     "engines": {
       "node": ">=22.6.0"
@@ -63,31 +67,31 @@
     "repositoryDeclared": true
   },
   "metrics": {
-    "files": 33,
-    "bytes": 394685,
+    "files": 34,
+    "bytes": 406448,
     "sourceFiles": 9,
     "testFiles": 4,
     "docFiles": 8,
-    "configFiles": 10,
+    "configFiles": 11,
     "assetFiles": 1,
     "lockfiles": 1,
     "generatedFiles": 0,
     "committedBuildOutput": 0,
-    "longFunctionCount": 3,
-    "maxFunctionLines": 235,
-    "maxFunctionName": "createUploadHandler",
-    "maxFunctionAt": "src/upload.ts:87",
+    "longFunctionCount": 1,
+    "maxFunctionLines": 184,
+    "maxFunctionName": "apply",
+    "maxFunctionAt": "src/index.ts:121",
     "vendoredFiles": 0,
-    "sourceLoc": 2634,
-    "testLoc": 672,
-    "docLoc": 1316,
+    "sourceLoc": 2703,
+    "testLoc": 739,
+    "docLoc": 1349,
     "maxDepth": 2,
     "topLevelDirCount": 4,
     "topLevelEntryCount": 6,
-    "topLevelFileCount": 16,
+    "topLevelFileCount": 17,
     "testToSourceRatio": 0.44,
-    "testLocRatio": 0.26,
-    "avgSourceLines": 293
+    "testLocRatio": 0.27,
+    "avgSourceLines": 300
   },
   "conventions": {
     "fileNaming": {
@@ -145,7 +149,7 @@
     "lockfile": true,
     "dockerfile": false,
     "dockerCompose": false,
-    "linterConfig": false,
+    "linterConfig": true,
     "formatterConfig": false,
     "typeConfig": true,
     "testConfig": false,
@@ -197,7 +201,7 @@
       "path": "ARCHITECTURE.md",
       "type": "file",
       "files": 1,
-      "loc": 281,
+      "loc": 294,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -206,7 +210,7 @@
       "path": "CHANGELOG.md",
       "type": "file",
       "files": 1,
-      "loc": 345,
+      "loc": 365,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -266,6 +270,15 @@
       "directFiles": 1
     },
     {
+      "path": "biome.json",
+      "type": "file",
+      "files": 1,
+      "loc": 49,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
       "path": "build.mjs",
       "type": "file",
       "files": 1,
@@ -296,7 +309,7 @@
       "path": "package.json",
       "type": "file",
       "files": 1,
-      "loc": 99,
+      "loc": 102,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -314,7 +327,7 @@
       "path": "scripts",
       "type": "dir",
       "files": 1,
-      "loc": 364,
+      "loc": 363,
       "sourceFiles": 1,
       "testFiles": 0,
       "directFiles": 1
@@ -323,7 +336,7 @@
       "path": "src",
       "type": "dir",
       "files": 7,
-      "loc": 2243,
+      "loc": 2313,
       "sourceFiles": 7,
       "testFiles": 0,
       "directFiles": 6
@@ -332,7 +345,7 @@
       "path": "test",
       "type": "dir",
       "files": 4,
-      "loc": 672,
+      "loc": 739,
       "sourceFiles": 0,
       "testFiles": 4,
       "directFiles": 4
@@ -359,44 +372,32 @@
   "committedBuildOutput": [],
   "longestFunctions": [
     {
-      "path": "src/upload.ts",
-      "name": "createUploadHandler",
-      "lines": 235,
-      "startLine": 87
-    },
-    {
       "path": "src/index.ts",
       "name": "apply",
-      "lines": 182,
+      "lines": 184,
       "startLine": 121
-    },
-    {
-      "path": "src/upload.ts",
-      "name": "handlePost",
-      "lines": 166,
-      "startLine": 111
     }
   ],
   "largestFiles": [
     {
       "path": "src/client/index.tsx",
-      "lines": 752,
-      "bytes": 29454
+      "lines": 755,
+      "bytes": 29653
     },
     {
       "path": "src/upload.ts",
-      "lines": 367,
-      "bytes": 15439
+      "lines": 444,
+      "bytes": 17542
     },
     {
       "path": "scripts/check-manifest.mjs",
-      "lines": 364,
-      "bytes": 17283
+      "lines": 363,
+      "bytes": 17235
     },
     {
       "path": "src/index.ts",
-      "lines": 302,
-      "bytes": 13124
+      "lines": 304,
+      "bytes": 13239
     },
     {
       "path": "src/convert.ts",
@@ -415,8 +416,8 @@
     },
     {
       "path": "src/detect.ts",
-      "lines": 151,
-      "bytes": 6228
+      "lines": 139,
+      "bytes": 5566
     },
     {
       "path": "build.mjs",
@@ -426,12 +427,12 @@
   ],
   "mostImported": [
     {
-      "path": "src/convert.ts",
+      "path": "src/detect.ts",
       "importedBy": 5
     },
     {
-      "path": "src/detect.ts",
-      "importedBy": 5
+      "path": "src/convert.ts",
+      "importedBy": 4
     },
     {
       "path": "src/upload.ts",
@@ -451,8 +452,8 @@
     {
       "name": "(root)",
       "root": ".",
-      "fileCount": 16,
-      "loc": 1530,
+      "fileCount": 17,
+      "loc": 1615,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -469,10 +470,10 @@
       ],
       "entry": "build.mjs",
       "depth": 0,
-      "directRootFiles": 16,
+      "directRootFiles": 17,
       "longestFile": {
         "path": "CHANGELOG.md",
-        "lines": 345
+        "lines": 365
       }
     },
     {
@@ -530,7 +531,7 @@
       "name": "scripts",
       "root": "scripts",
       "fileCount": 1,
-      "loc": 364,
+      "loc": 363,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -541,14 +542,14 @@
       "directRootFiles": 1,
       "longestFile": {
         "path": "scripts/check-manifest.mjs",
-        "lines": 364
+        "lines": 363
       }
     },
     {
       "name": "src/(root)",
       "root": "src",
       "fileCount": 6,
-      "loc": 1491,
+      "loc": 1558,
       "sourceFiles": 6,
       "testFiles": 0,
       "imports": [],
@@ -561,14 +562,14 @@
       "directRootFiles": 6,
       "longestFile": {
         "path": "src/upload.ts",
-        "lines": 367
+        "lines": 444
       }
     },
     {
       "name": "src/client",
       "root": "src/client",
       "fileCount": 1,
-      "loc": 752,
+      "loc": 755,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -579,14 +580,14 @@
       "directRootFiles": 1,
       "longestFile": {
         "path": "src/client/index.tsx",
-        "lines": 752
+        "lines": 755
       }
     },
     {
       "name": "test",
       "root": "test",
       "fileCount": 4,
-      "loc": 672,
+      "loc": 739,
       "sourceFiles": 0,
       "testFiles": 4,
       "imports": [
@@ -598,17 +599,17 @@
       "directRootFiles": 4,
       "longestFile": {
         "path": "test/upload-handler.test.ts",
-        "lines": 441
+        "lines": 512
       }
     }
   ],
   "graph": {
     "nodes": 8,
-    "edges": 15,
+    "edges": 14,
     "unresolvedRelative": 0,
     "unresolvedSource": 0,
     "unresolvedTest": 0,
-    "external": 46,
+    "external": 43,
     "buildOutputRefs": 0,
     "cycles": [],
     "crossDirEdges": 6,
@@ -623,8 +624,8 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-06T15:59:55+08:00",
-    "commits": 28,
+    "lastCommitAt": "2026-10-06T16:01:44+08:00",
+    "commits": 29,
     "churn90d": [
       {
         "path": "CHANGELOG.md",
@@ -656,11 +657,11 @@
       },
       {
         "path": ".structure/baseline.json",
-        "commits": 6
+        "commits": 7
       },
       {
         "path": "ARCHITECTURE.md",
-        "commits": 6
+        "commits": 7
       },
       {
         "path": "cordis.patch.yml",
@@ -687,6 +688,10 @@
         "commits": 3
       },
       {
+        "path": "scripts/check-manifest.mjs",
+        "commits": 3
+      },
+      {
         "path": "src/asr.ts",
         "commits": 3
       },
@@ -701,14 +706,10 @@
       {
         "path": ".gitignore",
         "commits": 2
-      },
-      {
-        "path": "CONTRIBUTING.md",
-        "commits": 2
       }
     ],
     "churnFiles90d": 43,
-    "dirtyFiles": 2
+    "dirtyFiles": 12
   },
-  "scanMs": 83
+  "scanMs": 93
 }

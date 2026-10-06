@@ -1,14 +1,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { execFile } from 'node:child_process'
-import { promisify } from 'node:util'
 import { mkdtempSync, writeFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { convertMarkitdown, probeMarkitdown, convertJs, convertMarkitdownNode, convertDocument } from '../src/convert.ts'
 import { sniff } from '../src/detect.ts'
 
-const execFileAsync = promisify(execFile) as (file: string, args: string[], opts: object) => Promise<{ stdout: string; stderr: string }>
 
 /** Locate a usable markitdown CLI: env var, venv inside the repo, or PATH. */
 function findMarkitdown(): string {
@@ -67,7 +64,6 @@ test('convertMarkitdown: converts a DOCX via markitdown extras', { skip: !exists
   // Generate a minimal DOCX using the zip container + word/document.xml skeleton.
   const dir = mkdtempSync(join(tmpdir(), 'dshfu-'))
   const docx = join(dir, 'sample.docx')
-  const { execFileSync } = await import('node:child_process')
   const { spawnSync } = await import('node:child_process')
   // Use textutil on macOS to produce a real DOCX from HTML.
   const html = join(dir, 'sample.html')

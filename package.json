@@ -83,6 +83,7 @@
     "react": "^18.2.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.15",
     "@deepseek-ai/dsh-credentials": "0.1.0-rc.6",
     "@types/node": "^26.2.0",
     "@types/react": "~18.3.1",
@@ -92,6 +93,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node build.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
     "test": "node --test test/*.test.ts",
     "check:manifest": "node scripts/check-manifest.mjs",
     "prepublishOnly": "npm run check:manifest && npm run build && npm test"

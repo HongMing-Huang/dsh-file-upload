@@ -191,7 +191,9 @@ export function apply(ctx: any, config: FileUploadConfig): void {
     }
   }
   const resolveVisionKey = (): Promise<string> => resolveKeyFor(config.visionApiKeyEnv)
-  const vision = async (filePath: string, name: string): Promise<string> => {
+  // `_name` is part of the `UploadOptions.vision` callback contract; the
+  // description call does not need it.
+  const vision = async (filePath: string, _name: string): Promise<string> => {
     return describeImage(filePath, {
       endpoint: config.visionEndpoint,
       model: config.visionModel,

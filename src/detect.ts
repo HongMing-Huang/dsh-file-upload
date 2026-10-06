@@ -28,21 +28,9 @@ export interface SniffResult {
   encoding?: 'utf8' | 'utf16le' | 'gb18030'
 }
 
-const TEXT_EXTS = new Set([
-  'txt', 'md', 'markdown', 'json', 'jsonl', 'csv', 'tsv', 'log', 'yaml', 'yml',
-  'toml', 'ini', 'conf', 'cfg', 'xml', 'html', 'htm', 'css', 'scss', 'less',
-  'js', 'mjs', 'cjs', 'ts', 'mts', 'cts', 'jsx', 'tsx', 'py', 'rb', 'go',
-  'rs', 'java', 'kt', 'c', 'h', 'cpp', 'hpp', 'cs', 'php', 'sh', 'bash', 'zsh',
-  'fish', 'ps1', 'bat', 'sql', 'graphql', 'proto', 'dockerfile', 'gitignore',
-  'env', 'properties', 'lock', 'sum', 'sha256', 'diff', 'patch', 'vue', 'svelte'
-])
-
 const PDF_HEAD = /^%PDF-/
 const ZIP_HEAD = /^PK\x03\x04/
-const DOCX_HEAD = /^PK\x03\x04/ // differentiated by [Content_Types].xml below
-const XLSX_HEAD = /^PK\x03\x04/
 
-const UTF8_BOM = Buffer.from([0xef, 0xbb, 0xbf])
 const UTF16LE_BOM = Buffer.from([0xff, 0xfe])
 const UTF16BE_BOM = Buffer.from([0xfe, 0xff])
 
