@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-06T07:22:32.894Z",
+  "generatedAt": "2026-10-06T07:33:34.145Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -62,7 +62,7 @@
   },
   "metrics": {
     "files": 32,
-    "bytes": 347643,
+    "bytes": 352595,
     "sourceFiles": 8,
     "testFiles": 4,
     "docFiles": 8,
@@ -78,7 +78,7 @@
     "vendoredFiles": 0,
     "sourceLoc": 2063,
     "testLoc": 514,
-    "docLoc": 1077,
+    "docLoc": 1181,
     "maxDepth": 2,
     "topLevelDirCount": 3,
     "topLevelEntryCount": 5,
@@ -194,7 +194,7 @@
       "path": "ARCHITECTURE.md",
       "type": "file",
       "files": 1,
-      "loc": 218,
+      "loc": 226,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -212,7 +212,7 @@
       "path": "CONTRIBUTING.md",
       "type": "file",
       "files": 1,
-      "loc": 46,
+      "loc": 142,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -435,7 +435,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 16,
-      "loc": 1279,
+      "loc": 1383,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -588,12 +588,16 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-06T15:13:30+08:00",
-    "commits": 22,
+    "lastCommitAt": "2026-10-06T15:31:49+08:00",
+    "commits": 23,
     "churn90d": [
       {
         "path": "CHANGELOG.md",
-        "commits": 14
+        "commits": 15
+      },
+      {
+        "path": "package.json",
+        "commits": 15
       },
       {
         "path": "README.md",
@@ -601,10 +605,6 @@
       },
       {
         "path": "README.zh.md",
-        "commits": 14
-      },
-      {
-        "path": "package.json",
         "commits": 14
       },
       {
@@ -626,6 +626,14 @@
       {
         "path": "src/vision.ts",
         "commits": 4
+      },
+      {
+        "path": ".structure/baseline.json",
+        "commits": 3
+      },
+      {
+        "path": "ARCHITECTURE.md",
+        "commits": 3
       },
       {
         "path": "pnpm-lock.yaml",
@@ -652,14 +660,6 @@
         "commits": 2
       },
       {
-        "path": ".structure/baseline.json",
-        "commits": 2
-      },
-      {
-        "path": "ARCHITECTURE.md",
-        "commits": 2
-      },
-      {
         "path": "examples/local-override.yml",
         "commits": 2
       },
@@ -675,5 +675,5 @@
     "churnFiles90d": 41,
     "dirtyFiles": 2
   },
-  "scanMs": 83
+  "scanMs": 45
 }

@@ -22,7 +22,7 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 22 commits, last 2026-10-06T15:13:30+08:00, 2 dirty files |
+| Git | 23 commits, last 2026-10-06T15:31:49+08:00, 2 dirty files |
 
 ## 2. Layout at a glance
 
@@ -32,9 +32,9 @@
 | `.gitignore` | file | 1 | 15 | 0 | 0 |  |
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
 | `AGENTS.md` | file | 1 | 59 | 0 | 0 |  |
-| `ARCHITECTURE.md` | file | 1 | 218 | 0 | 0 |  |
+| `ARCHITECTURE.md` | file | 1 | 225 | 0 | 0 |  |
 | `CHANGELOG.md` | file | 1 | 304 | 0 | 0 |  |
-| `CONTRIBUTING.md` | file | 1 | 46 | 0 | 0 |  |
+| `CONTRIBUTING.md` | file | 1 | 142 | 0 | 0 |  |
 | `INSTALL.md` | file | 1 | 151 | 0 | 0 |  |
 | `LICENSE` | file | 1 | 0 | 0 | 0 |  |
 | `README.md` | file | 1 | 141 | 0 | 0 |  |
@@ -113,10 +113,10 @@ graph LR
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 32 (339 KB) |
+| Files tracked | 32 (344 KB) |
 | Source | 8 files / 2063 LOC |
 | Tests | 4 files / 514 LOC |
-| Docs | 8 files / 1077 LOC |
+| Docs | 8 files / 1180 LOC |
 | Config files | 10 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
@@ -127,7 +127,7 @@ graph LR
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
 | Most depended-on files | `src/convert.ts` (5), `src/detect.ts` (5), `src/upload.ts` (3) |
-| Churn hotspots (90d) | `CHANGELOG.md` (14), `README.md` (14), `README.zh.md` (14) |
+| Churn hotspots (90d) | `CHANGELOG.md` (15), `package.json` (15), `README.md` (14) |
 
 ## 6. Standards checklist
 
@@ -209,10 +209,18 @@ graph LR
   profile manifest 的两处（`dependencies` 与 `dsh.profile.bundles`）、用 `--dump-config` 不启动应用即可
   验证装载的配方、以及「peer 区间不兼容被拒」「registry 不可达」「装完按钮不出现」「row id 说明」四类排障。
   **该文件不引入任何新模块边界**，不参与 import 图。
+- **发布检查单不新增顶层文件（2026-10-06）**：发布流程写在 `CONTRIBUTING.md` 的 **Releasing** 一节，而不是单独开
+  `RELEASING.md`——根目录已有 16 个散落文件，`root-file-clutter` 规则的上限正是 16，再加一个就会触发告警。
+  顺序：确认版本确实领先于已发布版本 → 跑 `guard.mjs verify` → **`pnpm pack` 看真实产物**（而不是看源码树）→
+  在一次性 `DSH_HOME` 里做一次安装演练 → 发布 → 核对 registry 上的版本与 peer 区间。
+  其中「看产物」和「安装演练」两步专门覆盖本项目踩过的两个坑：Host 半边能装载、浏览器半边却缺失或声明错误时
+  **安装仍然报成功**；以及 peer 区间漂移会让安装被静默拒绝。
 
 ### 监控方式
 
 - 提交前：`.git/hooks/pre-commit` 已安装 structure-guard 区块（error 阻断，warn 不阻断；`git commit --no-verify` 可单次绕过）。
-- 结构变更后：`node ~/.dsh/skills/structure-guard/scripts/guard.mjs audit .`
+  该区块调用**仓库内 vendored 的引擎** `.dsh/structure-guard/scripts/guard.mjs`，因此不依赖全局 skill 是否安装
+  （全局路径 `~/.dsh/skills/structure-guard/` 在 2026-10-06 已不存在，旧 hook 会直接 `MODULE_NOT_FOUND`）。
+- 结构变更后：`node .dsh/structure-guard/scripts/guard.mjs audit .`
 - 有意变更后：先在本文档记录理由 → 改 `.structure/guard.json` → `guard.mjs baseline .` → `guard.mjs digest .`
 <!-- END CURATED -->
