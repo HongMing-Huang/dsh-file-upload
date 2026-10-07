@@ -474,22 +474,49 @@ function DragOverlay({ attach }: { attach: (files: File[]) => Promise<void> }) {
   useEffect(() => {
     const hasFiles = (e: DragEvent): boolean => Array.from(e.dataTransfer?.types ?? []).includes('Files')
 
+    // The official `dsh-client-ui-conversation` package also listens for
+    // `dragenter`/`dragover`/`drop` on the document — in the BUBBLE phase — and
+    // shows its own "drop images here" overlay for anything whose
+    // `dataTransfer.types` contains `Files`, then rejects non-image drops with
+    // "only PNG/JPG/WebP/GIF are supported". The plugin's client half loads after
+    // the shell, so its listeners were registered later and therefore ran later:
+    // any non-image drop (.md, .pdf, .docx) was consumed by the official overlay
+    // and never reached this plugin at all.
+    //
+    // Registering in the CAPTURE phase (third argument `true`) puts these
+    // handlers ahead of the official ones, and `stopImmediatePropagation` on a
+    // non-image drop keeps the official overlay from also acting on it. Image-
+    // only drags are still handed through untouched, so the official attachment
+    // flow is unaffected.
+    const dragIsImageOnly = (e: DragEvent): boolean => {
+      const items = Array.from(e.dataTransfer?.items ?? []).filter((it) => it.kind === 'file')
+      if (items.length === 0) return false
+      return items.every((it) => /^image\/(png|jpe?g|webp|gif)$/i.test(it.type))
+    }
+    /** True when this plugin is taking the event and the official one must not. */
+    const claimsDrag = (e: DragEvent): boolean => hasFiles(e) && !dragIsImageOnly(e)
+
     const onDragEnter = (e: DragEvent): void => {
       if (!hasFiles(e)) return
+      if (claimsDrag(e)) e.stopImmediatePropagation()
       depth.current += 1
       setActive(true)
     }
     const onDragOver = (e: DragEvent): void => {
       if (!hasFiles(e)) return
+      if (claimsDrag(e)) e.stopImmediatePropagation()
       e.preventDefault()
     }
     const onDragLeave = (e: DragEvent): void => {
       if (!hasFiles(e)) return
+      // Not stopped: `dragleave` is not one of the gestures the official overlay
+      // acts on, and swallowing it could leave its state stuck.
       depth.current = Math.max(0, depth.current - 1)
       if (depth.current === 0) setActive(false)
     }
     const onDrop = (e: DragEvent): void => {
       if (!hasFiles(e)) return
+      if (claimsDrag(e)) e.stopImmediatePropagation()
       e.preventDefault()
       depth.current = 0
       setActive(false)
@@ -509,16 +536,18 @@ function DragOverlay({ attach }: { attach: (files: File[]) => Promise<void> }) {
       }
     }
 
-    document.addEventListener('dragenter', onDragEnter)
-    document.addEventListener('dragover', onDragOver)
-    document.addEventListener('dragleave', onDragLeave)
-    document.addEventListener('drop', onDrop)
+    // Capture phase: see the note on `dragIsImageOnly` above — these must run
+    // before the official conversation handlers, which sit in the bubble phase.
+    document.addEventListener('dragenter', onDragEnter, true)
+    document.addEventListener('dragover', onDragOver, true)
+    document.addEventListener('dragleave', onDragLeave, true)
+    document.addEventListener('drop', onDrop, true)
     document.addEventListener('paste', onPaste)
     return () => {
-      document.removeEventListener('dragenter', onDragEnter)
-      document.removeEventListener('dragover', onDragOver)
-      document.removeEventListener('dragleave', onDragLeave)
-      document.removeEventListener('drop', onDrop)
+      document.removeEventListener('dragenter', onDragEnter, true)
+      document.removeEventListener('dragover', onDragOver, true)
+      document.removeEventListener('dragleave', onDragLeave, true)
+      document.removeEventListener('drop', onDrop, true)
       document.removeEventListener('paste', onPaste)
     }
   }, [attach])

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-07T08:57:49.136Z",
+  "generatedAt": "2026-10-07T09:01:37.473Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -15,7 +15,7 @@
       },
       {
         "lang": "typescriptreact",
-        "loc": 755
+        "loc": 784
       },
       {
         "lang": "javascript",
@@ -68,7 +68,7 @@
   },
   "metrics": {
     "files": 36,
-    "bytes": 433729,
+    "bytes": 436793,
     "sourceFiles": 9,
     "testFiles": 6,
     "docFiles": 8,
@@ -82,16 +82,16 @@
     "maxFunctionName": "apply",
     "maxFunctionAt": "src/index.ts:139",
     "vendoredFiles": 0,
-    "sourceLoc": 2809,
+    "sourceLoc": 2838,
     "testLoc": 918,
-    "docLoc": 1469,
+    "docLoc": 1484,
     "maxDepth": 2,
     "topLevelDirCount": 4,
     "topLevelEntryCount": 6,
     "topLevelFileCount": 17,
     "testToSourceRatio": 0.67,
-    "testLocRatio": 0.33,
-    "avgSourceLines": 312
+    "testLocRatio": 0.32,
+    "avgSourceLines": 315
   },
   "conventions": {
     "fileNaming": {
@@ -210,7 +210,7 @@
       "path": "CHANGELOG.md",
       "type": "file",
       "files": 1,
-      "loc": 429,
+      "loc": 444,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -336,7 +336,7 @@
       "path": "src",
       "type": "dir",
       "files": 7,
-      "loc": 2372,
+      "loc": 2401,
       "sourceFiles": 7,
       "testFiles": 0,
       "directFiles": 6
@@ -381,8 +381,8 @@
   "largestFiles": [
     {
       "path": "src/client/index.tsx",
-      "lines": 755,
-      "bytes": 29653
+      "lines": 784,
+      "bytes": 31572
     },
     {
       "path": "src/upload.ts",
@@ -457,7 +457,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 17,
-      "loc": 1747,
+      "loc": 1762,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -477,7 +477,7 @@
       "directRootFiles": 17,
       "longestFile": {
         "path": "CHANGELOG.md",
-        "lines": 429
+        "lines": 444
       }
     },
     {
@@ -573,7 +573,7 @@
       "name": "src/client",
       "root": "src/client",
       "fileCount": 1,
-      "loc": 755,
+      "loc": 784,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -584,7 +584,7 @@
       "directRootFiles": 1,
       "longestFile": {
         "path": "src/client/index.tsx",
-        "lines": 755
+        "lines": 784
       }
     },
     {
@@ -628,8 +628,8 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-07T16:53:48+08:00",
-    "commits": 37,
+    "lastCommitAt": "2026-10-07T16:57:49+08:00",
+    "commits": 38,
     "churn90d": [
       {
         "path": "CHANGELOG.md",
@@ -645,7 +645,7 @@
       },
       {
         "path": "ARCHITECTURE.md",
-        "commits": 14
+        "commits": 15
       },
       {
         "path": "README.md",
@@ -661,7 +661,7 @@
       },
       {
         "path": ".structure/baseline.json",
-        "commits": 12
+        "commits": 13
       },
       {
         "path": "src/client/index.tsx",
@@ -676,16 +676,16 @@
         "commits": 6
       },
       {
+        "path": ".github/workflows/structure-guard.yml",
+        "commits": 5
+      },
+      {
         "path": "scripts/check-manifest.mjs",
         "commits": 5
       },
       {
         "path": "test/upload-handler.test.ts",
         "commits": 5
-      },
-      {
-        "path": ".github/workflows/structure-guard.yml",
-        "commits": 4
       },
       {
         "path": "pnpm-lock.yaml",
@@ -715,5 +715,5 @@
     "churnFiles90d": 52,
     "dirtyFiles": 2
   },
-  "scanMs": 50
+  "scanMs": 122
 }

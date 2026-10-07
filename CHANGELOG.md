@@ -23,6 +23,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   inserts a clean `@relative/path` reference (relative to the session
   workspace). Absolute host paths no longer leak into the composer or the
   message; the removal card still deletes via the absolute path internally.
+- **Dragging a non-image file did nothing (issue #3)**: the official
+  `dsh-client-ui-conversation` package listens for `dragenter`/`dragover`/`drop`
+  on the document in the bubble phase, and claims anything whose
+  `dataTransfer.types` contains `Files` — showing its "drop images here" overlay
+  and then rejecting the drop with "only PNG/JPG/WebP/GIF are supported". This
+  plugin's client half loads after the shell, so its own listeners were
+  registered later and therefore ran later, and a dragged `.md`, `.pdf` or
+  `.docx` never reached it: upload by drag-and-drop was effectively dead while
+  the paperclip still worked. The four document listeners now register in the
+  capture phase, restoring precedence, and `dragenter`/`dragover`/`drop` call
+  `stopImmediatePropagation()` when the drag carries anything other than images.
+  Image-only drags are deliberately left alone so the official attachment flow
+  keeps working — the two paths now split by payload instead of by registration
+  order. Reported with a verified reproduction and the capture-phase fix in
+  [#3](https://github.com/HongMing-Huang/dsh-file-upload/issues/3).
 - **Every CI run failed on a missing module the local gate could not see**:
   `.gitignore` had a bare `lib/`, meant for the build output, which also matched
   the vendored engine's own `.dsh/structure-guard/scripts/lib/`. Six dependency

@@ -12,7 +12,7 @@
 | Version | 0.5.4 |
 | Layout archetype | single-package-src |
 | Primary language | typescript |
-| Languages by volume | typescript (2535 LOC), typescriptreact (755 LOC), javascript (437 LOC) |
+| Languages by volume | typescript (2535 LOC), typescriptreact (784 LOC), javascript (437 LOC) |
 | Module system | esm |
 | Package manager | pnpm |
 | Engines | {"node":">=22.6.0"} |
@@ -22,7 +22,7 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 37 commits, last 2026-10-07T16:53:48+08:00, 2 dirty files |
+| Git | 38 commits, last 2026-10-07T16:57:49+08:00, 3 dirty files |
 
 ## 2. Layout at a glance
 
@@ -33,7 +33,7 @@
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
 | `AGENTS.md` | file | 1 | 60 | 0 | 0 |  |
 | `ARCHITECTURE.md` | file | 1 | 350 | 0 | 0 |  |
-| `CHANGELOG.md` | file | 1 | 429 | 0 | 0 |  |
+| `CHANGELOG.md` | file | 1 | 444 | 0 | 0 |  |
 | `CONTRIBUTING.md` | file | 1 | 142 | 0 | 0 |  |
 | `INSTALL.md` | file | 1 | 189 | 0 | 0 |  |
 | `LICENSE` | file | 1 | 0 | 0 | 0 |  |
@@ -47,7 +47,7 @@
 | `package.json` | file | 1 | 103 | 0 | 0 |  |
 | `pnpm-lock.yaml` | file | 1 | 0 | 0 | 0 |  |
 | `scripts/` | directory | 1 | 410 | 1 | 0 | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
-| `src/` | directory | 7 | 2372 | 7 | 0 |  |
+| `src/` | directory | 7 | 2401 | 7 | 0 |  |
 | `test/` | directory | 6 | 918 | 0 | 6 |  |
 | `tsconfig.build.json` | file | 1 | 15 | 0 | 0 |  |
 | `tsconfig.json` | file | 1 | 28 | 0 | 0 |  |
@@ -64,7 +64,7 @@ Root holds 17 loose file(s): `.gitignore`, `AGENTS.md`, `ARCHITECTURE.md`, `CHAN
 | `vision` | 0 | 1 | 162 | 1 | 0 | `src/vision.ts` | _nothing_ | — | 图片描述能力封装。叶子模块，供 entry 在需要视觉理解时调用。 |
 | `entry` | 3 | 1 | 324 | 1 | 0 | `src/index.ts` | `tool`, `upload`, `convert`, `detect`, `vision` | `convert`, `tool`, `upload`, `vision` | 宿主插件入口：注册上传服务与 read_document 工具，只做装配，不写业务逻辑。 |
 | `tool` | 2 | 1 | 266 | 1 | 0 | `src/tool.ts` | `detect`, `convert` | `convert`, `detect` | 面向模型的 read_document 工具定义、参数 schema 与解析缓存 ParseCache。 |
-| `client` | 0 | 1 | 755 | 1 | 0 | `src/client/index.tsx` | _nothing_ | — | 浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。 |
+| `client` | 0 | 1 | 784 | 1 | 0 | `src/client/index.tsx` | _nothing_ | — | 浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。 |
 | `build` | — | 1 | 27 | 1 | 0 | `build.mjs` | _undeclared_ | — | 构建脚本：tsc 产物之后的 client bundle 收尾。 |
 | `examples` | — | 1 | 33 | 0 | 0 | — | `*` | — | cordis.patch.yml 的本地覆盖示例，文档性质。 |
 | `scripts` | — | 1 | 410 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
@@ -118,16 +118,16 @@ graph LR
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 36 (424 KB) |
-| Source | 9 files / 2809 LOC |
+| Files tracked | 36 (427 KB) |
+| Source | 9 files / 2838 LOC |
 | Tests | 6 files / 918 LOC |
-| Docs | 8 files / 1469 LOC |
+| Docs | 8 files / 1484 LOC |
 | Config files | 11 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
 | Max nesting depth | 2 |
-| Average source file | 312 lines |
-| Largest source file | `src/client/index.tsx` (755 lines) |
+| Average source file | 315 lines |
+| Largest source file | `src/client/index.tsx` (784 lines) |
 | Import graph | 10 nodes / 17 internal edges (9 cross-directory) |
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
