@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-07T08:50:34.718Z",
+  "generatedAt": "2026-10-07T08:57:49.136Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -68,7 +68,7 @@
   },
   "metrics": {
     "files": 36,
-    "bytes": 431432,
+    "bytes": 433729,
     "sourceFiles": 9,
     "testFiles": 6,
     "docFiles": 8,
@@ -84,7 +84,7 @@
     "vendoredFiles": 0,
     "sourceLoc": 2809,
     "testLoc": 918,
-    "docLoc": 1459,
+    "docLoc": 1469,
     "maxDepth": 2,
     "topLevelDirCount": 4,
     "topLevelEntryCount": 6,
@@ -165,7 +165,7 @@
       "path": ".github",
       "type": "dir",
       "files": 2,
-      "loc": 107,
+      "loc": 123,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 0
@@ -201,7 +201,7 @@
       "path": "ARCHITECTURE.md",
       "type": "file",
       "files": 1,
-      "loc": 340,
+      "loc": 350,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -457,7 +457,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 17,
-      "loc": 1737,
+      "loc": 1747,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -484,7 +484,7 @@
       "name": ".github",
       "root": ".github",
       "fileCount": 2,
-      "loc": 107,
+      "loc": 123,
       "sourceFiles": 0,
       "testFiles": 0,
       "imports": [],
@@ -494,7 +494,7 @@
       "directRootFiles": 0,
       "longestFile": {
         "path": ".github/workflows/structure-guard.yml",
-        "lines": 65
+        "lines": 80
       }
     },
     {
@@ -628,8 +628,8 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-07T16:48:02+08:00",
-    "commits": 35,
+    "lastCommitAt": "2026-10-07T16:53:48+08:00",
+    "commits": 37,
     "churn90d": [
       {
         "path": "CHANGELOG.md",
@@ -637,11 +637,15 @@
       },
       {
         "path": "package.json",
-        "commits": 17
+        "commits": 18
       },
       {
         "path": "src/index.ts",
         "commits": 17
+      },
+      {
+        "path": "ARCHITECTURE.md",
+        "commits": 14
       },
       {
         "path": "README.md",
@@ -656,16 +660,12 @@
         "commits": 14
       },
       {
-        "path": "ARCHITECTURE.md",
+        "path": ".structure/baseline.json",
         "commits": 12
       },
       {
         "path": "src/client/index.tsx",
         "commits": 12
-      },
-      {
-        "path": ".structure/baseline.json",
-        "commits": 11
       },
       {
         "path": "AGENTS.md",
@@ -682,6 +682,10 @@
       {
         "path": "test/upload-handler.test.ts",
         "commits": 5
+      },
+      {
+        "path": ".github/workflows/structure-guard.yml",
+        "commits": 4
       },
       {
         "path": "pnpm-lock.yaml",
@@ -706,14 +710,10 @@
       {
         "path": "src/asr.ts",
         "commits": 3
-      },
-      {
-        "path": "src/tool.ts",
-        "commits": 3
       }
     ],
     "churnFiles90d": 52,
     "dirtyFiles": 2
   },
-  "scanMs": 95
+  "scanMs": 50
 }

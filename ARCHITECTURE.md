@@ -22,17 +22,17 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 36 commits, last 2026-10-07T16:50:46+08:00, 3 dirty files |
+| Git | 37 commits, last 2026-10-07T16:53:48+08:00, 2 dirty files |
 
 ## 2. Layout at a glance
 
 | Top level | Kind | Files | LOC | Source | Tests | Purpose (curated) |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.github/` | directory | 2 | 107 | 0 | 0 |  |
+| `.github/` | directory | 2 | 123 | 0 | 0 |  |
 | `.gitignore` | file | 1 | 26 | 0 | 0 |  |
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
 | `AGENTS.md` | file | 1 | 60 | 0 | 0 |  |
-| `ARCHITECTURE.md` | file | 1 | 340 | 0 | 0 |  |
+| `ARCHITECTURE.md` | file | 1 | 350 | 0 | 0 |  |
 | `CHANGELOG.md` | file | 1 | 429 | 0 | 0 |  |
 | `CONTRIBUTING.md` | file | 1 | 142 | 0 | 0 |  |
 | `INSTALL.md` | file | 1 | 189 | 0 | 0 |  |
@@ -118,10 +118,10 @@ graph LR
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 36 (422 KB) |
+| Files tracked | 36 (424 KB) |
 | Source | 9 files / 2809 LOC |
 | Tests | 6 files / 918 LOC |
-| Docs | 8 files / 1459 LOC |
+| Docs | 8 files / 1469 LOC |
 | Config files | 11 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
@@ -224,6 +224,16 @@ graph LR
 - **AGENTS.md**（由 `guard.mjs agents .` 生成）：把本文档的模块契约、层级、禁止事项和监控命令写成编码 Agent 最先读到的形式，表格从 `.structure/guard.json` 派生，因此不会和实际校验规则脱节；CURATED 区块同样受保护。表格过时用 `guard.mjs agents . --check` 检测。
 - **CI**：已执行 `guard.mjs ci install .`，把引擎完整 vendored 到 `.dsh/structure-guard/`（含 `PROVENANCE.json` 校验和）并写入 `.github/workflows/structure-guard.yml`：`audit` 遇 error 让构建失败，`digest --check` 保证本文档不过期，报告作为 artifact 上传。升级技能后用 `ci install --force` 重新同步；完全移除用 `ci remove --purge`。
 - **发布前**：`guard.mjs verify .` = 结构门禁 + `typecheck` + `test` + `build`（当前 6.6s 全绿）。**
+- **`digest --check` 在 CI 里不可能通过（2026-10-07 查清，引擎设计问题）**：`--check` 把提交的
+  `ARCHITECTURE.md` 与现场渲染结果做**全文严格比较**（`existing === md`），而该文档里含
+  `git.commits`（`lib/digest.mjs` 渲染 `s.git.commits`）。**提交 regenerated digest 这个动作本身就是一次提交**，
+  因此文件里记的 commit 数永远比读到它的那个 checkout 少 1。
+  干净克隆实测：提交里是 `36 commits, last …, 3 dirty files`，同一个 commit 现场渲染是 `37 commits, last …`。
+  唯一能满足它的状态是"脏工作树"——也就是它被生成时的状态。
+  处理：CI 里保留该步骤但加 `continue-on-error: true`，让**内容漂移**（模块表变化、新 finding）仍出现在日志里，
+  而不把这个赢不了的比较变成红灯。**代价要知道**：真正的内容漂移不再阻断合并，只能靠人看日志。
+  正确的本地流程仍然是：改完 → `guard.mjs baseline .` + `guard.mjs digest .`（跑两次收敛）→ 再提交。
+
 - **对标业界**：`guard.mjs remote <owner/repo>` 不克隆即可查看任意 GitHub 项目的布局，`--compare .` 直接对照。当前与 cordis 的差距：根目录散落文件 19 vs 15、顶层入口 5 vs 2、缺 linter/formatter/.editorconfig/.gitattributes。
 
 ### 已知例外与待办

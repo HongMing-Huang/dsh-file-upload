@@ -51,7 +51,23 @@ jobs:
       - name: Structure and drift audit
         run: node .dsh/structure-guard/scripts/guard.mjs audit . --json --out structure-report.json
       # Add `--strict` above to fail the job on warnings as well as errors.
+      # Advisory, not a gate — and that is deliberate.
+      #
+      # `--check` compares the committed ARCHITECTURE.md against a freshly
+      # rendered one as an exact string. That document embeds `git.commits`
+      # (digest.mjs renders `s.git.commits`), and committing the regenerated
+      # digest is itself a commit, so the number in the file is always one behind
+      # the checkout that reads it. The check can therefore never pass in CI; the
+      # only state in which it is satisfiable is a dirty working tree, which is
+      # exactly where it was generated.
+      #
+      # Reproduced in a clean clone: the committed line reads
+      # `36 commits, last …, 3 dirty files` while the same commit renders
+      # `37 commits, last …`. Keeping the step — with continue-on-error — surfaces
+      # real content drift (a changed module table, a new finding) in the log
+      # without turning an un-winnable comparison into a red build.
       - name: Architecture digest is current
+        continue-on-error: true
         run: node .dsh/structure-guard/scripts/guard.mjs digest . --check
       - name: Manifest and packaging invariants
         run: pnpm run check:manifest
