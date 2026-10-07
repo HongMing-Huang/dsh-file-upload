@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-07T09:25:37.671Z",
+  "generatedAt": "2026-10-07T09:47:51.191Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -68,7 +68,7 @@
   },
   "metrics": {
     "files": 37,
-    "bytes": 450076,
+    "bytes": 452106,
     "sourceFiles": 9,
     "testFiles": 6,
     "docFiles": 9,
@@ -84,7 +84,7 @@
     "vendoredFiles": 0,
     "sourceLoc": 2867,
     "testLoc": 1025,
-    "docLoc": 1593,
+    "docLoc": 1636,
     "maxDepth": 2,
     "topLevelDirCount": 5,
     "topLevelEntryCount": 7,
@@ -192,7 +192,7 @@
       "path": "AGENTS.md",
       "type": "file",
       "files": 1,
-      "loc": 60,
+      "loc": 61,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -201,7 +201,7 @@
       "path": "ARCHITECTURE.md",
       "type": "file",
       "files": 1,
-      "loc": 362,
+      "loc": 365,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -300,7 +300,7 @@
       "path": "docs",
       "type": "dir",
       "files": 1,
-      "loc": 84,
+      "loc": 123,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -466,7 +466,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 17,
-      "loc": 1787,
+      "loc": 1791,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -527,7 +527,7 @@
       "name": "docs",
       "root": "docs",
       "fileCount": 1,
-      "loc": 84,
+      "loc": 123,
       "sourceFiles": 0,
       "testFiles": 0,
       "imports": [],
@@ -539,7 +539,7 @@
       "directRootFiles": 1,
       "longestFile": {
         "path": "docs/BRANCH-PROTECTION.md",
-        "lines": 84
+        "lines": 123
       }
     },
     {
@@ -656,20 +656,20 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-07T17:24:08+08:00",
-    "commits": 42,
+    "lastCommitAt": "2026-10-07T17:47:24+08:00",
+    "commits": 43,
     "churn90d": [
       {
         "path": "CHANGELOG.md",
         "commits": 23
       },
       {
-        "path": "package.json",
+        "path": "ARCHITECTURE.md",
         "commits": 18
       },
       {
-        "path": "ARCHITECTURE.md",
-        "commits": 17
+        "path": "package.json",
+        "commits": 18
       },
       {
         "path": "src/index.ts",
@@ -677,7 +677,7 @@
       },
       {
         "path": ".structure/baseline.json",
-        "commits": 15
+        "commits": 16
       },
       {
         "path": "README.md",
@@ -697,7 +697,7 @@
       },
       {
         "path": "AGENTS.md",
-        "commits": 6
+        "commits": 7
       },
       {
         "path": "cordis.patch.yml",
@@ -716,6 +716,10 @@
         "commits": 5
       },
       {
+        "path": ".structure/guard.json",
+        "commits": 4
+      },
+      {
         "path": "pnpm-lock.yaml",
         "commits": 4
       },
@@ -732,16 +736,12 @@
         "commits": 3
       },
       {
-        "path": ".structure/guard.json",
-        "commits": 3
-      },
-      {
         "path": "src/asr.ts",
         "commits": 3
       }
     ],
-    "churnFiles90d": 52,
-    "dirtyFiles": 2
+    "churnFiles90d": 53,
+    "dirtyFiles": 1
   },
-  "scanMs": 70
+  "scanMs": 95
 }
