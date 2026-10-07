@@ -209,8 +209,17 @@ function postUpload(
       if (xhr.status < 200 || xhr.status >= 300) {
         let detail = httpErrorText(xhr.status, t)
         try {
-          const payload = JSON.parse(xhr.responseText) as { error?: string }
-          if (typeof payload.error === 'string') detail = payload.error
+          const payload = JSON.parse(xhr.responseText) as {
+            error?: string
+            code?: string
+            params?: Record<string, string>
+          }
+          // Server failures carry a machine-readable code so the message can
+          // follow the locale. The prose stays as the fallback for a code this
+          // build does not know (a newer server) and for code-less bodies.
+          const key = typeof payload.code === 'string' ? `error.${payload.code}` : ''
+          if (key !== '' && key in zh) detail = t(key, payload.params)
+          else if (typeof payload.error === 'string') detail = payload.error
         } catch {
           // keep the status-based message
         }
