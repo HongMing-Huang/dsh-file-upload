@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-07T09:01:37.473Z",
+  "generatedAt": "2026-10-07T09:20:25.400Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -11,7 +11,7 @@
     "languages": [
       {
         "lang": "typescript",
-        "loc": 2535
+        "loc": 2671
       },
       {
         "lang": "typescriptreact",
@@ -68,7 +68,7 @@
   },
   "metrics": {
     "files": 36,
-    "bytes": 436793,
+    "bytes": 445251,
     "sourceFiles": 9,
     "testFiles": 6,
     "docFiles": 8,
@@ -82,16 +82,16 @@
     "maxFunctionName": "apply",
     "maxFunctionAt": "src/index.ts:139",
     "vendoredFiles": 0,
-    "sourceLoc": 2838,
-    "testLoc": 918,
-    "docLoc": 1484,
+    "sourceLoc": 2867,
+    "testLoc": 1025,
+    "docLoc": 1497,
     "maxDepth": 2,
     "topLevelDirCount": 4,
     "topLevelEntryCount": 6,
     "topLevelFileCount": 17,
     "testToSourceRatio": 0.67,
-    "testLocRatio": 0.32,
-    "avgSourceLines": 315
+    "testLocRatio": 0.36,
+    "avgSourceLines": 319
   },
   "conventions": {
     "fileNaming": {
@@ -210,7 +210,7 @@
       "path": "CHANGELOG.md",
       "type": "file",
       "files": 1,
-      "loc": 444,
+      "loc": 457,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -336,7 +336,7 @@
       "path": "src",
       "type": "dir",
       "files": 7,
-      "loc": 2401,
+      "loc": 2430,
       "sourceFiles": 7,
       "testFiles": 0,
       "directFiles": 6
@@ -345,7 +345,7 @@
       "path": "test",
       "type": "dir",
       "files": 6,
-      "loc": 918,
+      "loc": 1025,
       "sourceFiles": 0,
       "testFiles": 6,
       "directFiles": 6
@@ -401,8 +401,8 @@
     },
     {
       "path": "src/convert.ts",
-      "lines": 282,
-      "bytes": 11184
+      "lines": 311,
+      "bytes": 13013
     },
     {
       "path": "src/tool.ts",
@@ -428,7 +428,7 @@
   "mostImported": [
     {
       "path": "src/detect.ts",
-      "importedBy": 5
+      "importedBy": 6
     },
     {
       "path": "src/convert.ts",
@@ -457,7 +457,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 17,
-      "loc": 1762,
+      "loc": 1775,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -477,7 +477,7 @@
       "directRootFiles": 17,
       "longestFile": {
         "path": "CHANGELOG.md",
-        "lines": 444
+        "lines": 457
       }
     },
     {
@@ -553,7 +553,7 @@
       "name": "src/(root)",
       "root": "src",
       "fileCount": 6,
-      "loc": 1617,
+      "loc": 1646,
       "sourceFiles": 6,
       "testFiles": 0,
       "imports": [],
@@ -591,7 +591,7 @@
       "name": "test",
       "root": "test",
       "fileCount": 6,
-      "loc": 918,
+      "loc": 1025,
       "sourceFiles": 0,
       "testFiles": 6,
       "imports": [
@@ -609,14 +609,14 @@
   ],
   "graph": {
     "nodes": 10,
-    "edges": 17,
+    "edges": 18,
     "unresolvedRelative": 0,
     "unresolvedSource": 0,
     "unresolvedTest": 0,
-    "external": 48,
+    "external": 54,
     "buildOutputRefs": 0,
     "cycles": [],
-    "crossDirEdges": 9,
+    "crossDirEdges": 10,
     "unresolvedSamples": [],
     "internalViolations": [],
     "internalViolationCount": 0,
@@ -628,12 +628,12 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-07T16:57:49+08:00",
-    "commits": 38,
+    "lastCommitAt": "2026-10-07T17:01:49+08:00",
+    "commits": 39,
     "churn90d": [
       {
         "path": "CHANGELOG.md",
-        "commits": 21
+        "commits": 22
       },
       {
         "path": "package.json",
@@ -645,7 +645,11 @@
       },
       {
         "path": "ARCHITECTURE.md",
-        "commits": 15
+        "commits": 16
+      },
+      {
+        "path": ".structure/baseline.json",
+        "commits": 14
       },
       {
         "path": "README.md",
@@ -660,12 +664,8 @@
         "commits": 14
       },
       {
-        "path": ".structure/baseline.json",
-        "commits": 13
-      },
-      {
         "path": "src/client/index.tsx",
-        "commits": 12
+        "commits": 13
       },
       {
         "path": "AGENTS.md",
@@ -713,7 +713,7 @@
       }
     ],
     "churnFiles90d": 52,
-    "dirtyFiles": 2
+    "dirtyFiles": 3
   },
-  "scanMs": 122
+  "scanMs": 94
 }

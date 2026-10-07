@@ -23,6 +23,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   inserts a clean `@relative/path` reference (relative to the session
   workspace). Absolute host paths no longer leak into the composer or the
   message; the removal card still deletes via the absolute path internally.
+- **DOCX tables were silently dropped (issues #7, #15)**: the bundled engine
+  already returns correct Markdown — its `markdown_content` for a pricing DOCX
+  contains the full `| Role | Rate |` table — but `convertMarkitdownNode` ignored
+  it and rebuilt the Markdown from the typed `document.content` items, mapping
+  each to text and adding a marker only for `heading` and `listItem`. A
+  `{"type":"table"}` item carries `rows`, not `text`, so it produced an empty
+  string and vanished: a document of nothing but tables read as almost empty and
+  the model could not tell "no tables" from "tables dropped". The engine's own
+  `markdown_content` is now preferred outright, and the reconstruction fallback
+  (for a shape that omits it) renders table items as Markdown tables instead of
+  dropping them. Regression test builds a minimal DOCX with a table using only
+  node builtins — no archiver, no network — and fails on the pre-fix code with
+  `expected table cell Role`.
 - **Dragging a non-image file did nothing (issue #3)**: the official
   `dsh-client-ui-conversation` package listens for `dragenter`/`dragover`/`drop`
   on the document in the bubble phase, and claims anything whose
