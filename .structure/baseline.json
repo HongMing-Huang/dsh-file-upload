@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-07T09:20:25.400Z",
+  "generatedAt": "2026-10-07T09:25:37.671Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -67,11 +67,11 @@
     "repositoryDeclared": true
   },
   "metrics": {
-    "files": 36,
-    "bytes": 445251,
+    "files": 37,
+    "bytes": 450076,
     "sourceFiles": 9,
     "testFiles": 6,
-    "docFiles": 8,
+    "docFiles": 9,
     "configFiles": 11,
     "assetFiles": 1,
     "lockfiles": 1,
@@ -84,10 +84,10 @@
     "vendoredFiles": 0,
     "sourceLoc": 2867,
     "testLoc": 1025,
-    "docLoc": 1497,
+    "docLoc": 1593,
     "maxDepth": 2,
-    "topLevelDirCount": 4,
-    "topLevelEntryCount": 6,
+    "topLevelDirCount": 5,
+    "topLevelEntryCount": 7,
     "topLevelFileCount": 17,
     "testToSourceRatio": 0.67,
     "testLocRatio": 0.36,
@@ -137,7 +137,7 @@
     "enforcementArtifacts": [],
     "security": true,
     "codeOfConduct": false,
-    "docsDir": false,
+    "docsDir": true,
     "agentDocs": true,
     "adrDir": false,
     "ci": true,
@@ -201,7 +201,7 @@
       "path": "ARCHITECTURE.md",
       "type": "file",
       "files": 1,
-      "loc": 350,
+      "loc": 362,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -292,6 +292,15 @@
       "type": "file",
       "files": 1,
       "loc": 30,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "directFiles": 1
+    },
+    {
+      "path": "docs",
+      "type": "dir",
+      "files": 1,
+      "loc": 84,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -457,7 +466,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 17,
-      "loc": 1775,
+      "loc": 1787,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -512,6 +521,25 @@
       "longestFile": {
         "path": ".test-nonwritable/markitdown/.markitdown-installed.json",
         "lines": 1
+      }
+    },
+    {
+      "name": "docs",
+      "root": "docs",
+      "fileCount": 1,
+      "loc": 84,
+      "sourceFiles": 0,
+      "testFiles": 0,
+      "imports": [],
+      "importedBy": [],
+      "docs": [
+        "docs/BRANCH-PROTECTION.md"
+      ],
+      "depth": 1,
+      "directRootFiles": 1,
+      "longestFile": {
+        "path": "docs/BRANCH-PROTECTION.md",
+        "lines": 84
       }
     },
     {
@@ -628,28 +656,28 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-07T17:01:49+08:00",
-    "commits": 39,
+    "lastCommitAt": "2026-10-07T17:24:08+08:00",
+    "commits": 42,
     "churn90d": [
       {
         "path": "CHANGELOG.md",
-        "commits": 22
+        "commits": 23
       },
       {
         "path": "package.json",
         "commits": 18
       },
       {
+        "path": "ARCHITECTURE.md",
+        "commits": 17
+      },
+      {
         "path": "src/index.ts",
         "commits": 17
       },
       {
-        "path": "ARCHITECTURE.md",
-        "commits": 16
-      },
-      {
         "path": ".structure/baseline.json",
-        "commits": 14
+        "commits": 15
       },
       {
         "path": "README.md",
@@ -713,7 +741,7 @@
       }
     ],
     "churnFiles90d": 52,
-    "dirtyFiles": 3
+    "dirtyFiles": 2
   },
-  "scanMs": 94
+  "scanMs": 70
 }

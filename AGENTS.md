@@ -8,7 +8,7 @@
 ## What this is
 
 - Layout archetype: `single-package-src` · primary language: `typescript` · module system: `esm`
-- Size: 36 tracked files, 9 source files, ~2762 source lines, max depth 2
+- Size: 37 tracked files, 9 source files, ~2867 source lines, max depth 2
 - Tests: 6 file(s), placement `top-level`, ratio 0.67
 - Package manager: `pnpm` · version 0.5.4
 
@@ -29,6 +29,7 @@ These modules are declared, and `guard.mjs audit` fails when an import breaks th
 | `examples` | — | `examples/**` | `*` | cordis.patch.yml 的本地覆盖示例，文档性质。 |
 | `scripts` | — | `scripts/**` | _nothing_ | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
 | `tests` | — | `test/**` | `*` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
+| `docs` | — | `docs/**` | _nothing_ | 面向维护者的流程与运维文档（不参与运行时、不 import 代码），如分支保护与变更流程。 |
 
 Lower layers are inner: an import may only point from a higher layer to a lower one, and only where the row above allows it.
 
