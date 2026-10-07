@@ -1,6 +1,6 @@
 # dsh-file-upload — Architecture Digest
 
-> Generated 2026-10-06 by the `structure-guard` skill (`guard.mjs digest`).
+> Generated 2026-10-07 by the `structure-guard` skill (`guard.mjs digest`).
 > Tables and metrics are regenerated on every run. Text inside the CURATED block, and the
 > `describe` map in `.structure/guard.json`, are yours and are never overwritten.
 
@@ -12,7 +12,7 @@
 | Version | 0.5.4 |
 | Layout archetype | single-package-src |
 | Primary language | typescript |
-| Languages by volume | typescript (2535 LOC), typescriptreact (755 LOC), javascript (390 LOC) |
+| Languages by volume | typescript (2535 LOC), typescriptreact (755 LOC), javascript (437 LOC) |
 | Module system | esm |
 | Package manager | pnpm |
 | Engines | {"node":">=22.6.0"} |
@@ -22,18 +22,18 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 32 commits, last 2026-10-06T16:55:17+08:00, 3 dirty files |
+| Git | 34 commits, last 2026-10-07T16:43:04+08:00, 2 dirty files |
 
 ## 2. Layout at a glance
 
 | Top level | Kind | Files | LOC | Source | Tests | Purpose (curated) |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.github/` | directory | 2 | 74 | 0 | 0 |  |
-| `.gitignore` | file | 1 | 15 | 0 | 0 |  |
+| `.github/` | directory | 2 | 100 | 0 | 0 |  |
+| `.gitignore` | file | 1 | 26 | 0 | 0 |  |
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
 | `AGENTS.md` | file | 1 | 60 | 0 | 0 |  |
 | `ARCHITECTURE.md` | file | 1 | 340 | 0 | 0 |  |
-| `CHANGELOG.md` | file | 1 | 415 | 0 | 0 |  |
+| `CHANGELOG.md` | file | 1 | 429 | 0 | 0 |  |
 | `CONTRIBUTING.md` | file | 1 | 142 | 0 | 0 |  |
 | `INSTALL.md` | file | 1 | 189 | 0 | 0 |  |
 | `LICENSE` | file | 1 | 0 | 0 | 0 |  |
@@ -46,7 +46,7 @@
 | `examples/` | directory | 1 | 33 | 0 | 0 | cordis.patch.yml 的本地覆盖示例，文档性质。 |
 | `package.json` | file | 1 | 102 | 0 | 0 |  |
 | `pnpm-lock.yaml` | file | 1 | 0 | 0 | 0 |  |
-| `scripts/` | directory | 1 | 363 | 1 | 0 | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
+| `scripts/` | directory | 1 | 410 | 1 | 0 | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
 | `src/` | directory | 7 | 2372 | 7 | 0 |  |
 | `test/` | directory | 6 | 918 | 0 | 6 |  |
 | `tsconfig.build.json` | file | 1 | 15 | 0 | 0 |  |
@@ -67,7 +67,7 @@ Root holds 17 loose file(s): `.gitignore`, `AGENTS.md`, `ARCHITECTURE.md`, `CHAN
 | `client` | 0 | 1 | 755 | 1 | 0 | `src/client/index.tsx` | _nothing_ | — | 浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。 |
 | `build` | — | 1 | 27 | 1 | 0 | `build.mjs` | _undeclared_ | — | 构建脚本：tsc 产物之后的 client bundle 收尾。 |
 | `examples` | — | 1 | 33 | 0 | 0 | — | `*` | — | cordis.patch.yml 的本地覆盖示例，文档性质。 |
-| `scripts` | — | 1 | 363 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
+| `scripts` | — | 1 | 410 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
 | `tests` | — | 6 | 918 | 0 | 6 | — | `*` | `convert`, `detect`, `entry`, `tool`, `upload` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
 
 _18 tracked file(s) belong to no declared module: `.github/workflows/ci.yml`, `.github/workflows/structure-guard.yml`, `.gitignore`, `.test-nonwritable/markitdown/.markitdown-installed.json`, `.test-nonwritable/markitdown/.probe`, `AGENTS.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, …. Either declare them or move them where the contract covers them._
@@ -118,21 +118,21 @@ graph LR
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 36 (416 KB) |
-| Source | 9 files / 2762 LOC |
+| Files tracked | 36 (421 KB) |
+| Source | 9 files / 2809 LOC |
 | Tests | 6 files / 918 LOC |
-| Docs | 8 files / 1445 LOC |
+| Docs | 8 files / 1459 LOC |
 | Config files | 11 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
 | Max nesting depth | 2 |
-| Average source file | 307 lines |
+| Average source file | 312 lines |
 | Largest source file | `src/client/index.tsx` (755 lines) |
 | Import graph | 10 nodes / 17 internal edges (9 cross-directory) |
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
 | Most depended-on files | `src/detect.ts` (5), `src/convert.ts` (4), `src/upload.ts` (4) |
-| Churn hotspots (90d) | `CHANGELOG.md` (19), `package.json` (17), `src/index.ts` (17) |
+| Churn hotspots (90d) | `CHANGELOG.md` (21), `package.json` (17), `src/index.ts` (17) |
 
 ## 6. Standards checklist
 

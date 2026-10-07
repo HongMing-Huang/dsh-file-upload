@@ -1,4 +1,8 @@
 # structure-guard: managed workflow — regenerate with `guard.mjs ci install --force`, remove with `guard.mjs ci remove`.
+#
+# Hand-edited after `ci install` to fix a startup ordering bug and a git-depth
+# one; both are explained inline. `ci install --force` would overwrite this, so
+# re-apply these two changes if that is ever run.
 name: structure-guard
 
 on:
@@ -14,15 +18,37 @@ jobs:
   structure:
     runs-on: ubuntu-latest
     steps:
+      # `fetch-depth: 0` is required, not cosmetic: the audit records churn from
+      # git history and the generated digest embeds those numbers, so a shallow
+      # clone computes different metrics than the committed ARCHITECTURE.md and
+      # `digest --check` reports the file stale on every run.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      # The audit must run against a built tree. `lib/` is a build output and is
+      # gitignored, so in a fresh checkout it does not exist while package.json
+      # still points at `lib/index.js` and friends — the audit then fails with
+      # `stale-entry-points: ... exist neither in git nor on disk`, which is the
+      # gate reporting a real inconsistency in the checkout rather than a
+      # problem with the code. Building first makes the two agree.
+      #
+      # `--ignore-scripts` because the build needs no dependency's install
+      # script: esbuild ships a prebuilt binary, and the native image/OCR
+      # packages pulled in by markitdown-node are only needed at runtime.
+      - name: Install
+        run: pnpm install --no-frozen-lockfile --ignore-scripts
+      - name: Build
+        run: pnpm build
       - name: Structure and drift audit
         run: node .dsh/structure-guard/scripts/guard.mjs audit . --json --out structure-report.json
       # Add `--strict` above to fail the job on warnings as well as errors.
       - name: Architecture digest is current
         run: node .dsh/structure-guard/scripts/guard.mjs digest . --check
+      - name: Manifest and packaging invariants
+        run: pnpm run check:manifest
       - name: Upload structure report
         if: always()
         uses: actions/upload-artifact@v4
