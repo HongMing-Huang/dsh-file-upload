@@ -118,6 +118,70 @@ app's id:
 
 `15368` is the GitHub Actions app id. Setting it is what pins the rule to the
 workflow that produces the run; without an `app_id` the entry stays in the
-ambiguous legacy form and the block persists. Verified by removing the required
-checks entirely — the same pull request became `CLEAN` immediately — then
-restoring them in this form.
+ambiguous legacy form and the block persists.
+
+There is a second half, and it is the one that actually kept the block in place:
+**a matrix job's check name includes the matrix value.** The `CI` workflow runs
+`build-test` over `node-version: [22, 24]`, so the checks are really named
+`build-test (22)` and `build-test (24)`. Requiring `build-test` asks for a check
+that no workflow ever reports, and the failure is indistinguishable from the
+first problem:
+
+```
+mergeStateStatus: BLOCKED
+GraphQL: Required status check "build-test" is expected.
+```
+
+`structure` matched throughout precisely because it has no matrix — which is the
+clue worth remembering. The working rule lists every expanded name:
+
+```json
+"required_status_checks": {
+  "strict": true,
+  "checks": [
+    { "context": "build-test (22)", "app_id": 15368 },
+    { "context": "build-test (24)", "app_id": 15368 },
+    { "context": "structure",      "app_id": 15368 }
+  ]
+}
+```
+
+Verified end to end: with the rule written this way, a pull request whose runs
+were all green went from `BLOCKED` to `CLEAN` and merged without `--admin`.
+
+## The current configuration
+
+Verbatim, as applied, so it can be reapplied or reviewed rather than guessed at:
+
+```json
+{
+  "required_status_checks": {
+    "strict": true,
+    "checks": [
+      { "context": "build-test (22)", "app_id": 15368 },
+      { "context": "build-test (24)", "app_id": 15368 },
+      { "context": "structure", "app_id": 15368 }
+    ]
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": null,
+  "restrictions": null,
+  "allow_force_pushes": true,
+  "allow_deletions": false,
+  "allow_squash_merge": true,
+  "allow_merge_commit": true,
+  "allow_rebase_merge": true,
+  "delete_branch_on_merge": true
+}
+```
+
+`required_pull_request_reviews` is `null` — no approval is required, because a
+single-collaborator repository cannot supply one. That is the one rule here that
+is deliberately switched off, and the section above explains why. Everything else
+is enforced, including against administrators.
+
+Apply it with:
+
+```sh
+gh api --method PUT repos/<owner>/<repo>/branches/main/protection --input protection.json
+```
