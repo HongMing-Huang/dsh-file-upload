@@ -218,16 +218,45 @@ export async function convertMarkitdownNode(filePath: string): Promise<ConvertRe
     const detail = Array.isArray(result.errors) ? result.errors.join('; ') : String(result.errors ?? 'unknown error')
     throw new Error(`markitdown-node: ${detail}`)
   }
-  // content is an array of typed items ({type, text, formatting}).
+  // The engine already returns the document as Markdown in `markdown_content`,
+  // and it is the authority on every item type it emits. Prefer it outright.
+  //
+  // Reconstructing the Markdown from `document.content` instead — which is what
+  // this used to do — silently dropped anything the reconstruction did not know
+  // about: items were mapped to text and only `heading` and `listItem` got any
+  // marker, so a `{"type":"table"}` item, which carries `rows` rather than
+  // `text`, came out as an empty string and vanished. A DOCX of nothing but
+  // pricing tables read as an almost empty document, and the model had no way to
+  // tell "no tables" from "tables dropped" (issue #7, reproduced here).
+  if (typeof result.markdown_content === 'string' && result.markdown_content !== '') {
+    return { markdown: result.markdown_content, truncated: false, backend: 'markitdown-node' }
+  }
+  // Fallback for a shape that omits `markdown_content`: rebuild from the typed
+  // items. Inline text only, plus tables, since those are the two the engine
+  // emits for the document formats this plugin handles.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const items: Array<{ type?: string; text?: unknown; children?: unknown }> = result.document?.content ?? []
+  const items: Array<{ type?: string; text?: unknown; children?: unknown; rows?: unknown }> = result.document?.content ?? []
   const lines = items.map((item) => {
     const text = extractItemText(item)
     if (item.type === 'heading') return `## ${text}`
     if (item.type === 'listItem' || item.type === 'list-item') return `- ${text}`
+    if (item.type === 'table') return extractTableMarkdown(item.rows)
     return text
   })
   return { markdown: lines.filter((l) => l !== '').join('\n'), truncated: false, backend: 'markitdown-node' }
+}
+
+/**
+ * Render a `table` item's rows as a Markdown table. Only used by the fallback
+ * above, where the engine gave no ready-made Markdown to prefer.
+ */
+function extractTableMarkdown(rows: unknown): string {
+  if (!Array.isArray(rows) || rows.length === 0) return ''
+  const cells: string[][] = rows.map((row) => (Array.isArray(row) ? row.map((c) => extractItemText(c)) : [extractItemText(row)]))
+  const width = Math.max(...cells.map((r) => r.length))
+  const pad = (r: string[]): string => `| ${[...r, ...Array(width - r.length).fill('')].join(' | ')} |`
+  const [header, ...body] = cells
+  return [pad(header), `| ${Array(width).fill('---').join(' | ')} |`, ...body.map(pad)].join('\n')
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

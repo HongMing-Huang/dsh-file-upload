@@ -12,7 +12,7 @@
 | Version | 0.5.4 |
 | Layout archetype | single-package-src |
 | Primary language | typescript |
-| Languages by volume | typescript (2535 LOC), typescriptreact (784 LOC), javascript (437 LOC) |
+| Languages by volume | typescript (2671 LOC), typescriptreact (784 LOC), javascript (437 LOC) |
 | Module system | esm |
 | Package manager | pnpm |
 | Engines | {"node":">=22.6.0"} |
@@ -22,7 +22,7 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 38 commits, last 2026-10-07T16:57:49+08:00, 3 dirty files |
+| Git | 39 commits, last 2026-10-07T17:01:49+08:00, 4 dirty files |
 
 ## 2. Layout at a glance
 
@@ -33,7 +33,7 @@
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
 | `AGENTS.md` | file | 1 | 60 | 0 | 0 |  |
 | `ARCHITECTURE.md` | file | 1 | 350 | 0 | 0 |  |
-| `CHANGELOG.md` | file | 1 | 444 | 0 | 0 |  |
+| `CHANGELOG.md` | file | 1 | 457 | 0 | 0 |  |
 | `CONTRIBUTING.md` | file | 1 | 142 | 0 | 0 |  |
 | `INSTALL.md` | file | 1 | 189 | 0 | 0 |  |
 | `LICENSE` | file | 1 | 0 | 0 | 0 |  |
@@ -47,8 +47,8 @@
 | `package.json` | file | 1 | 103 | 0 | 0 |  |
 | `pnpm-lock.yaml` | file | 1 | 0 | 0 | 0 |  |
 | `scripts/` | directory | 1 | 410 | 1 | 0 | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
-| `src/` | directory | 7 | 2401 | 7 | 0 |  |
-| `test/` | directory | 6 | 918 | 0 | 6 |  |
+| `src/` | directory | 7 | 2430 | 7 | 0 |  |
+| `test/` | directory | 6 | 1025 | 0 | 6 |  |
 | `tsconfig.build.json` | file | 1 | 15 | 0 | 0 |  |
 | `tsconfig.json` | file | 1 | 28 | 0 | 0 |  |
 
@@ -58,7 +58,7 @@ Root holds 17 loose file(s): `.gitignore`, `AGENTS.md`, `ARCHITECTURE.md`, `CHAN
 
 | Module | Layer | Files | LOC | Source | Tests | Entry | May import (declared) | Actually imports | Purpose (curated) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `convert` | 1 | 1 | 282 | 1 | 0 | `src/convert.ts` | `detect` | `detect` | 文档转 Markdown 的适配层：唯一允许调用外部转换器（markitdown/mammoth/pdfjs/read-excel-file）的模块。 |
+| `convert` | 1 | 1 | 311 | 1 | 0 | `src/convert.ts` | `detect` | `detect` | 文档转 Markdown 的适配层：唯一允许调用外部转换器（markitdown/mammoth/pdfjs/read-excel-file）的模块。 |
 | `upload` | 2 | 1 | 444 | 1 | 0 | `src/upload.ts` | `detect`, `convert` | `detect` | 上传处理与清理：接收浏览器分片、落盘、哈希去重、定期回收临时文件。唯一允许写磁盘的模块。 |
 | `detect` | 0 | 1 | 139 | 1 | 0 | `src/detect.ts` | _nothing_ | — | 文件类型嗅探（魔数 + 扩展名）。叶子模块，不 import 项目内任何东西。 |
 | `vision` | 0 | 1 | 162 | 1 | 0 | `src/vision.ts` | _nothing_ | — | 图片描述能力封装。叶子模块，供 entry 在需要视觉理解时调用。 |
@@ -68,7 +68,7 @@ Root holds 17 loose file(s): `.gitignore`, `AGENTS.md`, `ARCHITECTURE.md`, `CHAN
 | `build` | — | 1 | 27 | 1 | 0 | `build.mjs` | _undeclared_ | — | 构建脚本：tsc 产物之后的 client bundle 收尾。 |
 | `examples` | — | 1 | 33 | 0 | 0 | — | `*` | — | cordis.patch.yml 的本地覆盖示例，文档性质。 |
 | `scripts` | — | 1 | 410 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
-| `tests` | — | 6 | 918 | 0 | 6 | — | `*` | `convert`, `detect`, `entry`, `tool`, `upload` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
+| `tests` | — | 6 | 1025 | 0 | 6 | — | `*` | `convert`, `detect`, `entry`, `tool`, `upload` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
 
 _18 tracked file(s) belong to no declared module: `.github/workflows/ci.yml`, `.github/workflows/structure-guard.yml`, `.gitignore`, `.test-nonwritable/markitdown/.markitdown-installed.json`, `.test-nonwritable/markitdown/.probe`, `AGENTS.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, …. Either declare them or move them where the contract covers them._
 
@@ -109,7 +109,7 @@ graph LR
 | File naming | flat: 8, kebab: 1 |
 | Naming consistency | 100% (dominant: flat) |
 | Test placement | top-level |
-| Test volume | 6 files / 918 LOC (ratio 0.67) |
+| Test volume | 6 files / 1025 LOC (ratio 0.67) |
 | Source roots | `src/` |
 | Barrel files (index.*) | present |
 | Scripts | `build`, `typecheck`, `lint`, `format`, `test`, `check:manifest`, `prepublishOnly` |
@@ -118,21 +118,21 @@ graph LR
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 36 (427 KB) |
-| Source | 9 files / 2838 LOC |
-| Tests | 6 files / 918 LOC |
-| Docs | 8 files / 1484 LOC |
+| Files tracked | 36 (435 KB) |
+| Source | 9 files / 2867 LOC |
+| Tests | 6 files / 1025 LOC |
+| Docs | 8 files / 1497 LOC |
 | Config files | 11 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
 | Max nesting depth | 2 |
-| Average source file | 315 lines |
+| Average source file | 319 lines |
 | Largest source file | `src/client/index.tsx` (784 lines) |
-| Import graph | 10 nodes / 17 internal edges (9 cross-directory) |
+| Import graph | 10 nodes / 18 internal edges (10 cross-directory) |
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
-| Most depended-on files | `src/detect.ts` (5), `src/convert.ts` (4), `src/upload.ts` (4) |
-| Churn hotspots (90d) | `CHANGELOG.md` (21), `package.json` (18), `src/index.ts` (17) |
+| Most depended-on files | `src/detect.ts` (6), `src/convert.ts` (4), `src/upload.ts` (4) |
+| Churn hotspots (90d) | `CHANGELOG.md` (22), `package.json` (18), `src/index.ts` (17) |
 
 ## 6. Standards checklist
 
