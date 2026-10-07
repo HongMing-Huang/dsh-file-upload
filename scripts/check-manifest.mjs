@@ -14,6 +14,7 @@
 
 import { readFileSync, existsSync, openSync, readSync, closeSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
+import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 const root = resolve(process.argv[2] ?? join(dirname(fileURLToPath(import.meta.url)), '..'))
@@ -350,6 +351,52 @@ const dsh = pkg.dsh ?? {}
       else if (undeclared.length > 0) fail('runtime-primitives-exist', `used but missing from src/client/client-ui-primitives.d.ts: ${undeclared.join(', ')}`)
       else pass('runtime-primitives-exist', `${used.size} primitive(s) used, exported by the runtime and declared in the stub`)
     }
+  }
+}
+
+// 11. A vendored entry point must ship the modules it imports.
+//
+//     `.gitignore` had a bare `lib/`, which also matched the vendored engine's
+//     own `.dsh/structure-guard/scripts/lib/`. The entry point was committed
+//     without its six dependencies, so the CI job died with
+//     ERR_MODULE_NOT_FOUND while the identical command passed locally — where
+//     the files sat on disk regardless of what git tracked. A check that reads
+//     the working tree cannot see that; this one asks git.
+{
+  const VENDORED = ['.dsh/structure-guard/scripts/guard.mjs']
+  if (typeof execFileSync !== 'function') {
+    warn('vendored-deps-tracked', 'node:child_process unavailable')
+  } else {
+    const problems = []
+    let checked = 0
+    for (const entry of VENDORED) {
+      const entryPath = join(root, entry)
+      if (!existsSync(entryPath)) continue
+      const tracked = new Set(
+        execFileSync('git', ['ls-files', '-z', '--', dirname(entry)], { cwd: root, encoding: 'utf8' })
+          .split('\0')
+          .filter(Boolean)
+          .map((p) => p.replaceAll('\\', '/'))
+      )
+      // Every relative import the entry transitively reaches must be tracked.
+      const queue = [entry]
+      const seen = new Set()
+      while (queue.length > 0) {
+        const rel = queue.shift()
+        if (seen.has(rel)) continue
+        seen.add(rel)
+        const resolved = join(root, rel)
+        if (!existsSync(resolved)) continue
+        if (!tracked.has(rel)) problems.push(`${rel} is not tracked by git`)
+        for (const m of readFileSync(resolved, 'utf8').matchAll(/(?:from|import)\s*['"](\.{1,2}\/[^'"]+)['"]/g)) {
+          queue.push(resolve(dirname(rel), m[1]).slice(root.length + 1))
+        }
+      }
+      checked += seen.size
+    }
+    if (checked === 0) warn('vendored-deps-tracked', 'no vendored entry found')
+    else if (problems.length > 0) fail('vendored-deps-tracked', problems.join('; '))
+    else pass('vendored-deps-tracked', `${checked} vendored module(s) present in git`)
   }
 }
 

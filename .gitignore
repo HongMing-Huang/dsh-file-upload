@@ -1,5 +1,11 @@
 node_modules/
-lib/
+# Root-anchored on purpose. A bare `lib/` also matches
+# `.dsh/structure-guard/scripts/lib/`, which silently kept the vendored
+# structure-guard engine's six dependency modules out of the repository: the
+# entry point was committed without them, so the CI job died with
+# ERR_MODULE_NOT_FOUND on scan.mjs while the same command passed locally, where
+# the files existed on disk regardless of git.
+/lib/
 .venv/
 *.log
 .DS_Store
@@ -13,3 +19,8 @@ structure-report.json
 # Legacy leftovers from the pre-v0.5 MarkItDown venv bootstrap (commit 7fdc463).
 # Still tracked; run `git rm -r --cached .test-nonwritable` to finish the job.
 .test-nonwritable/
+
+# Runtime state written into the workspace by OTHER DSH plugins, not by this one.
+# `git add -A` would otherwise sweep them into a commit.
+.mimosa/
+.video_agent/

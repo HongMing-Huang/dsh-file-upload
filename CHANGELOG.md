@@ -23,6 +23,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   inserts a clean `@relative/path` reference (relative to the session
   workspace). Absolute host paths no longer leak into the composer or the
   message; the removal card still deletes via the absolute path internally.
+- **Every CI run failed on a missing module the local gate could not see**:
+  `.gitignore` had a bare `lib/`, meant for the build output, which also matched
+  the vendored engine's own `.dsh/structure-guard/scripts/lib/`. Six dependency
+  modules were therefore never committed, so `structure-guard` died in CI with
+  `ERR_MODULE_NOT_FOUND: scan.mjs` while the identical command passed locally —
+  on a machine the files exist on disk regardless of what git tracks. The rule is
+  now root-anchored (`/lib/`), the six modules are tracked, and
+  `scripts/check-manifest.mjs` gained a twelfth invariant that walks a vendored
+  entry point's relative imports and asserts each is in `git ls-files` — the
+  check reads git, because a check that only reads the working tree cannot catch
+  this class of bug.
+- **Other plugins' runtime state could be swept into commits**: `.mimosa/` and
+  `.video_agent/` are written into the workspace by other DSH plugins, and
+  `git add -A` would commit them. Both are ignored now.
 - **A clean build shipped a package with no type declarations**: `tsconfig.build.json`
   had `declaration: false` and `sourceMap: false` while `package.json` declares
   `types: "lib/index.d.ts"` and an exports `types` condition pointing at the same
