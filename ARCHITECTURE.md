@@ -12,7 +12,7 @@
 | Version | 0.5.4 |
 | Layout archetype | single-package-src |
 | Primary language | typescript |
-| Languages by volume | typescript (2671 LOC), typescriptreact (784 LOC), javascript (437 LOC) |
+| Languages by volume | typescript (2778 LOC), typescriptreact (769 LOC), javascript (437 LOC) |
 | Module system | esm |
 | Package manager | pnpm |
 | Engines | {"node":">=22.6.0"} |
@@ -22,7 +22,7 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 43 commits, last 2026-10-07T17:47:24+08:00, 2 dirty files |
+| Git | 45 commits, last 2026-10-07T17:55:00+08:00, 7 dirty files |
 
 ## 2. Layout at a glance
 
@@ -33,7 +33,7 @@
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
 | `AGENTS.md` | file | 1 | 61 | 0 | 0 |  |
 | `ARCHITECTURE.md` | file | 1 | 365 | 0 | 0 |  |
-| `CHANGELOG.md` | file | 1 | 457 | 0 | 0 |  |
+| `CHANGELOG.md` | file | 1 | 469 | 0 | 0 |  |
 | `CONTRIBUTING.md` | file | 1 | 142 | 0 | 0 |  |
 | `INSTALL.md` | file | 1 | 189 | 0 | 0 |  |
 | `LICENSE` | file | 1 | 0 | 0 | 0 |  |
@@ -43,13 +43,13 @@
 | `biome.json` | file | 1 | 49 | 0 | 0 |  |
 | `build.mjs` | file | 1 | 27 | 1 | 0 |  |
 | `cordis.patch.yml` | file | 1 | 30 | 0 | 0 |  |
-| `docs/` | directory | 1 | 123 | 0 | 0 | 面向维护者的流程与运维文档（不参与运行时、不 import 代码），如分支保护与变更流程。 |
+| `docs/` | directory | 1 | 187 | 0 | 0 | 面向维护者的流程与运维文档（不参与运行时、不 import 代码），如分支保护与变更流程。 |
 | `examples/` | directory | 1 | 33 | 0 | 0 | cordis.patch.yml 的本地覆盖示例，文档性质。 |
 | `package.json` | file | 1 | 103 | 0 | 0 |  |
 | `pnpm-lock.yaml` | file | 1 | 0 | 0 | 0 |  |
 | `scripts/` | directory | 1 | 410 | 1 | 0 | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
-| `src/` | directory | 7 | 2430 | 7 | 0 |  |
-| `test/` | directory | 6 | 1025 | 0 | 6 |  |
+| `src/` | directory | 9 | 2504 | 9 | 0 |  |
+| `test/` | directory | 7 | 1043 | 0 | 7 |  |
 | `tsconfig.build.json` | file | 1 | 15 | 0 | 0 |  |
 | `tsconfig.json` | file | 1 | 28 | 0 | 0 |  |
 
@@ -62,15 +62,15 @@ Root holds 17 loose file(s): `.gitignore`, `AGENTS.md`, `ARCHITECTURE.md`, `CHAN
 | `convert` | 1 | 1 | 311 | 1 | 0 | `src/convert.ts` | `detect` | `detect` | 文档转 Markdown 的适配层：唯一允许调用外部转换器（markitdown/mammoth/pdfjs/read-excel-file）的模块。 |
 | `upload` | 2 | 1 | 444 | 1 | 0 | `src/upload.ts` | `detect`, `convert` | `detect` | 上传处理与清理：接收浏览器分片、落盘、哈希去重、定期回收临时文件。唯一允许写磁盘的模块。 |
 | `detect` | 0 | 1 | 139 | 1 | 0 | `src/detect.ts` | _nothing_ | — | 文件类型嗅探（魔数 + 扩展名）。叶子模块，不 import 项目内任何东西。 |
-| `vision` | 0 | 1 | 162 | 1 | 0 | `src/vision.ts` | _nothing_ | — | 图片描述能力封装。叶子模块，供 entry 在需要视觉理解时调用。 |
+| `vision` | 0 | 1 | 164 | 1 | 0 | `src/vision.ts` | _nothing_ | — | 图片描述能力封装。叶子模块，供 entry 在需要视觉理解时调用。 |
 | `entry` | 3 | 1 | 324 | 1 | 0 | `src/index.ts` | `tool`, `upload`, `convert`, `detect`, `vision` | `convert`, `tool`, `upload`, `vision` | 宿主插件入口：注册上传服务与 read_document 工具，只做装配，不写业务逻辑。 |
 | `tool` | 2 | 1 | 266 | 1 | 0 | `src/tool.ts` | `detect`, `convert` | `convert`, `detect` | 面向模型的 read_document 工具定义、参数 schema 与解析缓存 ParseCache。 |
-| `client` | 0 | 1 | 784 | 1 | 0 | `src/client/index.tsx` | _nothing_ | — | 浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。 |
+| `client` | 0 | 3 | 856 | 3 | 0 | `src/client/index.tsx` | _nothing_ | — | 浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。 |
 | `build` | — | 1 | 27 | 1 | 0 | `build.mjs` | _undeclared_ | — | 构建脚本：tsc 产物之后的 client bundle 收尾。 |
 | `examples` | — | 1 | 33 | 0 | 0 | — | `*` | — | cordis.patch.yml 的本地覆盖示例，文档性质。 |
 | `scripts` | — | 1 | 410 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
-| `tests` | — | 6 | 1025 | 0 | 6 | — | `*` | `convert`, `detect`, `entry`, `tool`, `upload` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
-| `docs` | — | 1 | 123 | 0 | 0 | — | _nothing_ | — | 面向维护者的流程与运维文档（不参与运行时、不 import 代码），如分支保护与变更流程。 |
+| `tests` | — | 7 | 1043 | 0 | 7 | — | `*` | `client`, `convert`, `detect`, `entry`, `tool`, `upload` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
+| `docs` | — | 1 | 187 | 0 | 0 | — | _nothing_ | — | 面向维护者的流程与运维文档（不参与运行时、不 import 代码），如分支保护与变更流程。 |
 
 _18 tracked file(s) belong to no declared module: `.github/workflows/ci.yml`, `.github/workflows/structure-guard.yml`, `.gitignore`, `.test-nonwritable/markitdown/.markitdown-installed.json`, `.test-nonwritable/markitdown/.probe`, `AGENTS.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, …. Either declare them or move them where the contract covers them._
 
@@ -98,6 +98,7 @@ graph LR
   entry --> vision
   tool --> convert
   tool --> detect
+  tests --> client
   tests --> convert
   tests --> detect
   tests --> entry
@@ -109,10 +110,10 @@ graph LR
 
 | Aspect | Observed |
 | --- | --- |
-| File naming | flat: 8, kebab: 1 |
+| File naming | flat: 10, kebab: 1 |
 | Naming consistency | 100% (dominant: flat) |
 | Test placement | top-level |
-| Test volume | 6 files / 1025 LOC (ratio 0.67) |
+| Test volume | 7 files / 1043 LOC (ratio 0.64) |
 | Source roots | `src/` |
 | Barrel files (index.*) | present |
 | Scripts | `build`, `typecheck`, `lint`, `format`, `test`, `check:manifest`, `prepublishOnly` |
@@ -121,21 +122,21 @@ graph LR
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 37 (442 KB) |
-| Source | 9 files / 2867 LOC |
-| Tests | 6 files / 1025 LOC |
-| Docs | 9 files / 1636 LOC |
+| Files tracked | 40 (448 KB) |
+| Source | 11 files / 2941 LOC |
+| Tests | 7 files / 1043 LOC |
+| Docs | 9 files / 1712 LOC |
 | Config files | 11 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
 | Max nesting depth | 2 |
-| Average source file | 319 lines |
-| Largest source file | `src/client/index.tsx` (784 lines) |
-| Import graph | 10 nodes / 18 internal edges (10 cross-directory) |
+| Average source file | 267 lines |
+| Largest source file | `src/client/index.tsx` (769 lines) |
+| Import graph | 12 nodes / 21 internal edges (11 cross-directory) |
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
 | Most depended-on files | `src/detect.ts` (6), `src/convert.ts` (4), `src/upload.ts` (4) |
-| Churn hotspots (90d) | `CHANGELOG.md` (23), `ARCHITECTURE.md` (18), `package.json` (18) |
+| Churn hotspots (90d) | `CHANGELOG.md` (23), `ARCHITECTURE.md` (19), `package.json` (18) |
 
 ## 6. Standards checklist
 

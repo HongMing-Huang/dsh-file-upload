@@ -136,7 +136,9 @@ export async function describeImage(filePath: string, options: VisionOptions): P
             content: [
               {
                 type: 'text',
-                text: '请详细描述这张图片的内容,包括图中出现的文字。用用户使用的语言回答(如果无法判断则用中文)。'
+                // Model-facing prompt: English, because the host has no locale of
+                // its own and the answer language is left to the model anyway.
+                text: 'Please describe the contents of this image in detail, including any text visible in it. Answer in the user\'s language (use English if it cannot be determined).'
               },
               { type: 'image_url', image_url: { url: imageDataUrl(filePath) } }
             ]

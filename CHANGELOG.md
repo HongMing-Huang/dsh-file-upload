@@ -17,6 +17,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   far above OCR). Chain order: explicit `visionEndpoint` → local Ollama →
   DeepSeek official vision → OpenAI standard.
 
+### Changed
+
+- **Client copy now follows the harness locale**: the paperclip tooltip, the
+  drag overlay, upload-failure messages and card chrome all resolve through a
+  registered `dsh-file-upload` namespace (`zh`/`en`) instead of Chinese
+  literals, and both slot registrations declare `locale:`, so switching
+  Settings → Language re-renders them without a reload. The host-side strings
+  the model reads — the xlsx truncation notices and the vision-description
+  prompt — are now English, since the locale registry has no host side.
+  Landed for #21 against current main, with the dictionaries contributed by
+  @niquedegraaff in #6.
+
 ### Fixed
 
 - **Codex-style references everywhere**: every upload — images included — now
