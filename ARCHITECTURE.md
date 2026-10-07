@@ -22,7 +22,7 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 42 commits, last 2026-10-07T17:24:08+08:00, 2 dirty files |
+| Git | 43 commits, last 2026-10-07T17:47:24+08:00, 2 dirty files |
 
 ## 2. Layout at a glance
 
@@ -31,7 +31,7 @@
 | `.github/` | directory | 2 | 123 | 0 | 0 |  |
 | `.gitignore` | file | 1 | 26 | 0 | 0 |  |
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
-| `AGENTS.md` | file | 1 | 60 | 0 | 0 |  |
+| `AGENTS.md` | file | 1 | 61 | 0 | 0 |  |
 | `ARCHITECTURE.md` | file | 1 | 365 | 0 | 0 |  |
 | `CHANGELOG.md` | file | 1 | 457 | 0 | 0 |  |
 | `CONTRIBUTING.md` | file | 1 | 142 | 0 | 0 |  |
@@ -43,7 +43,7 @@
 | `biome.json` | file | 1 | 49 | 0 | 0 |  |
 | `build.mjs` | file | 1 | 27 | 1 | 0 |  |
 | `cordis.patch.yml` | file | 1 | 30 | 0 | 0 |  |
-| `docs/` | directory | 1 | 84 | 0 | 0 | 面向维护者的流程与运维文档（不参与运行时、不 import 代码），如分支保护与变更流程。 |
+| `docs/` | directory | 1 | 123 | 0 | 0 | 面向维护者的流程与运维文档（不参与运行时、不 import 代码），如分支保护与变更流程。 |
 | `examples/` | directory | 1 | 33 | 0 | 0 | cordis.patch.yml 的本地覆盖示例，文档性质。 |
 | `package.json` | file | 1 | 103 | 0 | 0 |  |
 | `pnpm-lock.yaml` | file | 1 | 0 | 0 | 0 |  |
@@ -70,7 +70,7 @@ Root holds 17 loose file(s): `.gitignore`, `AGENTS.md`, `ARCHITECTURE.md`, `CHAN
 | `examples` | — | 1 | 33 | 0 | 0 | — | `*` | — | cordis.patch.yml 的本地覆盖示例，文档性质。 |
 | `scripts` | — | 1 | 410 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
 | `tests` | — | 6 | 1025 | 0 | 6 | — | `*` | `convert`, `detect`, `entry`, `tool`, `upload` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
-| `docs` | — | 1 | 84 | 0 | 0 | — | _nothing_ | — | 面向维护者的流程与运维文档（不参与运行时、不 import 代码），如分支保护与变更流程。 |
+| `docs` | — | 1 | 123 | 0 | 0 | — | _nothing_ | — | 面向维护者的流程与运维文档（不参与运行时、不 import 代码），如分支保护与变更流程。 |
 
 _18 tracked file(s) belong to no declared module: `.github/workflows/ci.yml`, `.github/workflows/structure-guard.yml`, `.gitignore`, `.test-nonwritable/markitdown/.markitdown-installed.json`, `.test-nonwritable/markitdown/.probe`, `AGENTS.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, …. Either declare them or move them where the contract covers them._
 
@@ -121,10 +121,10 @@ graph LR
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 37 (440 KB) |
+| Files tracked | 37 (442 KB) |
 | Source | 9 files / 2867 LOC |
 | Tests | 6 files / 1025 LOC |
-| Docs | 9 files / 1596 LOC |
+| Docs | 9 files / 1636 LOC |
 | Config files | 11 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
@@ -135,7 +135,7 @@ graph LR
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
 | Most depended-on files | `src/detect.ts` (6), `src/convert.ts` (4), `src/upload.ts` (4) |
-| Churn hotspots (90d) | `CHANGELOG.md` (23), `package.json` (18), `ARCHITECTURE.md` (17) |
+| Churn hotspots (90d) | `CHANGELOG.md` (23), `ARCHITECTURE.md` (18), `package.json` (18) |
 
 ## 6. Standards checklist
 

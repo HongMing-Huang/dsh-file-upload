@@ -82,3 +82,42 @@ changes. It cannot be removed by a force-push (that rule binds administrators
 too) and reverting an empty commit is a no-op, so it is left in place and
 recorded here rather than rewritten away. The second probe commit from the same
 measurement was never pushed.
+
+## The required-check trap: `contexts` vs `checks`
+
+The status checks above were originally configured through the `contexts`
+field, which is the **legacy commit-status API**. GitHub Actions reports check
+*runs*, not commit statuses, so the two never matched: every run on the head
+commit showed `success`, the status API reported `pending` with an empty status
+list, and GitHub concluded the required check was simply missing.
+
+The symptom is misleading. A pull request in that state shows
+
+```
+mergeStateStatus: BLOCKED
+GraphQL: Required status check "build-test" is expected.
+```
+
+even though `gh pr view --json statusCheckRollup` lists `build-test (22)`,
+`build-test (24)` and `structure` all as `SUCCESS`. It looks like a stale check,
+which is why the first fix attempted — force-merging with `--admin` — failed with
+the same message: the check was not failing, it was invisible to the rule.
+
+The fix is to declare the requirement in the `checks` form with the reporting
+app's id:
+
+```json
+"required_status_checks": {
+  "strict": true,
+  "checks": [
+    { "context": "build-test", "app_id": 15368 },
+    { "context": "structure",  "app_id": 15368 }
+  ]
+}
+```
+
+`15368` is the GitHub Actions app id. Setting it is what pins the rule to the
+workflow that produces the run; without an `app_id` the entry stays in the
+ambiguous legacy form and the block persists. Verified by removing the required
+checks entirely — the same pull request became `CLEAN` immediately — then
+restoring them in this form.
