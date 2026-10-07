@@ -22,13 +22,13 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 34 commits, last 2026-10-07T16:43:04+08:00, 2 dirty files |
+| Git | 35 commits, last 2026-10-07T16:48:02+08:00, 3 dirty files |
 
 ## 2. Layout at a glance
 
 | Top level | Kind | Files | LOC | Source | Tests | Purpose (curated) |
 | --- | --- | --- | --- | --- | --- | --- |
-| `.github/` | directory | 2 | 100 | 0 | 0 |  |
+| `.github/` | directory | 2 | 107 | 0 | 0 |  |
 | `.gitignore` | file | 1 | 26 | 0 | 0 |  |
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
 | `AGENTS.md` | file | 1 | 60 | 0 | 0 |  |
@@ -44,7 +44,7 @@
 | `build.mjs` | file | 1 | 27 | 1 | 0 |  |
 | `cordis.patch.yml` | file | 1 | 30 | 0 | 0 |  |
 | `examples/` | directory | 1 | 33 | 0 | 0 | cordis.patch.yml 的本地覆盖示例，文档性质。 |
-| `package.json` | file | 1 | 102 | 0 | 0 |  |
+| `package.json` | file | 1 | 103 | 0 | 0 |  |
 | `pnpm-lock.yaml` | file | 1 | 0 | 0 | 0 |  |
 | `scripts/` | directory | 1 | 410 | 1 | 0 | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
 | `src/` | directory | 7 | 2372 | 7 | 0 |  |

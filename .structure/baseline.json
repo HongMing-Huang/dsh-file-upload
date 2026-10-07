@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-06T08:56:40.757Z",
+  "generatedAt": "2026-10-07T08:50:34.718Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -19,7 +19,7 @@
       },
       {
         "lang": "javascript",
-        "loc": 390
+        "loc": 437
       }
     ],
     "archetype": "single-package-src",
@@ -68,7 +68,7 @@
   },
   "metrics": {
     "files": 36,
-    "bytes": 425907,
+    "bytes": 431432,
     "sourceFiles": 9,
     "testFiles": 6,
     "docFiles": 8,
@@ -82,16 +82,16 @@
     "maxFunctionName": "apply",
     "maxFunctionAt": "src/index.ts:139",
     "vendoredFiles": 0,
-    "sourceLoc": 2762,
+    "sourceLoc": 2809,
     "testLoc": 918,
-    "docLoc": 1445,
+    "docLoc": 1459,
     "maxDepth": 2,
     "topLevelDirCount": 4,
     "topLevelEntryCount": 6,
     "topLevelFileCount": 17,
     "testToSourceRatio": 0.67,
     "testLocRatio": 0.33,
-    "avgSourceLines": 307
+    "avgSourceLines": 312
   },
   "conventions": {
     "fileNaming": {
@@ -165,7 +165,7 @@
       "path": ".github",
       "type": "dir",
       "files": 2,
-      "loc": 74,
+      "loc": 107,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 0
@@ -174,7 +174,7 @@
       "path": ".gitignore",
       "type": "file",
       "files": 1,
-      "loc": 15,
+      "loc": 26,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -210,7 +210,7 @@
       "path": "CHANGELOG.md",
       "type": "file",
       "files": 1,
-      "loc": 415,
+      "loc": 429,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -309,7 +309,7 @@
       "path": "package.json",
       "type": "file",
       "files": 1,
-      "loc": 102,
+      "loc": 103,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -327,7 +327,7 @@
       "path": "scripts",
       "type": "dir",
       "files": 1,
-      "loc": 363,
+      "loc": 410,
       "sourceFiles": 1,
       "testFiles": 0,
       "directFiles": 1
@@ -391,8 +391,8 @@
     },
     {
       "path": "scripts/check-manifest.mjs",
-      "lines": 363,
-      "bytes": 17235
+      "lines": 410,
+      "bytes": 19304
     },
     {
       "path": "src/index.ts",
@@ -457,7 +457,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 17,
-      "loc": 1711,
+      "loc": 1737,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -477,14 +477,14 @@
       "directRootFiles": 17,
       "longestFile": {
         "path": "CHANGELOG.md",
-        "lines": 415
+        "lines": 429
       }
     },
     {
       "name": ".github",
       "root": ".github",
       "fileCount": 2,
-      "loc": 74,
+      "loc": 107,
       "sourceFiles": 0,
       "testFiles": 0,
       "imports": [],
@@ -493,8 +493,8 @@
       "depth": 2,
       "directRootFiles": 0,
       "longestFile": {
-        "path": ".github/workflows/ci.yml",
-        "lines": 42
+        "path": ".github/workflows/structure-guard.yml",
+        "lines": 65
       }
     },
     {
@@ -535,7 +535,7 @@
       "name": "scripts",
       "root": "scripts",
       "fileCount": 1,
-      "loc": 363,
+      "loc": 410,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -546,7 +546,7 @@
       "directRootFiles": 1,
       "longestFile": {
         "path": "scripts/check-manifest.mjs",
-        "lines": 363
+        "lines": 410
       }
     },
     {
@@ -613,7 +613,7 @@
     "unresolvedRelative": 0,
     "unresolvedSource": 0,
     "unresolvedTest": 0,
-    "external": 47,
+    "external": 48,
     "buildOutputRefs": 0,
     "cycles": [],
     "crossDirEdges": 9,
@@ -628,12 +628,12 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-06T16:55:17+08:00",
-    "commits": 32,
+    "lastCommitAt": "2026-10-07T16:48:02+08:00",
+    "commits": 35,
     "churn90d": [
       {
         "path": "CHANGELOG.md",
-        "commits": 19
+        "commits": 21
       },
       {
         "path": "package.json",
@@ -656,16 +656,16 @@
         "commits": 14
       },
       {
+        "path": "ARCHITECTURE.md",
+        "commits": 12
+      },
+      {
         "path": "src/client/index.tsx",
         "commits": 12
       },
       {
         "path": ".structure/baseline.json",
-        "commits": 10
-      },
-      {
-        "path": "ARCHITECTURE.md",
-        "commits": 10
+        "commits": 11
       },
       {
         "path": "AGENTS.md",
@@ -676,15 +676,15 @@
         "commits": 6
       },
       {
+        "path": "scripts/check-manifest.mjs",
+        "commits": 5
+      },
+      {
         "path": "test/upload-handler.test.ts",
         "commits": 5
       },
       {
         "path": "pnpm-lock.yaml",
-        "commits": 4
-      },
-      {
-        "path": "scripts/check-manifest.mjs",
         "commits": 4
       },
       {
@@ -694,6 +694,10 @@
       {
         "path": "src/vision.ts",
         "commits": 4
+      },
+      {
+        "path": ".gitignore",
+        "commits": 3
       },
       {
         "path": ".structure/guard.json",
@@ -706,14 +710,10 @@
       {
         "path": "src/tool.ts",
         "commits": 3
-      },
-      {
-        "path": "test/detect.test.ts",
-        "commits": 3
       }
     ],
-    "churnFiles90d": 46,
-    "dirtyFiles": 3
+    "churnFiles90d": 52,
+    "dirtyFiles": 2
   },
-  "scanMs": 202
+  "scanMs": 95
 }
