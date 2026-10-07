@@ -86,6 +86,14 @@
         "examples/**"
       ],
       "layer": null
+    },
+    {
+      "name": "docs",
+      "paths": [
+        "docs/**"
+      ],
+      "layer": null,
+      "mayImport": []
     }
   ],
   "boundaries": [
@@ -146,6 +154,10 @@
       "mayImport": [
         "*"
       ]
+    },
+    {
+      "from": "docs",
+      "mayImport": []
     }
   ],
   "thresholds": {
@@ -192,7 +204,8 @@
     "build": "构建脚本：tsc 产物之后的 client bundle 收尾。",
     "scripts": "独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。",
     "tests": "node:test 测试，顶层 test/ + *.test.ts 命名。",
-    "examples": "cordis.patch.yml 的本地覆盖示例，文档性质。"
+    "examples": "cordis.patch.yml 的本地覆盖示例，文档性质。",
+    "docs": "面向维护者的流程与运维文档（不参与运行时、不 import 代码），如分支保护与变更流程。"
   },
   "digest": {
     "path": "ARCHITECTURE.md"

@@ -22,7 +22,7 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 39 commits, last 2026-10-07T17:01:49+08:00, 4 dirty files |
+| Git | 42 commits, last 2026-10-07T17:24:08+08:00, 2 dirty files |
 
 ## 2. Layout at a glance
 
@@ -32,7 +32,7 @@
 | `.gitignore` | file | 1 | 26 | 0 | 0 |  |
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
 | `AGENTS.md` | file | 1 | 60 | 0 | 0 |  |
-| `ARCHITECTURE.md` | file | 1 | 350 | 0 | 0 |  |
+| `ARCHITECTURE.md` | file | 1 | 365 | 0 | 0 |  |
 | `CHANGELOG.md` | file | 1 | 457 | 0 | 0 |  |
 | `CONTRIBUTING.md` | file | 1 | 142 | 0 | 0 |  |
 | `INSTALL.md` | file | 1 | 189 | 0 | 0 |  |
@@ -43,6 +43,7 @@
 | `biome.json` | file | 1 | 49 | 0 | 0 |  |
 | `build.mjs` | file | 1 | 27 | 1 | 0 |  |
 | `cordis.patch.yml` | file | 1 | 30 | 0 | 0 |  |
+| `docs/` | directory | 1 | 84 | 0 | 0 | 面向维护者的流程与运维文档（不参与运行时、不 import 代码），如分支保护与变更流程。 |
 | `examples/` | directory | 1 | 33 | 0 | 0 | cordis.patch.yml 的本地覆盖示例，文档性质。 |
 | `package.json` | file | 1 | 103 | 0 | 0 |  |
 | `pnpm-lock.yaml` | file | 1 | 0 | 0 | 0 |  |
@@ -69,6 +70,7 @@ Root holds 17 loose file(s): `.gitignore`, `AGENTS.md`, `ARCHITECTURE.md`, `CHAN
 | `examples` | — | 1 | 33 | 0 | 0 | — | `*` | — | cordis.patch.yml 的本地覆盖示例，文档性质。 |
 | `scripts` | — | 1 | 410 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
 | `tests` | — | 6 | 1025 | 0 | 6 | — | `*` | `convert`, `detect`, `entry`, `tool`, `upload` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
+| `docs` | — | 1 | 84 | 0 | 0 | — | _nothing_ | — | 面向维护者的流程与运维文档（不参与运行时、不 import 代码），如分支保护与变更流程。 |
 
 _18 tracked file(s) belong to no declared module: `.github/workflows/ci.yml`, `.github/workflows/structure-guard.yml`, `.gitignore`, `.test-nonwritable/markitdown/.markitdown-installed.json`, `.test-nonwritable/markitdown/.probe`, `AGENTS.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, …. Either declare them or move them where the contract covers them._
 
@@ -87,6 +89,7 @@ graph LR
   examples["examples"]
   scripts["scripts"]
   tests["tests"]
+  docs["docs"]
   convert --> detect
   upload --> detect
   entry --> convert
@@ -118,10 +121,10 @@ graph LR
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 36 (435 KB) |
+| Files tracked | 37 (440 KB) |
 | Source | 9 files / 2867 LOC |
 | Tests | 6 files / 1025 LOC |
-| Docs | 8 files / 1497 LOC |
+| Docs | 9 files / 1596 LOC |
 | Config files | 11 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
@@ -132,7 +135,7 @@ graph LR
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
 | Most depended-on files | `src/detect.ts` (6), `src/convert.ts` (4), `src/upload.ts` (4) |
-| Churn hotspots (90d) | `CHANGELOG.md` (22), `package.json` (18), `src/index.ts` (17) |
+| Churn hotspots (90d) | `CHANGELOG.md` (23), `package.json` (18), `ARCHITECTURE.md` (17) |
 
 ## 6. Standards checklist
 
@@ -144,7 +147,7 @@ graph LR
 | CONTRIBUTING | present |
 | ARCHITECTURE / DESIGN | present |
 | SECURITY | present |
-| docs/ directory | **missing** |
+| docs/ directory | present |
 | ADR / RFC directory | **missing** |
 | CI workflow | present |
 | linter config | present |
@@ -237,6 +240,18 @@ graph LR
 - **对标业界**：`guard.mjs remote <owner/repo>` 不克隆即可查看任意 GitHub 项目的布局，`--compare .` 直接对照。当前与 cordis 的差距：根目录散落文件 19 vs 15、顶层入口 5 vs 2、缺 linter/formatter/.editorconfig/.gitattributes。
 
 ### 已知例外与待办
+
+- **`docs/` 与分支保护流程（2026-10-07 新增，已按规则登记）**：新增顶层 `docs/` 目录并在 `guard.json` 里
+  声明为独立模块（`layer: null`、`mayImport: []`——纯文档，不 import 代码、不参与运行时）。
+  `docs/BRANCH-PROTECTION.md` 记录 `main` 的保护规则、**为什么 `enforce_admins` 是重点**、
+  以及 issue → branch → PR → 审阅 → 合并的流程。
+  **实测过保护是否真的生效**（这是本条的由来）：`enforce_admins: false` 时直推 `main` 成功，GitHub 只打印
+  `Bypassed rule violations`；开启 `enforce_admins: true` 后同一操作被硬拒
+  （`GH006: Protected branch update failed`）。**强推保护是唯一一条即使不加管理员强制也生效的规则**——
+  所以各条规则必须逐条验证，不能当成一个总开关。
+  遗留：`main` 上有一个空提交 `test: probe whether main is actually protected`（测量过程中产生，
+  不含任何改动）。强推被保护挡住、revert 空提交又是 no-op，因此保留并在该文档里注明，而不是改写历史。
+
 
 - **插件形式已实测（2026-10-06）**：不再只靠"人工核对"，而是真的把装配跑了一遍。
   `apply()` 用一个桩 Cordis ctx（六个注入服务各就位、可选服务返回 undefined）真实执行，结果：
