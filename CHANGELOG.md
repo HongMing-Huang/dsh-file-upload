@@ -31,6 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Upload failures ignored the locale**: the client rendered the server's
+  English prose verbatim on any non-2xx answer, so the localized `http.*`
+  strings only covered bodies without JSON. Failure responses now carry a
+  machine-readable `code` (and `params` — the rejected extension rides both the
+  prose and `params.ext`), and the client renders `error.<code>` through its
+  dictionaries; unknown codes and code-less bodies fall back to the prose and
+  the status mapping exactly as before. The system prompt no longer quotes the
+  zh-only image-description marker, which is locale-dependent now, and a test
+  keeps the server's code list and the dictionaries in lockstep (#23).
 - **Codex-style references everywhere**: every upload — images included — now
   inserts a clean `@relative/path` reference (relative to the session
   workspace). Absolute host paths no longer leak into the composer or the

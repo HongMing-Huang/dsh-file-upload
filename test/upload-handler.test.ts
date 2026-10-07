@@ -162,6 +162,9 @@ test('upload handler: unknown session rejected 403', async () => {
       body: 'x'
     })
     assert.equal(res.status, 403)
+    const body = (await res.json()) as { error: string; code?: string }
+    assert.equal(body.error, 'unknown session')
+    assert.equal(body.code, 'unknownSession')
   } finally {
     server.close()
   }
@@ -176,6 +179,7 @@ test('upload handler: oversized payload rejected 413', async () => {
       body: new Uint8Array(2 * 1024 * 1024)
     })
     assert.equal(res.status, 413)
+    assert.equal(((await res.json()) as { code?: string }).code, 'payloadTooLarge')
   } finally {
     server.close()
   }
@@ -274,8 +278,9 @@ test('upload handler: concurrency gate still rejects the fifth in-flight upload'
       body: 'fifth'
     })
     assert.equal(res.status, 429)
-    const body = (await res.json()) as { error: string }
+    const body = (await res.json()) as { error: string; code?: string }
     assert.equal(body.error, 'too many concurrent uploads')
+    assert.equal(body.code, 'tooManyUploads')
   } finally {
     for (const entry of held) entry.release()
     const statuses = await Promise.all(held.map((entry) => entry.done))
@@ -342,8 +347,10 @@ test('upload handler: extension outside the allowlist rejected 415', async () =>
       body: 'MZ'
     })
     assert.equal(res.status, 415)
-    const body = (await res.json()) as { error: string }
+    const body = (await res.json()) as { error: string; code?: string; params?: Record<string, string> }
     assert.equal(body.error, 'extension ".exe" not allowed')
+    assert.equal(body.code, 'extensionNotAllowed')
+    assert.deepEqual(body.params, { ext: 'exe' })
   } finally {
     server.close()
   }

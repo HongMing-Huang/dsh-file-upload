@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-07T10:12:13.912Z",
+  "generatedAt": "2026-10-07T13:57:41.755Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -11,11 +11,11 @@
     "languages": [
       {
         "lang": "typescript",
-        "loc": 2778
+        "loc": 2831
       },
       {
         "lang": "typescriptreact",
-        "loc": 769
+        "loc": 778
       },
       {
         "lang": "javascript",
@@ -68,7 +68,7 @@
   },
   "metrics": {
     "files": 40,
-    "bytes": 459098,
+    "bytes": 463046,
     "sourceFiles": 11,
     "testFiles": 7,
     "docFiles": 9,
@@ -82,16 +82,16 @@
     "maxFunctionName": "apply",
     "maxFunctionAt": "src/index.ts:139",
     "vendoredFiles": 0,
-    "sourceLoc": 2941,
-    "testLoc": 1043,
-    "docLoc": 1712,
+    "sourceLoc": 2985,
+    "testLoc": 1061,
+    "docLoc": 1723,
     "maxDepth": 2,
     "topLevelDirCount": 5,
     "topLevelEntryCount": 7,
     "topLevelFileCount": 17,
     "testToSourceRatio": 0.64,
-    "testLocRatio": 0.35,
-    "avgSourceLines": 267
+    "testLocRatio": 0.36,
+    "avgSourceLines": 271
   },
   "conventions": {
     "fileNaming": {
@@ -201,7 +201,7 @@
       "path": "ARCHITECTURE.md",
       "type": "file",
       "files": 1,
-      "loc": 365,
+      "loc": 367,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -210,7 +210,7 @@
       "path": "CHANGELOG.md",
       "type": "file",
       "files": 1,
-      "loc": 469,
+      "loc": 478,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -345,7 +345,7 @@
       "path": "src",
       "type": "dir",
       "files": 9,
-      "loc": 2504,
+      "loc": 2548,
       "sourceFiles": 9,
       "testFiles": 0,
       "directFiles": 6
@@ -354,7 +354,7 @@
       "path": "test",
       "type": "dir",
       "files": 7,
-      "loc": 1043,
+      "loc": 1061,
       "sourceFiles": 0,
       "testFiles": 7,
       "directFiles": 7
@@ -390,13 +390,13 @@
   "largestFiles": [
     {
       "path": "src/client/index.tsx",
-      "lines": 769,
-      "bytes": 28179
+      "lines": 778,
+      "bytes": 28667
     },
     {
       "path": "src/upload.ts",
-      "lines": 444,
-      "bytes": 17542
+      "lines": 465,
+      "bytes": 18371
     },
     {
       "path": "scripts/check-manifest.mjs",
@@ -406,7 +406,7 @@
     {
       "path": "src/index.ts",
       "lines": 324,
-      "bytes": 14657
+      "bytes": 14691
     },
     {
       "path": "src/convert.ts",
@@ -430,8 +430,8 @@
     },
     {
       "path": "src/client/locale.ts",
-      "lines": 50,
-      "bytes": 2267
+      "lines": 64,
+      "bytes": 3166
     },
     {
       "path": "src/client/style.ts",
@@ -450,11 +450,11 @@
       "importedBy": 6
     },
     {
-      "path": "src/convert.ts",
-      "importedBy": 4
+      "path": "src/upload.ts",
+      "importedBy": 5
     },
     {
-      "path": "src/upload.ts",
+      "path": "src/convert.ts",
       "importedBy": 4
     },
     {
@@ -484,7 +484,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 17,
-      "loc": 1803,
+      "loc": 1814,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -504,7 +504,7 @@
       "directRootFiles": 17,
       "longestFile": {
         "path": "CHANGELOG.md",
-        "lines": 469
+        "lines": 478
       }
     },
     {
@@ -599,7 +599,7 @@
       "name": "src/(root)",
       "root": "src",
       "fileCount": 6,
-      "loc": 1648,
+      "loc": 1669,
       "sourceFiles": 6,
       "testFiles": 0,
       "imports": [],
@@ -612,14 +612,14 @@
       "directRootFiles": 6,
       "longestFile": {
         "path": "src/upload.ts",
-        "lines": 444
+        "lines": 465
       }
     },
     {
       "name": "src/client",
       "root": "src/client",
       "fileCount": 3,
-      "loc": 856,
+      "loc": 879,
       "sourceFiles": 3,
       "testFiles": 0,
       "imports": [],
@@ -632,14 +632,14 @@
       "directRootFiles": 3,
       "longestFile": {
         "path": "src/client/index.tsx",
-        "lines": 769
+        "lines": 778
       }
     },
     {
       "name": "test",
       "root": "test",
       "fileCount": 7,
-      "loc": 1043,
+      "loc": 1061,
       "sourceFiles": 0,
       "testFiles": 7,
       "imports": [
@@ -652,20 +652,20 @@
       "directRootFiles": 7,
       "longestFile": {
         "path": "test/upload-handler.test.ts",
-        "lines": 512
+        "lines": 519
       }
     }
   ],
   "graph": {
     "nodes": 12,
-    "edges": 21,
+    "edges": 22,
     "unresolvedRelative": 0,
     "unresolvedSource": 0,
     "unresolvedTest": 0,
     "external": 56,
     "buildOutputRefs": 0,
     "cycles": [],
-    "crossDirEdges": 11,
+    "crossDirEdges": 12,
     "unresolvedSamples": [],
     "internalViolations": [],
     "internalViolationCount": 0,
@@ -677,24 +677,24 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-07T17:55:00+08:00",
-    "commits": 45,
+    "lastCommitAt": "2026-10-07T18:16:07+08:00",
+    "commits": 47,
     "churn90d": [
       {
         "path": "CHANGELOG.md",
-        "commits": 23
+        "commits": 24
       },
       {
         "path": "ARCHITECTURE.md",
-        "commits": 19
+        "commits": 20
+      },
+      {
+        "path": ".structure/baseline.json",
+        "commits": 18
       },
       {
         "path": "package.json",
         "commits": 18
-      },
-      {
-        "path": ".structure/baseline.json",
-        "commits": 17
       },
       {
         "path": "src/index.ts",
@@ -709,12 +709,12 @@
         "commits": 14
       },
       {
-        "path": "src/upload.ts",
+        "path": "src/client/index.tsx",
         "commits": 14
       },
       {
-        "path": "src/client/index.tsx",
-        "commits": 13
+        "path": "src/upload.ts",
+        "commits": 14
       },
       {
         "path": "AGENTS.md",
@@ -733,6 +733,10 @@
         "commits": 5
       },
       {
+        "path": "src/vision.ts",
+        "commits": 5
+      },
+      {
         "path": "test/upload-handler.test.ts",
         "commits": 5
       },
@@ -745,24 +749,20 @@
         "commits": 4
       },
       {
-        "path": "src/detect.ts",
+        "path": "src/convert.ts",
         "commits": 4
       },
       {
-        "path": "src/vision.ts",
+        "path": "src/detect.ts",
         "commits": 4
       },
       {
         "path": ".gitignore",
         "commits": 3
-      },
-      {
-        "path": "docs/BRANCH-PROTECTION.md",
-        "commits": 3
       }
     ],
-    "churnFiles90d": 53,
-    "dirtyFiles": 7
+    "churnFiles90d": 56,
+    "dirtyFiles": 8
   },
-  "scanMs": 173
+  "scanMs": 145
 }

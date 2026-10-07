@@ -120,6 +120,23 @@ function respond(res: ServerResponse, status: number, body: Record<string, unkno
   res.end(JSON.stringify(body))
 }
 
+/**
+ * Machine-readable codes for the failures a browser can surface in the upload
+ * flow. The client renders these through its locale dictionaries
+ * (`error.<code>`), so the list and the dictionaries are checked against each
+ * other by a test; the `error` prose stays beside the code as the fallback for
+ * readers that do not know codes.
+ */
+export const UPLOAD_ERROR_CODES = [
+  'payloadTooLarge',
+  'emptyUpload',
+  'unknownSession',
+  'tooManyUploads',
+  'extensionNotAllowed',
+  'writeFailed',
+  'loopbackOnly'
+] as const
+
 /** Resolve the session's own upload directory; null means the session is unknown. */
 async function storageDirFor(ctx: UploadContext, req: IncomingMessage): Promise<UploadStorage | null> {
   const raw = req.headers['x-session-id']
@@ -149,13 +166,13 @@ async function readBody(
     const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
     total += buf.length
     if (total > maxBytes) {
-      respond(res, 413, { error: 'payload too large' })
+      respond(res, 413, { error: 'payload too large', code: 'payloadTooLarge' })
       return { ok: false }
     }
     chunks.push(buf)
   }
   if (total === 0) {
-    respond(res, 400, { error: 'empty upload' })
+    respond(res, 400, { error: 'empty upload', code: 'emptyUpload' })
     return { ok: false }
   }
   return { ok: true, data: Buffer.concat(chunks) }
@@ -163,8 +180,8 @@ async function readBody(
 
 /**
  * Step 2 — validate: decode `x-file-name` / `x-file-relpath`, sanitize both and
- * apply the extension allowlist. A rejected extension comes back with its `ext`
- * so the 415 body stays byte-identical to the original.
+ * apply the extension allowlist. A rejected extension comes back in the prose
+ * and as `params.ext`, so a client that renders the code still gets the value.
  */
 function resolveUploadName(
   req: IncomingMessage,
@@ -279,16 +296,16 @@ function buildUploadResponse(meta: UploadedMeta, relativePath: string): Record<s
 async function handlePost(ctx: UploadContext, req: IncomingMessage, res: ServerResponse): Promise<void> {
   const storage = await storageDirFor(ctx, req)
   if (storage === null) {
-    respond(res, 403, { error: 'unknown session' })
+    respond(res, 403, { error: 'unknown session', code: 'unknownSession' })
     return
   }
   if (ctx.inflight >= ctx.maxConcurrent) {
-    respond(res, 429, { error: 'too many concurrent uploads' })
+    respond(res, 429, { error: 'too many concurrent uploads', code: 'tooManyUploads' })
     return
   }
   const declared = Number(req.headers['content-length'])
   if (Number.isFinite(declared) && declared > ctx.maxBytes) {
-    respond(res, 413, { error: 'payload too large' })
+    respond(res, 413, { error: 'payload too large', code: 'payloadTooLarge' })
     return
   }
   // The slot covers only the body read + disk write below. The image
@@ -311,7 +328,11 @@ async function handlePost(ctx: UploadContext, req: IncomingMessage, res: ServerR
     if (!body.ok) return
     const resolved = resolveUploadName(req, ctx.allowedExtensions)
     if (!resolved.ok) {
-      respond(res, 415, { error: `extension ".${resolved.ext}" not allowed` })
+      respond(res, 415, {
+        error: `extension ".${resolved.ext}" not allowed`,
+        code: 'extensionNotAllowed',
+        params: { ext: resolved.ext }
+      })
       return
     }
     // The client is already gone: stop here so a cancelled upload never
@@ -323,7 +344,7 @@ async function handlePost(ctx: UploadContext, req: IncomingMessage, res: ServerR
     // and there is nobody left to answer, so it is not a server failure.
     if (!clientGone()) {
       console.error('[dsh-file-upload] upload persist failed:', err)
-      respond(res, 500, { error: 'write failed' })
+      respond(res, 500, { error: 'write failed', code: 'writeFailed' })
     }
   } finally {
     ctx.inflight -= 1
@@ -349,7 +370,7 @@ async function handlePost(ctx: UploadContext, req: IncomingMessage, res: ServerR
 async function handleDelete(ctx: UploadContext, req: IncomingMessage, res: ServerResponse): Promise<void> {
   const storage = await storageDirFor(ctx, req)
   if (storage === null) {
-    respond(res, 403, { error: 'unknown session' })
+    respond(res, 403, { error: 'unknown session', code: 'unknownSession' })
     return
   }
   const raw = req.headers['x-file-path']
@@ -388,7 +409,7 @@ export function createUploadHandler(options: UploadOptions) {
   return async function handler(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const host = req.headers.host ?? ''
     if (!LOOPBACK_HOST.test(host)) {
-      respond(res, 403, { error: 'loopback only' })
+      respond(res, 403, { error: 'loopback only', code: 'loopbackOnly' })
       return
     }
     if (req.method === 'POST') return handlePost(ctx, req, res)
