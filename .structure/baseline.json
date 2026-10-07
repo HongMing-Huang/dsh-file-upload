@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-07T09:47:51.191Z",
+  "generatedAt": "2026-10-07T10:12:13.912Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -11,11 +11,11 @@
     "languages": [
       {
         "lang": "typescript",
-        "loc": 2671
+        "loc": 2778
       },
       {
         "lang": "typescriptreact",
-        "loc": 784
+        "loc": 769
       },
       {
         "lang": "javascript",
@@ -67,10 +67,10 @@
     "repositoryDeclared": true
   },
   "metrics": {
-    "files": 37,
-    "bytes": 452106,
-    "sourceFiles": 9,
-    "testFiles": 6,
+    "files": 40,
+    "bytes": 459098,
+    "sourceFiles": 11,
+    "testFiles": 7,
     "docFiles": 9,
     "configFiles": 11,
     "assetFiles": 1,
@@ -82,16 +82,16 @@
     "maxFunctionName": "apply",
     "maxFunctionAt": "src/index.ts:139",
     "vendoredFiles": 0,
-    "sourceLoc": 2867,
-    "testLoc": 1025,
-    "docLoc": 1636,
+    "sourceLoc": 2941,
+    "testLoc": 1043,
+    "docLoc": 1712,
     "maxDepth": 2,
     "topLevelDirCount": 5,
     "topLevelEntryCount": 7,
     "topLevelFileCount": 17,
-    "testToSourceRatio": 0.67,
-    "testLocRatio": 0.36,
-    "avgSourceLines": 319
+    "testToSourceRatio": 0.64,
+    "testLocRatio": 0.35,
+    "avgSourceLines": 267
   },
   "conventions": {
     "fileNaming": {
@@ -99,7 +99,7 @@
       "snake": 0,
       "camel": 0,
       "pascal": 0,
-      "flat": 8,
+      "flat": 10,
       "screaming": 0,
       "other": 0
     },
@@ -109,7 +109,7 @@
         "kebab": 1
       },
       ".ts": {
-        "flat": 6
+        "flat": 8
       },
       ".tsx": {
         "flat": 1
@@ -210,7 +210,7 @@
       "path": "CHANGELOG.md",
       "type": "file",
       "files": 1,
-      "loc": 457,
+      "loc": 469,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -300,7 +300,7 @@
       "path": "docs",
       "type": "dir",
       "files": 1,
-      "loc": 123,
+      "loc": 187,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -344,20 +344,20 @@
     {
       "path": "src",
       "type": "dir",
-      "files": 7,
-      "loc": 2430,
-      "sourceFiles": 7,
+      "files": 9,
+      "loc": 2504,
+      "sourceFiles": 9,
       "testFiles": 0,
       "directFiles": 6
     },
     {
       "path": "test",
       "type": "dir",
-      "files": 6,
-      "loc": 1025,
+      "files": 7,
+      "loc": 1043,
       "sourceFiles": 0,
-      "testFiles": 6,
-      "directFiles": 6
+      "testFiles": 7,
+      "directFiles": 7
     },
     {
       "path": "tsconfig.build.json",
@@ -390,8 +390,8 @@
   "largestFiles": [
     {
       "path": "src/client/index.tsx",
-      "lines": 784,
-      "bytes": 31572
+      "lines": 769,
+      "bytes": 28179
     },
     {
       "path": "src/upload.ts",
@@ -411,7 +411,7 @@
     {
       "path": "src/convert.ts",
       "lines": 311,
-      "bytes": 13013
+      "bytes": 13025
     },
     {
       "path": "src/tool.ts",
@@ -420,13 +420,23 @@
     },
     {
       "path": "src/vision.ts",
-      "lines": 162,
-      "bytes": 6543
+      "lines": 164,
+      "bytes": 6734
     },
     {
       "path": "src/detect.ts",
       "lines": 139,
       "bytes": 5566
+    },
+    {
+      "path": "src/client/locale.ts",
+      "lines": 50,
+      "bytes": 2267
+    },
+    {
+      "path": "src/client/style.ts",
+      "lines": 37,
+      "bytes": 4489
     },
     {
       "path": "build.mjs",
@@ -448,8 +458,16 @@
       "importedBy": 4
     },
     {
+      "path": "src/client/locale.ts",
+      "importedBy": 2
+    },
+    {
       "path": "src/tool.ts",
       "importedBy": 2
+    },
+    {
+      "path": "src/client/style.ts",
+      "importedBy": 1
     },
     {
       "path": "src/index.ts",
@@ -466,7 +484,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 17,
-      "loc": 1791,
+      "loc": 1803,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -486,7 +504,7 @@
       "directRootFiles": 17,
       "longestFile": {
         "path": "CHANGELOG.md",
-        "lines": 457
+        "lines": 469
       }
     },
     {
@@ -527,7 +545,7 @@
       "name": "docs",
       "root": "docs",
       "fileCount": 1,
-      "loc": 123,
+      "loc": 187,
       "sourceFiles": 0,
       "testFiles": 0,
       "imports": [],
@@ -539,7 +557,7 @@
       "directRootFiles": 1,
       "longestFile": {
         "path": "docs/BRANCH-PROTECTION.md",
-        "lines": 123
+        "lines": 187
       }
     },
     {
@@ -581,7 +599,7 @@
       "name": "src/(root)",
       "root": "src",
       "fileCount": 6,
-      "loc": 1646,
+      "loc": 1648,
       "sourceFiles": 6,
       "testFiles": 0,
       "imports": [],
@@ -600,35 +618,38 @@
     {
       "name": "src/client",
       "root": "src/client",
-      "fileCount": 1,
-      "loc": 784,
-      "sourceFiles": 1,
+      "fileCount": 3,
+      "loc": 856,
+      "sourceFiles": 3,
       "testFiles": 0,
       "imports": [],
-      "importedBy": [],
+      "importedBy": [
+        "test"
+      ],
       "docs": [],
       "entry": "src/client/index.tsx",
       "depth": 2,
-      "directRootFiles": 1,
+      "directRootFiles": 3,
       "longestFile": {
         "path": "src/client/index.tsx",
-        "lines": 784
+        "lines": 769
       }
     },
     {
       "name": "test",
       "root": "test",
-      "fileCount": 6,
-      "loc": 1025,
+      "fileCount": 7,
+      "loc": 1043,
       "sourceFiles": 0,
-      "testFiles": 6,
+      "testFiles": 7,
       "imports": [
-        "src/(root)"
+        "src/(root)",
+        "src/client"
       ],
       "importedBy": [],
       "docs": [],
       "depth": 1,
-      "directRootFiles": 6,
+      "directRootFiles": 7,
       "longestFile": {
         "path": "test/upload-handler.test.ts",
         "lines": 512
@@ -636,15 +657,15 @@
     }
   ],
   "graph": {
-    "nodes": 10,
-    "edges": 18,
+    "nodes": 12,
+    "edges": 21,
     "unresolvedRelative": 0,
     "unresolvedSource": 0,
     "unresolvedTest": 0,
-    "external": 54,
+    "external": 56,
     "buildOutputRefs": 0,
     "cycles": [],
-    "crossDirEdges": 10,
+    "crossDirEdges": 11,
     "unresolvedSamples": [],
     "internalViolations": [],
     "internalViolationCount": 0,
@@ -656,8 +677,8 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-07T17:47:24+08:00",
-    "commits": 43,
+    "lastCommitAt": "2026-10-07T17:55:00+08:00",
+    "commits": 45,
     "churn90d": [
       {
         "path": "CHANGELOG.md",
@@ -665,19 +686,19 @@
       },
       {
         "path": "ARCHITECTURE.md",
-        "commits": 18
+        "commits": 19
       },
       {
         "path": "package.json",
         "commits": 18
       },
       {
-        "path": "src/index.ts",
+        "path": ".structure/baseline.json",
         "commits": 17
       },
       {
-        "path": ".structure/baseline.json",
-        "commits": 16
+        "path": "src/index.ts",
+        "commits": 17
       },
       {
         "path": "README.md",
@@ -736,12 +757,12 @@
         "commits": 3
       },
       {
-        "path": "src/asr.ts",
+        "path": "docs/BRANCH-PROTECTION.md",
         "commits": 3
       }
     ],
     "churnFiles90d": 53,
-    "dirtyFiles": 1
+    "dirtyFiles": 7
   },
-  "scanMs": 95
+  "scanMs": 173
 }
