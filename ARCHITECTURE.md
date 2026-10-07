@@ -22,7 +22,7 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 35 commits, last 2026-10-07T16:48:02+08:00, 3 dirty files |
+| Git | 36 commits, last 2026-10-07T16:50:46+08:00, 3 dirty files |
 
 ## 2. Layout at a glance
 
@@ -118,7 +118,7 @@ graph LR
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 36 (421 KB) |
+| Files tracked | 36 (422 KB) |
 | Source | 9 files / 2809 LOC |
 | Tests | 6 files / 918 LOC |
 | Docs | 8 files / 1459 LOC |
@@ -132,7 +132,7 @@ graph LR
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
 | Most depended-on files | `src/detect.ts` (5), `src/convert.ts` (4), `src/upload.ts` (4) |
-| Churn hotspots (90d) | `CHANGELOG.md` (21), `package.json` (17), `src/index.ts` (17) |
+| Churn hotspots (90d) | `CHANGELOG.md` (21), `package.json` (18), `src/index.ts` (17) |
 
 ## 6. Standards checklist
 

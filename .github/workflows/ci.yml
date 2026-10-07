@@ -17,8 +17,9 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
+        # No `version` on purpose: the action fails when one is given both here
+        # and in `package.json`'s `packageManager`, and that field is the single
+        # source of truth for the pnpm that produced the committed lockfile.
 
       - name: Setup Node ${{ matrix.node-version }}
         uses: actions/setup-node@v4

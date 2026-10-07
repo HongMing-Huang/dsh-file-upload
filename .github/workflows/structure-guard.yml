@@ -29,12 +29,11 @@ jobs:
         with:
           node-version: 22
       # pnpm is not on the runner by default, so the install step below needs it
-      # set up explicitly. The version is pinned to what `package.json` declares
-      # via `packageManager` and what generated `pnpm-lock.yaml`, so CI resolves
-      # the same dependency graph the checkout was built against.
+      # set up explicitly. No `version` here on purpose: the action refuses to
+      # run when a version is given both here and in `package.json`'s
+      # `packageManager`, and that field is the single source of truth — it names
+      # the pnpm that produced the committed lockfile.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
       # The audit must run against a built tree. `lib/` is a build output and is
       # gitignored, so in a fresh checkout it does not exist while package.json
       # still points at `lib/index.js` and friends — the audit then fails with
