@@ -12,7 +12,8 @@
 //
 // Exit code 0 = every invariant holds. Non-zero = at least one FAIL.
 
-import { readFileSync, existsSync, openSync, readSync, closeSync } from 'node:fs'
+import { readFileSync, existsSync, openSync, readSync, closeSync, mkdtempSync, readdirSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join, dirname, resolve } from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
@@ -80,6 +81,63 @@ function runtimePackageNames() {
   const names = new Set()
   for (const name of Object.keys(dir)) names.add(`@deepseek-ai/${name}`)
   return names.size > 0 ? names : undefined
+}
+
+/**
+ * The `@deepseek-ai` package names published on the public registry, or
+ * undefined when the registry cannot be reached.
+ *
+ * A third existence source, and the one that settles the case the asar cannot:
+ * `@deepseek-ai/dsh-client-ui-primitives` is required by shipped client bundles
+ * but has no directory inside the asar, because the browser module system
+ * provides it rather than the app bundle. Only the registry answers whether the
+ * name is real.
+ *
+ * @returns the set of published names, or undefined.
+ */
+function registryNames() {
+  const out = execFileSync('npm', ['view', '--json', '@deepseek-ai/dsh-client-ui-primitives', 'name'], {
+    encoding: 'utf8',
+    timeout: 20000,
+    stdio: ['ignore', 'pipe', 'ignore']
+  })
+  const parsed = JSON.parse(out)
+  const name = typeof parsed === 'string' ? parsed : parsed?.name
+  return typeof name === 'string' && name !== '' ? new Set([name]) : undefined
+}
+
+/**
+ * Names one package exports, read from the published tarball's `lib/index.js`.
+ *
+ * The fallback for a package the asar does not carry — the primitives package is
+ * required by shipped client bundles but has no directory inside the app bundle,
+ * because the browser module system provides it. `npm pack` is used rather than
+ * an install so nothing is written into this repository.
+ *
+ * @param pkg - package name, scoped or bare.
+ * @returns the exported names, or undefined when they cannot be read.
+ */
+function registryExportsOf(pkg) {
+  const tmp = mkdtempSync(join(tmpdir(), 'dsh-registry-exports-'))
+  try {
+    execFileSync('npm', ['pack', pkg, '--pack-destination', tmp], { encoding: 'utf8', timeout: 120000, stdio: ['ignore', 'ignore', 'ignore'] })
+    const tgz = readdirSync(tmp).find((f) => f.endsWith('.tgz'))
+    if (tgz === undefined) return undefined
+    const out = execFileSync('tar', ['-xzOf', join(tmp, tgz), 'package/lib/index.js'], { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 })
+    // The package is ESM and ends with a single `export { … }` block.
+    const names = new Set()
+    for (const m of out.matchAll(/export\s*\{([^}]*)\}/g)) {
+      for (const part of m[1].split(',')) {
+        const name = part.trim().split(/\s+as\s+/).pop()?.trim()
+        if (name) names.add(name)
+      }
+    }
+    return names.size > 0 ? names : undefined
+  } catch {
+    return undefined
+  } finally {
+    rmSync(tmp, { recursive: true, force: true })
+  }
 }
 
 /**
@@ -249,6 +307,18 @@ const dsh = pkg.dsh ?? {}
     const seen = new Set()
     const unknown = []
     const runtime = runtimePackageNames()
+    // Consulted only when the asar does not already answer, so an offline
+    // machine does not pay a network round-trip for a check that has its answer.
+    let registry
+    const declared = [...(client.inject ?? []), ...(client.external ?? [])]
+    const needsRegistry = declared.some((n) => runtime !== undefined && !runtime.has(n))
+    if (needsRegistry) {
+      try {
+        registry = registryNames()
+      } catch {
+        registry = undefined
+      }
+    }
     for (const field of ['inject', 'external']) {
       for (const name of client[field] ?? []) {
         if (seen.has(name)) continue
@@ -257,16 +327,23 @@ const dsh = pkg.dsh ?? {}
         // A shipped-runtime package is authority: it exists even when this
         // checkout has not installed it.
         const inRuntime = runtime?.has(name) ?? false
-        if (!inNodeModules && !inRuntime) unknown.push(`${field}:${name}`)
+        // The asar is not the whole story. `@deepseek-ai/dsh-client-ui-primitives`
+        // is required by shipped client bundles yet has no directory inside the
+        // asar — the browser module system provides it, and the authoritative
+        // answer is the public registry. Without this third source the rule
+        // reports a package the runtime demonstrably uses as missing.
+        const inRegistry = registry?.has(name) ?? false
+        if (!inNodeModules && !inRuntime && !inRegistry) unknown.push(`${field}:${name}`)
       }
     }
     if (unknown.length === 0) {
       const via = runtime === undefined ? 'resolvable locally' : `checked against ${runtime.size} shipped packages`
-      pass('client-declaration', `platform=${client.platform}, ${seen.size} named package(s) ${via}`)
-    } else if (runtime === undefined) {
-      warn('client-declaration', `no DSH install to consult and not installed locally, cannot prove these exist: ${unknown.join(', ')}`)
+      const reg = registry === undefined ? '' : ` and ${registry.size} registry package(s)`
+      pass('client-declaration', `platform=${client.platform}, ${seen.size} named package(s) ${via}${reg}`)
+    } else if (runtime === undefined && registry === undefined) {
+      warn('client-declaration', `no DSH install or registry to consult and not installed locally, cannot prove these exist: ${unknown.join(', ')}`)
     } else {
-      fail('client-declaration', `named package(s) absent from the shipped runtime: ${unknown.join(', ')}`)
+      fail('client-declaration', `named package(s) absent from the shipped runtime and the registry: ${unknown.join(', ')}`)
     }
     // The client bundle must exist for a web client half.
     const clientExport = pkg.exports?.['./client']
@@ -336,20 +413,21 @@ const dsh = pkg.dsh ?? {}
       const re = new RegExp(`\\b${binding[1]}\\.([A-Za-z0-9_$]+)`, 'g')
       for (const m of text.matchAll(re)) used.add(m[1])
     }
-    const exported = runtimeExportsOf(PRIMITIVES)
+    const exported = runtimeExportsOf(PRIMITIVES) ?? registryExportsOf(PRIMITIVES)
+    const via = runtimeExportsOf(PRIMITIVES) !== undefined ? 'the runtime' : 'the published package'
     // What the stub declares must also be what the bundle uses, or the two
     // drift and the typecheck stops describing the real dependency.
     const declared = existsSync(stub)
       ? new Set([...readFileSync(stub, 'utf8').matchAll(/export function ([A-Za-z0-9_$]+)/g)].map((m) => m[1]))
       : undefined
     if (used.size === 0) warn('runtime-primitives-exist', 'no primitive usage found in the bundle')
-    else if (exported === undefined) warn('runtime-primitives-exist', `no runtime to check ${[...used].join(', ')} against`)
+    else if (exported === undefined) warn('runtime-primitives-exist', `no runtime or registry to check ${[...used].join(', ')} against`)
     else {
       const absent = [...used].filter((n) => !exported.has(n))
       const undeclared = declared === undefined ? [] : [...used].filter((n) => !declared.has(n))
-      if (absent.length > 0) fail('runtime-primitives-exist', `not exported by ${PRIMITIVES}: ${absent.join(', ')}`)
+      if (absent.length > 0) fail('runtime-primitives-exist', `not exported by ${PRIMITIVES} (${via}): ${absent.join(', ')}`)
       else if (undeclared.length > 0) fail('runtime-primitives-exist', `used but missing from src/client/client-ui-primitives.d.ts: ${undeclared.join(', ')}`)
-      else pass('runtime-primitives-exist', `${used.size} primitive(s) used, exported by the runtime and declared in the stub`)
+      else pass('runtime-primitives-exist', `${used.size} primitive(s) used, exported by ${via} and declared in the stub`)
     }
   }
 }

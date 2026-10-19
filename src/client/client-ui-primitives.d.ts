@@ -45,15 +45,16 @@ declare module '@deepseek-ai/dsh-client-ui-primitives' {
   }): ReactNode
 
   /**
-   * Size-graded glyph families. The runtime exports `…Regular` (≈16px) and
-   * `…Medium` (≈20px) grades — there is no `…16` suffix in the shipped
-   * package. Each icon takes a numeric `size` in pixels.
+   * Size-graded glyphs. The published package exports the `…16` names — there is
+   * no `…Regular` grade. Keep this list in step with the published
+   * `lib/index.js`, because a name that resolves to `undefined` renders an empty
+   * button and nothing reports it.
    */
   export interface IconProps {
     size?: number
     className?: string
   }
 
-  export function IconPaperclipOutlineRegular(props: IconProps): ReactNode
-  export function IconCloseOutlineRegular(props: IconProps): ReactNode
+  export function IconPaperclipOutline16(props: IconProps): ReactNode
+  export function IconCloseOutline16(props: IconProps): ReactNode
 }

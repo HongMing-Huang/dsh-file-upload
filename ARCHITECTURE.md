@@ -1,6 +1,6 @@
 # dsh-file-upload — Architecture Digest
 
-> Generated 2026-10-07 by the `structure-guard` skill (`guard.mjs digest`).
+> Generated 2026-10-19 by the `structure-guard` skill (`guard.mjs digest`).
 > Tables and metrics are regenerated on every run. Text inside the CURATED block, and the
 > `describe` map in `.structure/guard.json`, are yours and are never overwritten.
 
@@ -12,7 +12,7 @@
 | Version | 0.5.4 |
 | Layout archetype | single-package-src |
 | Primary language | typescript |
-| Languages by volume | typescript (2831 LOC), typescriptreact (778 LOC), javascript (437 LOC) |
+| Languages by volume | typescript (2831 LOC), typescriptreact (784 LOC), javascript (515 LOC) |
 | Module system | esm |
 | Package manager | pnpm |
 | Engines | {"node":">=22.6.0"} |
@@ -22,7 +22,7 @@
 | Exports map | yes |
 | License | MIT |
 | Repository declared | yes |
-| Git | 47 commits, last 2026-10-07T18:16:07+08:00, 8 dirty files |
+| Git | 49 commits, last 2026-10-07T21:59:55+08:00, 4 dirty files |
 
 ## 2. Layout at a glance
 
@@ -32,8 +32,8 @@
 | `.gitignore` | file | 1 | 26 | 0 | 0 |  |
 | `.test-nonwritable/` | directory | 2 | 2 | 0 | 0 |  |
 | `AGENTS.md` | file | 1 | 61 | 0 | 0 |  |
-| `ARCHITECTURE.md` | file | 1 | 367 | 0 | 0 |  |
-| `CHANGELOG.md` | file | 1 | 478 | 0 | 0 |  |
+| `ARCHITECTURE.md` | file | 1 | 366 | 0 | 0 |  |
+| `CHANGELOG.md` | file | 1 | 495 | 0 | 0 |  |
 | `CONTRIBUTING.md` | file | 1 | 142 | 0 | 0 |  |
 | `INSTALL.md` | file | 1 | 189 | 0 | 0 |  |
 | `LICENSE` | file | 1 | 0 | 0 | 0 |  |
@@ -47,8 +47,8 @@
 | `examples/` | directory | 1 | 33 | 0 | 0 | cordis.patch.yml 的本地覆盖示例，文档性质。 |
 | `package.json` | file | 1 | 103 | 0 | 0 |  |
 | `pnpm-lock.yaml` | file | 1 | 0 | 0 | 0 |  |
-| `scripts/` | directory | 1 | 410 | 1 | 0 | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
-| `src/` | directory | 9 | 2548 | 9 | 0 |  |
+| `scripts/` | directory | 1 | 488 | 1 | 0 | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
+| `src/` | directory | 9 | 2554 | 9 | 0 |  |
 | `test/` | directory | 7 | 1061 | 0 | 7 |  |
 | `tsconfig.build.json` | file | 1 | 15 | 0 | 0 |  |
 | `tsconfig.json` | file | 1 | 28 | 0 | 0 |  |
@@ -65,10 +65,10 @@ Root holds 17 loose file(s): `.gitignore`, `AGENTS.md`, `ARCHITECTURE.md`, `CHAN
 | `vision` | 0 | 1 | 164 | 1 | 0 | `src/vision.ts` | _nothing_ | — | 图片描述能力封装。叶子模块，供 entry 在需要视觉理解时调用。 |
 | `entry` | 3 | 1 | 324 | 1 | 0 | `src/index.ts` | `tool`, `upload`, `convert`, `detect`, `vision` | `convert`, `tool`, `upload`, `vision` | 宿主插件入口：注册上传服务与 read_document 工具，只做装配，不写业务逻辑。 |
 | `tool` | 2 | 1 | 266 | 1 | 0 | `src/tool.ts` | `detect`, `convert` | `convert`, `detect` | 面向模型的 read_document 工具定义、参数 schema 与解析缓存 ParseCache。 |
-| `client` | 0 | 3 | 879 | 3 | 0 | `src/client/index.tsx` | _nothing_ | — | 浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。 |
+| `client` | 0 | 3 | 885 | 3 | 0 | `src/client/index.tsx` | _nothing_ | — | 浏览器半边：React/TSX，只依赖 react 与 dsh-client-ui-primitives，禁止 import 宿主代码。 |
 | `build` | — | 1 | 27 | 1 | 0 | `build.mjs` | _undeclared_ | — | 构建脚本：tsc 产物之后的 client bundle 收尾。 |
 | `examples` | — | 1 | 33 | 0 | 0 | — | `*` | — | cordis.patch.yml 的本地覆盖示例，文档性质。 |
-| `scripts` | — | 1 | 410 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
+| `scripts` | — | 1 | 488 | 1 | 0 | `scripts/check-manifest.mjs` | _nothing_ | — | 独立自检脚本（不参与运行时、不 import 项目内代码）：校验 package.json / cordis.patch.yml 的打包与安装不变量。 |
 | `tests` | — | 7 | 1061 | 0 | 7 | — | `*` | `client`, `convert`, `detect`, `entry`, `tool`, `upload` | node:test 测试，顶层 test/ + *.test.ts 命名。 |
 | `docs` | — | 1 | 187 | 0 | 0 | — | _nothing_ | — | 面向维护者的流程与运维文档（不参与运行时、不 import 代码），如分支保护与变更流程。 |
 
@@ -122,21 +122,21 @@ graph LR
 
 | Metric | Value |
 | --- | --- |
-| Files tracked | 40 (452 KB) |
-| Source | 11 files / 2985 LOC |
+| Files tracked | 40 (457 KB) |
+| Source | 11 files / 3069 LOC |
 | Tests | 7 files / 1061 LOC |
-| Docs | 9 files / 1723 LOC |
+| Docs | 9 files / 1739 LOC |
 | Config files | 11 |
 | Generated artifacts tracked | 0 |
 | Vendored files tracked | 0 |
 | Max nesting depth | 2 |
-| Average source file | 271 lines |
-| Largest source file | `src/client/index.tsx` (778 lines) |
+| Average source file | 279 lines |
+| Largest source file | `src/client/index.tsx` (784 lines) |
 | Import graph | 12 nodes / 22 internal edges (12 cross-directory) |
 | Import cycles | 0 |
 | Unresolved relative imports | 0 |
 | Most depended-on files | `src/detect.ts` (6), `src/upload.ts` (5), `src/convert.ts` (4) |
-| Churn hotspots (90d) | `CHANGELOG.md` (24), `ARCHITECTURE.md` (20), `.structure/baseline.json` (18) |
+| Churn hotspots (90d) | `CHANGELOG.md` (25), `ARCHITECTURE.md` (21), `.structure/baseline.json` (19) |
 
 ## 6. Standards checklist
 
