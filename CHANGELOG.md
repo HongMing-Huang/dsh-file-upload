@@ -44,6 +44,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   inserts a clean `@relative/path` reference (relative to the session
   workspace). Absolute host paths no longer leak into the composer or the
   message; the removal card still deletes via the absolute path internally.
+- **Both toolbar icons vanished again after the 2026-10-17 DSH release**: the
+  client imported `IconPaperclipOutlineRegular` and `IconCloseOutlineRegular`,
+  which the published primitives package does not export — it ships the `…16`
+  names and no `…Regular` grade. Both imports resolved to `undefined` and React
+  rendered empty buttons with no error anywhere, so the paperclip and the two
+  remove buttons simply disappeared. This is the second rename under this file:
+  it started at `…16`, was measured and changed to `…Regular` on 2026-10-07, and
+  the October release moved it back. The names are back to `…16`.
+- **`check:manifest` could not see a package the browser module system provides**:
+  it looked for `@deepseek-ai/dsh-client-ui-primitives` only in the Electron asar,
+  where the package has no directory at all — shipped client bundles `require` it,
+  but the browser module system resolves it. The rule therefore failed on a
+  package the runtime demonstrably uses, and its companion rule degraded to a
+  warning that could not name the actual problem. Both now fall back to the
+  public registry (`npm pack`, nothing installed into this repository), which is
+  what identified the two missing icon names. Verified by reintroducing the
+  wrong names: the rule fails and prints them.
 - **DOCX tables were silently dropped (issues #7, #15)**: the bundled engine
   already returns correct Markdown — its `markdown_content` for a pricing DOCX
   contains the full `| Role | Rate |` table — but `convertMarkitdownNode` ignored

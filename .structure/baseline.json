@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-10-07T13:57:41.755Z",
+  "generatedAt": "2026-10-19T09:26:34.407Z",
   "root": "/Users/c14h14n3/Desktop/DSH插件/dsh-file-upload",
   "fileSource": "git",
   "truncated": false,
@@ -15,11 +15,11 @@
       },
       {
         "lang": "typescriptreact",
-        "loc": 778
+        "loc": 784
       },
       {
         "lang": "javascript",
-        "loc": 437
+        "loc": 515
       }
     ],
     "archetype": "single-package-src",
@@ -68,7 +68,7 @@
   },
   "metrics": {
     "files": 40,
-    "bytes": 463046,
+    "bytes": 468445,
     "sourceFiles": 11,
     "testFiles": 7,
     "docFiles": 9,
@@ -82,16 +82,16 @@
     "maxFunctionName": "apply",
     "maxFunctionAt": "src/index.ts:139",
     "vendoredFiles": 0,
-    "sourceLoc": 2985,
+    "sourceLoc": 3069,
     "testLoc": 1061,
-    "docLoc": 1723,
+    "docLoc": 1739,
     "maxDepth": 2,
     "topLevelDirCount": 5,
     "topLevelEntryCount": 7,
     "topLevelFileCount": 17,
     "testToSourceRatio": 0.64,
-    "testLocRatio": 0.36,
-    "avgSourceLines": 271
+    "testLocRatio": 0.35,
+    "avgSourceLines": 279
   },
   "conventions": {
     "fileNaming": {
@@ -201,7 +201,7 @@
       "path": "ARCHITECTURE.md",
       "type": "file",
       "files": 1,
-      "loc": 367,
+      "loc": 366,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -210,7 +210,7 @@
       "path": "CHANGELOG.md",
       "type": "file",
       "files": 1,
-      "loc": 478,
+      "loc": 495,
       "sourceFiles": 0,
       "testFiles": 0,
       "directFiles": 1
@@ -336,7 +336,7 @@
       "path": "scripts",
       "type": "dir",
       "files": 1,
-      "loc": 410,
+      "loc": 488,
       "sourceFiles": 1,
       "testFiles": 0,
       "directFiles": 1
@@ -345,7 +345,7 @@
       "path": "src",
       "type": "dir",
       "files": 9,
-      "loc": 2548,
+      "loc": 2554,
       "sourceFiles": 9,
       "testFiles": 0,
       "directFiles": 6
@@ -390,18 +390,18 @@
   "largestFiles": [
     {
       "path": "src/client/index.tsx",
-      "lines": 778,
-      "bytes": 28667
+      "lines": 784,
+      "bytes": 29089
+    },
+    {
+      "path": "scripts/check-manifest.mjs",
+      "lines": 488,
+      "bytes": 23019
     },
     {
       "path": "src/upload.ts",
       "lines": 465,
       "bytes": 18371
-    },
-    {
-      "path": "scripts/check-manifest.mjs",
-      "lines": 410,
-      "bytes": 19304
     },
     {
       "path": "src/index.ts",
@@ -484,7 +484,7 @@
       "name": "(root)",
       "root": ".",
       "fileCount": 17,
-      "loc": 1814,
+      "loc": 1830,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -504,7 +504,7 @@
       "directRootFiles": 17,
       "longestFile": {
         "path": "CHANGELOG.md",
-        "lines": 478
+        "lines": 495
       }
     },
     {
@@ -581,7 +581,7 @@
       "name": "scripts",
       "root": "scripts",
       "fileCount": 1,
-      "loc": 410,
+      "loc": 488,
       "sourceFiles": 1,
       "testFiles": 0,
       "imports": [],
@@ -592,7 +592,7 @@
       "directRootFiles": 1,
       "longestFile": {
         "path": "scripts/check-manifest.mjs",
-        "lines": 410
+        "lines": 488
       }
     },
     {
@@ -619,7 +619,7 @@
       "name": "src/client",
       "root": "src/client",
       "fileCount": 3,
-      "loc": 879,
+      "loc": 885,
       "sourceFiles": 3,
       "testFiles": 0,
       "imports": [],
@@ -632,7 +632,7 @@
       "directRootFiles": 3,
       "longestFile": {
         "path": "src/client/index.tsx",
-        "lines": 778
+        "lines": 784
       }
     },
     {
@@ -662,7 +662,7 @@
     "unresolvedRelative": 0,
     "unresolvedSource": 0,
     "unresolvedTest": 0,
-    "external": 56,
+    "external": 57,
     "buildOutputRefs": 0,
     "cycles": [],
     "crossDirEdges": 12,
@@ -677,20 +677,20 @@
   },
   "git": {
     "isRepo": true,
-    "lastCommitAt": "2026-10-07T18:16:07+08:00",
-    "commits": 47,
+    "lastCommitAt": "2026-10-07T21:59:55+08:00",
+    "commits": 49,
     "churn90d": [
       {
         "path": "CHANGELOG.md",
-        "commits": 24
+        "commits": 25
       },
       {
         "path": "ARCHITECTURE.md",
-        "commits": 20
+        "commits": 21
       },
       {
         "path": ".structure/baseline.json",
-        "commits": 18
+        "commits": 19
       },
       {
         "path": "package.json",
@@ -698,7 +698,15 @@
       },
       {
         "path": "src/index.ts",
-        "commits": 17
+        "commits": 18
+      },
+      {
+        "path": "src/client/index.tsx",
+        "commits": 15
+      },
+      {
+        "path": "src/upload.ts",
+        "commits": 15
       },
       {
         "path": "README.md",
@@ -709,19 +717,15 @@
         "commits": 14
       },
       {
-        "path": "src/client/index.tsx",
-        "commits": 14
-      },
-      {
-        "path": "src/upload.ts",
-        "commits": 14
-      },
-      {
         "path": "AGENTS.md",
         "commits": 7
       },
       {
         "path": "cordis.patch.yml",
+        "commits": 6
+      },
+      {
+        "path": "test/upload-handler.test.ts",
         "commits": 6
       },
       {
@@ -734,10 +738,6 @@
       },
       {
         "path": "src/vision.ts",
-        "commits": 5
-      },
-      {
-        "path": "test/upload-handler.test.ts",
         "commits": 5
       },
       {
@@ -762,7 +762,7 @@
       }
     ],
     "churnFiles90d": 56,
-    "dirtyFiles": 8
+    "dirtyFiles": 3
   },
-  "scanMs": 145
+  "scanMs": 112
 }

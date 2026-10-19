@@ -13,11 +13,17 @@
 
 import { useEffect, useRef, useState } from 'react'
 // The primitives export size-graded glyph families (`…Regular` / `…Medium`),
-// not the `…16` names this file used originally; those do not exist in the
-// shipped runtime, so both icons resolved to `undefined` and the paperclip and
-// the two remove buttons rendered nothing. `Regular` is the 16-18px grade the
-// official client plugins use in toolbars.
-import { Tooltip, IconPaperclipOutlineRegular, IconCloseOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
+// Size-graded glyphs. The primitives package exports the `…16` names — there is
+// no `…Regular` grade in it — so the icons must be imported by those names.
+//
+// This is the second time the naming moved under this file. It used `…16`, was
+// changed to `…Regular` on 2026-10-07 after measuring the then-current runtime,
+// and the 2026-10-17 DSH release renamed them back to `…16` while dropping the
+// `…Regular` aliases. Either way the failure is silent: an import that resolves
+// to `undefined` renders an empty button with no error anywhere, which is why
+// `scripts/check-manifest.mjs` now verifies the three symbols against the
+// published package rather than against whatever happens to be installed.
+import { Tooltip, IconPaperclipOutline16, IconCloseOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { NS, zh, en, type Translator } from './locale.ts'
 import { injectCss } from './style.ts'
 
@@ -438,7 +444,7 @@ function UploadButton({ attach, t }: UploadButtonProps) {
   return (
     <Tooltip label={busy ? t('upload.busy') : t('upload.label')}>
       <button type="button" className="dsh-upload-btn" aria-label={t('upload.label')} disabled={busy} onClick={pick}>
-        <IconPaperclipOutlineRegular size={14} />
+        <IconPaperclipOutline16 size={14} />
       </button>
     </Tooltip>
   )
@@ -643,7 +649,7 @@ function UploadDock({ attach, sessionId, t }: DockProps) {
                     aria-label={meta.status === 'uploading' ? t('card.cancel') : t('card.remove')}
                     onClick={() => removeCard(ref)}
                   >
-                    <IconCloseOutlineRegular size={12} />
+                    <IconCloseOutline16 size={12} />
                   </button>
                 </Tooltip>
               </div>
@@ -660,7 +666,7 @@ function UploadDock({ attach, sessionId, t }: DockProps) {
             aria-label={t('card.close')}
             onClick={() => setError(null)}
           >
-            <IconCloseOutlineRegular size={12} />
+            <IconCloseOutline16 size={12} />
           </button>
         </div>
       )}
